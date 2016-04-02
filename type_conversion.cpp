@@ -2,6 +2,7 @@
 #include <QFileInfo>
 #include <QUrl>
 
+#include "julia_object.hpp"
 #include "type_conversion.hpp"
 
 namespace qmlwrap
@@ -58,6 +59,31 @@ jl_value_t* convert_to_julia<QString>(const QVariant& v)
   return nullptr;
 }
 
+template<typename... TypesT>
+jl_value_t* try_qobject_cast(QObject* o)
+{
+  for(auto* cast_o : {dynamic_cast<TypesT*>(o)...}) // TODO: Figure out why qobject_cast fails here
+  {
+    if(cast_o != nullptr)
+      return cxx_wrap::convert_to_julia(cast_o);
+  }
+
+  qWarning() << "got unknown QObject* type in QVariant conversion: " << o->metaObject()->className();
+  return nullptr;
+}
+
+// QObject*
+template<>
+jl_value_t* convert_to_julia<QObject*>(const QVariant& v)
+{
+  if(v.type() == qMetaTypeId<QObject*>())
+  {
+    return try_qobject_cast<JuliaObject>(v.value<QObject*>());
+  }
+
+  return nullptr;
+}
+
 // Try conversion for a list of types
 template<typename... TypesT>
 jl_value_t* try_convert_to_julia(const QVariant& v)
@@ -85,7 +111,7 @@ QVariant ConvertToCpp<QVariant, false, false, false>::operator()(jl_value_t* jul
 
 jl_value_t* ConvertToJulia<QVariant, false, false, false>::operator()(const QVariant& v) const
 {
-  return qmlwrap::detail::try_convert_to_julia<bool, float, double, int32_t, int64_t, uint32_t, uint64_t, QString>(v);
+  return qmlwrap::detail::try_convert_to_julia<bool, float, double, int32_t, int64_t, uint32_t, uint64_t, QString, QObject*>(v);
 }
 
 jl_value_t* ConvertToJulia<QString, false, false, false>::operator()(const QString& str) const

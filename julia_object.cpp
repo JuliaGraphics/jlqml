@@ -41,6 +41,10 @@ JuliaObject::JuliaObject(jl_value_t* julia_object, QObject* parent) : QQmlProper
   QObject::connect(this, &JuliaObject::valueChanged, this, &JuliaObject::onValueChanged);
 }
 
+JuliaObject::~JuliaObject()
+{
+}
+
 void JuliaObject::onValueChanged(const QString &key, const QVariant &value)
 {
   const auto map_it = m_field_mapping.find(key.toStdString());

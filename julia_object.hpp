@@ -18,6 +18,7 @@ class JuliaObject : public QQmlPropertyMap
   Q_OBJECT
 public:
   JuliaObject(jl_value_t* julia_object, QObject* parent = 0);
+  virtual ~JuliaObject();
 private slots:
   void onValueChanged(const QString &key, const QVariant &value);
 private:
