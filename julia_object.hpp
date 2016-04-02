@@ -1,0 +1,30 @@
+#ifndef QML_JULIA_OBJECT_H
+#define QML_JULIA_OBJECT_H
+
+#include <string>
+#include <map>
+
+#include <QObject>
+#include <QQmlPropertyMap>
+
+#include "type_conversion.hpp"
+
+namespace qmlwrap
+{
+
+/// Wrap Julia composite types
+class JuliaObject : public QQmlPropertyMap
+{
+  Q_OBJECT
+public:
+  JuliaObject(jl_value_t* julia_object, QObject* parent = 0);
+private slots:
+  void onValueChanged(const QString &key, const QVariant &value);
+private:
+  jl_value_t* m_julia_object;
+  std::map<std::string, uint32_t> m_field_mapping;
+};
+
+}
+
+#endif
