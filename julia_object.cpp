@@ -4,7 +4,7 @@
 namespace qmlwrap
 {
 
-JuliaObject::JuliaObject(jl_value_t* julia_object, QObject* parent) : QQmlPropertyMap(parent), m_julia_object(julia_object)
+JuliaObject::JuliaObject(jl_value_t* julia_object, QObject* parent) : QQmlPropertyMap(this, parent), m_julia_object(julia_object)
 {
   jl_datatype_t* dt = (jl_datatype_t*)jl_typeof(julia_object);
   if(jl_is_structtype(dt))
@@ -14,22 +14,20 @@ JuliaObject::JuliaObject(jl_value_t* julia_object, QObject* parent) : QQmlProper
     {
       const std::string fname = cxx_wrap::symbol_name(jl_field_name(dt, i));
       jl_value_t* field_val = jl_fieldref(julia_object, i);
-      if(jl_is_structtype(jl_typeof(field_val)))
+      QVariant qt_fd = cxx_wrap::convert_to_cpp<QVariant>(field_val);
+      if(!qt_fd.isNull())
+      {
+        m_field_mapping[fname] = i;
+        insert(fname.c_str(), qt_fd);
+      }
+      else if(jl_is_structtype(jl_typeof(field_val)))
       {
         insert(fname.c_str(), QVariant::fromValue(new JuliaObject(field_val, this)));
         m_field_mapping[fname] = i;
       }
       else
       {
-        QVariant qt_fd = cxx_wrap::convert_to_cpp<QVariant>(field_val);
-        if(qt_fd.isNull())
-        {
-          qWarning() << "not converting unsupported field " << fname.c_str() << " of type " << cxx_wrap::julia_type_name((jl_datatype_t*)jl_typeof(field_val)).c_str();
-          continue;
-        }
-        qWarning() << "adding field " << fname.c_str() << " with value " << qt_fd;
-        m_field_mapping[fname] = i;
-        insert(fname.c_str(), qt_fd);
+        qWarning() << "not converting unsupported field " << fname.c_str() << " of type " << cxx_wrap::julia_type_name((jl_datatype_t*)jl_typeof(field_val)).c_str();
       }
     }
   }
@@ -53,7 +51,6 @@ void JuliaObject::onValueChanged(const QString &key, const QVariant &value)
     qWarning() << "value change on unmapped field: " << key << ": " << value;
     return;
   }
-  qWarning() << "value change on field: " << key << ": " << value << " at index " << map_it->second;
   jl_value_t* val = cxx_wrap::convert_to_julia(value);
   JL_GC_PUSH1(&val);
   jl_set_nth_field(m_julia_object, map_it->second, val);
@@ -67,7 +64,7 @@ void JuliaObject::set(const QString& key, const QVariant& value)
     throw std::runtime_error("JuliaObject has no key named " + key.toStdString());
   }
 
-  (*this)[key] = value;
+  this->insert(key, value);
   emit valueChanged(key, value);
 }
 

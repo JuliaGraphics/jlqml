@@ -62,7 +62,7 @@ jl_value_t* convert_to_julia<QString>(const QVariant& v)
 template<typename... TypesT>
 jl_value_t* try_qobject_cast(QObject* o)
 {
-  for(auto* cast_o : {dynamic_cast<TypesT*>(o)...}) // TODO: Figure out why qobject_cast fails here
+  for(auto* cast_o : {qobject_cast<TypesT*>(o)...})
   {
     if(cast_o != nullptr)
       return cxx_wrap::convert_to_julia(cast_o);
