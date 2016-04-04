@@ -60,4 +60,15 @@ void JuliaObject::onValueChanged(const QString &key, const QVariant &value)
   JL_GC_POP();
 }
 
+void JuliaObject::set(const QString& key, const QVariant& value)
+{
+  if(!this->contains(key))
+  {
+    throw std::runtime_error("JuliaObject has no key named " + key.toStdString());
+  }
+
+  (*this)[key] = value;
+  emit valueChanged(key, value);
+}
+
 } // namespace qmlwrap

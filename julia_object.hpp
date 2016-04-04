@@ -19,6 +19,8 @@ class JuliaObject : public QQmlPropertyMap
 public:
   JuliaObject(jl_value_t* julia_object, QObject* parent = 0);
   virtual ~JuliaObject();
+  /// Update a value. Updating a non-existant key is an error.
+  void set(const QString& key, const QVariant& value);
 private slots:
   void onValueChanged(const QString &key, const QVariant &value);
 private:

@@ -113,9 +113,11 @@ JULIA_CPP_MODULE_BEGIN(registry)
   });
 
   qml_module.add_type<QTimer>("QTimer", julia_type<QObject>());
+
   qml_module.add_type<qmlwrap::JuliaObject>("JuliaObject", julia_type<QObject>())
-    .method("value", &qmlwrap::JuliaObject::value);
+    .method("set", &qmlwrap::JuliaObject::set) // Not exported, use @qmlset
+    .method("value", &qmlwrap::JuliaObject::value); // Not exported, use @qmlget
 
   // Exports:
-  qml_module.export_symbols("QApplication", "QQmlApplicationEngine", "QQmlContext", "set_context_property", "root_context", "load", "qt_prefix_path", "QQuickView", "set_source", "engine", "QByteArray", "QQmlComponent", "set_data", "create", "QQuickItem", "content_item", "QQuickWindow", "QQmlEngine", "JuliaObject", "QTimer", "value", "context_property");
+  qml_module.export_symbols("QApplication", "QQmlApplicationEngine", "QQmlContext", "set_context_property", "root_context", "load", "qt_prefix_path", "QQuickView", "set_source", "engine", "QByteArray", "QQmlComponent", "set_data", "create", "QQuickItem", "content_item", "QQuickWindow", "QQmlEngine", "JuliaObject", "QTimer", "context_property");
 JULIA_CPP_MODULE_END
