@@ -10,6 +10,7 @@
 
 #include "julia_api.hpp"
 #include "julia_object.hpp"
+#include "julia_signals.hpp"
 #include "type_conversion.hpp"
 
 namespace qmlwrap
@@ -37,6 +38,7 @@ JULIA_CPP_MODULE_BEGIN(registry)
   Module& qml_module = registry.create_module("QML");
 
   qmlRegisterSingletonType<qmlwrap::JuliaAPI>("org.julialang", 1, 0, "Julia", qmlwrap::julia_api_singletontype_provider);
+  qmlRegisterType<qmlwrap::JuliaSignals>("org.julialang", 1, 0, "JuliaSignals");
 
   qml_module.add_abstract<QObject>("QObject");
 
@@ -118,6 +120,19 @@ JULIA_CPP_MODULE_BEGIN(registry)
     .method("set", &qmlwrap::JuliaObject::set) // Not exported, use @qmlset
     .method("value", &qmlwrap::JuliaObject::value); // Not exported, use @qmlget
 
+  // Emit signals helper
+  qml_module.method("emit", [](const QString& signal_name, const cxx_wrap::ArrayRef<jl_value_t*>& args)
+  {
+    using namespace qmlwrap;
+    JuliaAPI* api = qobject_cast<JuliaAPI*>(julia_api_singletontype_provider(nullptr, nullptr));
+    JuliaSignals* julia_signals = api->juliaSignals();
+    if(julia_signals == nullptr)
+    {
+      throw std::runtime_error("No signals available");
+    }
+    julia_signals->emit_signal(signal_name, args);
+  });
+
   // Exports:
-  qml_module.export_symbols("QApplication", "QQmlApplicationEngine", "QQmlContext", "set_context_property", "root_context", "load", "qt_prefix_path", "QQuickView", "set_source", "engine", "QByteArray", "QQmlComponent", "set_data", "create", "QQuickItem", "content_item", "QQuickWindow", "QQmlEngine", "JuliaObject", "QTimer", "context_property");
+  qml_module.export_symbols("QApplication", "QQmlApplicationEngine", "QQmlContext", "set_context_property", "root_context", "load", "qt_prefix_path", "QQuickView", "set_source", "engine", "QByteArray", "QQmlComponent", "set_data", "create", "QQuickItem", "content_item", "QQuickWindow", "QQmlEngine", "JuliaObject", "QTimer", "context_property", "emit");
 JULIA_CPP_MODULE_END

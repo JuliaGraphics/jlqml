@@ -67,12 +67,18 @@ QVariant JuliaAPI::call(const QString& fname)
   return call(fname, QVariantList());
 }
 
+void JuliaAPI::setJuliaSignals(JuliaSignals* julia_signals)
+{
+  m_julia_signals = julia_signals;
+  emit juliaSignalsChanged(julia_signals);
+}
+
 QObject* julia_api_singletontype_provider(QQmlEngine *engine, QJSEngine *scriptEngine)
 {
   Q_UNUSED(engine)
   Q_UNUSED(scriptEngine)
 
-  JuliaAPI* api = new JuliaAPI();
+  static JuliaAPI* api = new JuliaAPI();
   return api;
 }
 

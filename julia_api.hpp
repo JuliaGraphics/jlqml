@@ -8,10 +8,13 @@
 namespace qmlwrap
 {
 
+class JuliaSignals;
+
 /// Global API, allowing to call Julia functions from QML
 class JuliaAPI : public QObject
 {
   Q_OBJECT
+  Q_PROPERTY(JuliaSignals* juliaSignals READ juliaSignals WRITE setJuliaSignals NOTIFY juliaSignalsChanged)
 public:
 
   // Call a Julia function that takes any number of arguments as a list
@@ -19,6 +22,19 @@ public:
 
   // Call a Julia function that takes no arguments
   Q_INVOKABLE QVariant call(const QString& fname);
+
+  JuliaSignals* juliaSignals() const
+  {
+    return m_julia_signals;
+  }
+
+  void setJuliaSignals(JuliaSignals* julia_signals);
+
+signals:
+  void juliaSignalsChanged(JuliaSignals* julia_signals);
+
+private:
+  JuliaSignals* m_julia_signals = nullptr;
 };
 
 QObject* julia_api_singletontype_provider(QQmlEngine *engine, QJSEngine *scriptEngine);
