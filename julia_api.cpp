@@ -42,6 +42,13 @@ QVariant JuliaAPI::call(const QString& fname, const QVariantList& args)
 
   // Do the call
   result = jl_call(func, julia_args, nb_args);
+  if (jl_exception_occurred())
+  {
+    qWarning() << "Exception in Julia callback " << fname << ": " << QString(cxx_wrap::julia_type_name((jl_datatype_t*)jl_typeof(jl_exception_occurred())).c_str()) << ": " << jl_string_data(jl_fieldref(jl_exception_occurred(),0));
+    JL_GC_POP();
+    JL_GC_POP();
+    return QVariant();
+  }
 
   // Process result
   if(result == nullptr)
@@ -70,7 +77,6 @@ QVariant JuliaAPI::call(const QString& fname)
 void JuliaAPI::setJuliaSignals(JuliaSignals* julia_signals)
 {
   m_julia_signals = julia_signals;
-  emit juliaSignalsChanged(julia_signals);
 }
 
 QObject* julia_api_singletontype_provider(QQmlEngine *engine, QJSEngine *scriptEngine)

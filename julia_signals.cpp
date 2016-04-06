@@ -1,7 +1,6 @@
 #include <QDebug>
-#include <QMetaMethod>
+#include <QMetaObject>
 #include <QQmlEngine>
-#include <QQmlProperty>
 #include <QString>
 #include <QVariant>
 #include <QVariantList>
@@ -13,31 +12,27 @@
 namespace qmlwrap
 {
 
-JuliaSignals::JuliaSignals(QObject* parent) : QObject(parent)
+JuliaSignals::JuliaSignals(QQuickItem* parent) : QQuickItem(parent)
 {
-  JuliaAPI* api = qobject_cast<JuliaAPI*>(julia_api_singletontype_provider(nullptr, nullptr));
-  api->setJuliaSignals(this);
 }
 
 JuliaSignals::~JuliaSignals()
 {
 }
 
-void JuliaSignals::emit_signal(const QString& signal_name, const cxx_wrap::ArrayRef<jl_value_t*>& args)
+void JuliaSignals::emit_signal(const char* signal_name, const cxx_wrap::ArrayRef<jl_value_t*>& args)
 {
-  QQmlProperty prop(this, signal_name, QQmlEngine::contextForObject(this));
-  if(!prop.isValid())
+  if(!QMetaObject::invokeMethod(this, signal_name))
   {
-    qWarning() << "sig dont exist";
-    //throw std::runtime_error("Signal " + signal_name.toStdString() + " does not exist");
+    throw std::runtime_error("No signal named " + std::string(signal_name));
   }
-  if(!prop.isSignalProperty())
-  {
-    qWarning() << "this aint a sig";
-    //throw std::runtime_error("Property " + signal_name.toStdString() + " is not a signal");
-  }
+}
 
-  prop.method().invoke(this, Qt::DirectConnection);
+void JuliaSignals::componentComplete()
+{
+  QQuickItem::componentComplete();
+  JuliaAPI* api = qobject_cast<JuliaAPI*>(julia_api_singletontype_provider(nullptr, nullptr));
+  api->setJuliaSignals(this);
 }
 
 } // namespace qmlwrap
