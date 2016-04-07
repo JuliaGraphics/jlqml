@@ -13,10 +13,10 @@
 #define MAKE_Q_ARG(cpptype) \
 if(jl_types_equal(jl_typeof(v), (jl_value_t*)cxx_wrap::julia_type<cpptype>())) \
 { \
-  auto ptr = std::make_shared<argument_wrapper_impl<cpptype>>(cxx_wrap::convert_to_cpp<cpptype>(v)); \
+  auto ptr = std::make_shared<argument_wrapper_impl<cpptype>>(); \
   wrappers.push_back(ptr); \
-  ptr->m_arg = Q_ARG(cpptype, ptr->m_value); \
-  return ptr->m_arg; \
+  ptr->value = cxx_wrap::convert_to_cpp<cpptype>(v); \
+  return Q_ARG(cpptype, ptr->value); \
 }
 
 namespace qmlwrap
@@ -27,26 +27,16 @@ namespace detail
   // This is needed because QGenericArgument is a weak reference to a value, so the value needs to exist as long as the QGenericArgument instance
   struct argument_wrapper
   {
-    virtual const QGenericArgument& arg() const = 0;
+    virtual ~argument_wrapper() {}
   };
 
   template<typename T>
   struct argument_wrapper_impl : public argument_wrapper
   {
-    argument_wrapper_impl(const T& value) : m_value(value)
-    {
-    }
-
-    virtual const QGenericArgument& arg() const
-    {
-      return m_arg;
-    }
-
-    T m_value;
-    QGenericArgument m_arg;
+    T value;
   };
 
-  const QGenericArgument& make_arg(std::vector<std::shared_ptr<argument_wrapper>>& wrappers, jl_value_t* v)
+  QGenericArgument make_arg(std::vector<std::shared_ptr<argument_wrapper>>& wrappers, jl_value_t* v)
   {
     // Because Q_ARG is a macro, we have no choice but to enumerate all types here
     MAKE_Q_ARG(bool)
@@ -54,10 +44,10 @@ namespace detail
     MAKE_Q_ARG(int)
     if(jl_type_morespecific(jl_typeof(v), (jl_value_t*)cxx_wrap::julia_type<QString>()))
     {
-      auto ptr = std::make_shared<argument_wrapper_impl<QString>>(cxx_wrap::convert_to_cpp<QString>(v));
+      auto ptr = std::make_shared<argument_wrapper_impl<QString>>();
       wrappers.push_back(ptr);
-      ptr->m_arg = Q_ARG(QString, ptr->m_value);
-      return ptr->m_arg;
+      ptr->value = cxx_wrap::convert_to_cpp<QString>(v);
+      return Q_ARG(QString, ptr->value);
     }
 
     throw std::runtime_error("Failed to convert signal argument of type " + cxx_wrap::julia_type_name((jl_datatype_t*)jl_typeof(v)));
