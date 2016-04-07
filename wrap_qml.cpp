@@ -121,7 +121,7 @@ JULIA_CPP_MODULE_BEGIN(registry)
     .method("value", &qmlwrap::JuliaObject::value); // Not exported, use @qmlget
 
   // Emit signals helper
-  qml_module.method("emit", [](const char* signal_name, const cxx_wrap::ArrayRef<jl_value_t*>& args)
+  qml_module.method("emit", [](const char* signal_name, cxx_wrap::ArrayRef<jl_value_t*> args)
   {
     using namespace qmlwrap;
     JuliaAPI* api = qobject_cast<JuliaAPI*>(julia_api_singletontype_provider(nullptr, nullptr));
