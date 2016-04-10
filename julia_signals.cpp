@@ -86,8 +86,7 @@ namespace detail
 
 JuliaSignals::JuliaSignals(QObject* parent) : QObject(parent)
 {
-  JuliaAPI* api = qobject_cast<JuliaAPI*>(julia_api_singletontype_provider(nullptr, nullptr));
-  api->setJuliaSignals(this);
+  JuliaAPI::instance()->setJuliaSignals(this);
 }
 
 JuliaSignals::~JuliaSignals()

@@ -79,13 +79,70 @@ void JuliaAPI::setJuliaSignals(JuliaSignals* julia_signals)
   m_julia_signals = julia_signals;
 }
 
-QObject* julia_api_singletontype_provider(QQmlEngine *engine, QJSEngine *scriptEngine)
+void JuliaAPI::set_js_engine(QJSEngine* e)
 {
-  Q_UNUSED(engine)
-  Q_UNUSED(scriptEngine)
+  m_engine = e;
+  if(m_engine != nullptr)
+  {
+    for(const QString& fname : m_registered_functions)
+    {
+      register_function_internal(fname);
+    }
+    m_registered_functions.clear();
+  }
+}
 
-  static JuliaAPI* api = new JuliaAPI();
-  return api;
+void JuliaAPI::register_function(const QString& name)
+{
+  if(m_engine == nullptr)
+  {
+    m_registered_functions.push_back(name);
+  }
+  else
+  {
+    register_function_internal(name);
+  }
+}
+
+JuliaAPI* JuliaAPI::instance()
+{
+  static JuliaAPI m_instance;
+  return &m_instance;
+}
+
+void JuliaAPI::on_about_to_quit()
+{
+  m_engine = nullptr;
+  m_julia_signals = nullptr;
+  m_julia_js_root = QJSValue();
+}
+
+void JuliaAPI::register_function_internal(const QString& fname)
+{
+  if(m_engine == nullptr)
+  {
+    throw std::runtime_error("No JS engine, can't register function");
+  }
+
+  QJSValue f = m_engine->evaluate("function() { return Qt.julia.call(\"" + fname + "\", arguments.length === 1 ? [arguments[0]] : Array.apply(null, arguments)); }");
+
+  if(f.isError() || !f.isCallable())
+  {
+    throw std::runtime_error(("Error setting function" + fname).toStdString());
+  }
+
+  m_julia_js_root.setProperty(fname,f);
+}
+
+QJSValue julia_js_singletontype_provider(QQmlEngine *engine, QJSEngine *scriptEngine)
+{
+  QJSValue result = scriptEngine->newObject();
+  JuliaAPI* api = JuliaAPI::instance();
+  api->set_julia_js_root(result);
+  api->set_js_engine(engine);
+  QJSValue qt_api = engine->globalObject().property("Qt");
+  qt_api.setProperty("julia", engine->newQObject(api));
+  return result;
 }
 
 } // namespace qmlwrap

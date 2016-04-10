@@ -27,7 +27,11 @@ jl_value_t* application()
   }
 
   // Using create instead of new automatically attaches a finalizer that calls delete
-  return cxx_wrap::create<QApplication>(argc, &argv_buffer[0]);
+  jl_value_t* result = cxx_wrap::create<QApplication>(argc, &argv_buffer[0]);
+  QApplication* app = cxx_wrap::convert_to_cpp<QApplication*>(result);
+  QObject::connect(app, &QApplication::aboutToQuit, JuliaAPI::instance(), &JuliaAPI::on_about_to_quit);
+
+  return result;
 }
 
 } // namespace qmlwrap
@@ -37,7 +41,7 @@ JULIA_CPP_MODULE_BEGIN(registry)
 
   Module& qml_module = registry.create_module("QML");
 
-  qmlRegisterSingletonType<qmlwrap::JuliaAPI>("org.julialang", 1, 0, "Julia", qmlwrap::julia_api_singletontype_provider);
+  qmlRegisterSingletonType("org.julialang", 1, 0, "Julia", qmlwrap::julia_js_singletontype_provider);
   qmlRegisterType<qmlwrap::JuliaSignals>("org.julialang", 1, 0, "JuliaSignals");
 
   qml_module.add_abstract<QObject>("QObject");
@@ -124,13 +128,21 @@ JULIA_CPP_MODULE_BEGIN(registry)
   qml_module.method("emit", [](const char* signal_name, cxx_wrap::ArrayRef<jl_value_t*> args)
   {
     using namespace qmlwrap;
-    JuliaAPI* api = qobject_cast<JuliaAPI*>(julia_api_singletontype_provider(nullptr, nullptr));
-    JuliaSignals* julia_signals = api->juliaSignals();
+    JuliaSignals* julia_signals = JuliaAPI::instance()->juliaSignals();
     if(julia_signals == nullptr)
     {
       throw std::runtime_error("No signals available");
     }
     julia_signals->emit_signal(signal_name, args);
+  });
+
+  // Function to register a function
+  qml_module.method("register_function", [](cxx_wrap::ArrayRef<jl_value_t*> args)
+  {
+    for(jl_value_t* arg : args)
+    {
+      qmlwrap::JuliaAPI::instance()->register_function(convert_to_cpp<QString>(arg));
+    }
   });
 
   // Exports:
