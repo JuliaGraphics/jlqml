@@ -18,6 +18,7 @@ class JuliaAPI : public QObject
 {
   Q_OBJECT
 public:
+
   // Call a Julia function that takes any number of arguments as a list
   Q_INVOKABLE QVariant call(const QString& fname, const QVariantList& arg);
 

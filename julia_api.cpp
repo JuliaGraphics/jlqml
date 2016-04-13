@@ -106,8 +106,9 @@ void JuliaAPI::register_function(const QString& name)
 
 JuliaAPI* JuliaAPI::instance()
 {
-  static JuliaAPI m_instance;
-  return &m_instance;
+  // We don't care about cleanup since the instance is passed on to a Javascript-owned object
+  static JuliaAPI* m_instance = new JuliaAPI();
+  return m_instance;
 }
 
 void JuliaAPI::on_about_to_quit()
