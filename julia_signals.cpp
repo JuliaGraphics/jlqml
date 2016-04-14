@@ -58,10 +58,10 @@ namespace detail
   {
     void operator()(QObject* o, const char* signal_name, cxx_wrap::ArrayRef<jl_value_t*> args)
     {
-      if(sizeof...(Is) == jl_array_len(args.wrapped()))
+      if(sizeof...(Is) == args.size())
       {
         std::vector<std::shared_ptr<argument_wrapper>> wrappers; wrappers.reserve(sizeof...(Is));
-        if(!QMetaObject::invokeMethod(o, signal_name, make_arg(wrappers, *(args.begin()+Is))...))
+        if(!QMetaObject::invokeMethod(o, signal_name, make_arg(wrappers, args[Is])...))
         {
           throw std::runtime_error("Error emitting or finding signal " + std::string(signal_name));
         }
