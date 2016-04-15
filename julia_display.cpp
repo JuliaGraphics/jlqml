@@ -34,13 +34,4 @@ void JuliaDisplay::clear()
   m_pixmap.fill(Qt::transparent);
 }
 
-void JuliaDisplay::geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry)
-{
-  QQuickPaintedItem::geometryChanged(newGeometry, oldGeometry);
-  if(newGeometry != oldGeometry)
-  {
-    clear();
-  }
-}
-
 } // namespace qmlwrap

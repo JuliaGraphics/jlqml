@@ -24,9 +24,6 @@ public:
 
   void clear();
 
-protected:
-  void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry);
-
 private:
   QPixmap m_pixmap;
 };
