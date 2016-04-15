@@ -31,6 +31,8 @@ endif(WIN32)
 add_library(qmlwrap SHARED
   julia_api.hpp
   julia_api.cpp
+  julia_display.hpp
+  julia_display.cpp
   julia_object.hpp
   julia_object.cpp
   julia_signals.hpp

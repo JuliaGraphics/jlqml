@@ -9,6 +9,7 @@
 #include <QtQml>
 
 #include "julia_api.hpp"
+#include "julia_display.hpp"
 #include "julia_object.hpp"
 #include "julia_signals.hpp"
 #include "type_conversion.hpp"
@@ -43,6 +44,7 @@ JULIA_CPP_MODULE_BEGIN(registry)
 
   qmlRegisterSingletonType("org.julialang", 1, 0, "Julia", qmlwrap::julia_js_singletontype_provider);
   qmlRegisterType<qmlwrap::JuliaSignals>("org.julialang", 1, 0, "JuliaSignals");
+  qmlRegisterType<qmlwrap::JuliaDisplay>("org.julialang", 1, 0, "JuliaDisplay");
 
   qml_module.add_abstract<QObject>("QObject");
 
@@ -145,6 +147,9 @@ JULIA_CPP_MODULE_BEGIN(registry)
     }
   });
 
+  qml_module.add_type<qmlwrap::JuliaDisplay>("JuliaDisplay", julia_type("CppDisplay"))
+    .method("load_png", &qmlwrap::JuliaDisplay::load_png);
+
   // Exports:
-  qml_module.export_symbols("QApplication", "QQmlApplicationEngine", "QQmlContext", "set_context_property", "root_context", "load", "qt_prefix_path", "QQuickView", "set_source", "engine", "QByteArray", "QQmlComponent", "set_data", "create", "QQuickItem", "content_item", "QQuickWindow", "QQmlEngine", "JuliaObject", "QTimer", "context_property", "emit");
+  qml_module.export_symbols("QApplication", "QQmlApplicationEngine", "QQmlContext", "set_context_property", "root_context", "load", "qt_prefix_path", "QQuickView", "set_source", "engine", "QByteArray", "QQmlComponent", "set_data", "create", "QQuickItem", "content_item", "QQuickWindow", "QQmlEngine", "JuliaObject", "QTimer", "context_property", "emit", "JuliaDisplay");
 JULIA_CPP_MODULE_END

@@ -2,6 +2,7 @@
 #include <QFileInfo>
 #include <QUrl>
 
+#include "julia_display.hpp"
 #include "julia_object.hpp"
 #include "type_conversion.hpp"
 
@@ -59,17 +60,22 @@ jl_value_t* convert_to_julia<QString>(const QVariant& v)
   return nullptr;
 }
 
-template<typename... TypesT>
+template<int T = 0>
 jl_value_t* try_qobject_cast(QObject* o)
 {
-  for(auto* cast_o : {qobject_cast<TypesT*>(o)...})
+  qWarning() << "got unknown QObject* type in QVariant conversion: " << o->metaObject()->className();
+  return nullptr;
+}
+
+template<typename Type1, typename... TypesT>
+jl_value_t* try_qobject_cast(QObject* o)
+{
+  Type1* cast_o = qobject_cast<Type1*>(o);
   {
     if(cast_o != nullptr)
       return cxx_wrap::convert_to_julia(cast_o);
+    return try_qobject_cast<TypesT...>(o);
   }
-
-  qWarning() << "got unknown QObject* type in QVariant conversion: " << o->metaObject()->className();
-  return nullptr;
 }
 
 // QObject*
@@ -78,7 +84,8 @@ jl_value_t* convert_to_julia<QObject*>(const QVariant& v)
 {
   if(v.type() == qMetaTypeId<QObject*>())
   {
-    return try_qobject_cast<JuliaObject>(v.value<QObject*>());
+    // Add new types here
+    return try_qobject_cast<JuliaObject, JuliaDisplay>(v.value<QObject*>());
   }
 
   return nullptr;
