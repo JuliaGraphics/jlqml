@@ -42,6 +42,8 @@ public:
 
   static JuliaAPI* instance();
 
+  ~JuliaAPI();
+
 public slots:
   void on_about_to_quit();
 

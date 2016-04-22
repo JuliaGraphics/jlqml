@@ -106,9 +106,13 @@ void JuliaAPI::register_function(const QString& name)
 
 JuliaAPI* JuliaAPI::instance()
 {
-  // We don't care about cleanup since the instance is passed on to a Javascript-owned object
-  static JuliaAPI* m_instance = new JuliaAPI();
-  return m_instance;
+  static JuliaAPI m_instance;
+  return &m_instance;
+}
+
+JuliaAPI::~JuliaAPI()
+{
+  std::cout << "destroying JuliaAPI" << std::endl;
 }
 
 void JuliaAPI::on_about_to_quit()
@@ -143,6 +147,7 @@ QJSValue julia_js_singletontype_provider(QQmlEngine *engine, QJSEngine *scriptEn
   api->set_js_engine(engine);
   QJSValue qt_api = engine->globalObject().property("Qt");
   qt_api.setProperty("julia", engine->newQObject(api));
+  QQmlEngine::setObjectOwnership(api, QQmlEngine::CppOwnership);
   return result;
 }
 
