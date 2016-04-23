@@ -112,7 +112,6 @@ JuliaAPI* JuliaAPI::instance()
 
 JuliaAPI::~JuliaAPI()
 {
-  std::cout << "destroying JuliaAPI" << std::endl;
 }
 
 void JuliaAPI::on_about_to_quit()
@@ -137,6 +136,10 @@ void JuliaAPI::register_function_internal(const QString& fname)
   }
 
   m_julia_js_root.setProperty(fname,f);
+}
+
+JuliaAPI::JuliaAPI()
+{
 }
 
 QJSValue julia_js_singletontype_provider(QQmlEngine *engine, QJSEngine *scriptEngine)

@@ -62,7 +62,6 @@ struct ApplicationManager
     {
       m_app->quit();
     }
-    std::cout << "destroying app manager" << std::endl;
     cleanup();
   }
 
@@ -83,7 +82,6 @@ struct ApplicationManager
     QGuiApplication* app = new QGuiApplication(argc, &argv_buffer[0]);
     QObject::connect(app, &QGuiApplication::aboutToQuit, [this]()
     {
-      std::cout << "about to quit" << std::endl;
       m_quit_called = true;
       if(m_timer != nullptr)
       {
@@ -140,7 +138,6 @@ struct ApplicationManager
   {
     m_running = true;
     QGuiApplication::exec();
-    std::cout << "exec returned" << std::endl;
     cleanup();
   }
 
@@ -160,7 +157,6 @@ private:
 
   void cleanup()
   {
-    std::cout << "doing cleanup" << std::endl;
     JuliaAPI::instance()->on_about_to_quit();
     delete m_engine;
     delete m_app;
@@ -286,7 +282,7 @@ JULIA_CPP_MODULE_BEGIN(registry)
   qml_module.method("qmlcontext", []() { return qmlwrap::ApplicationManager::instance().root_context(); });
   qml_module.method("load_qml_app", qmlwrap::load_qml_app);
   qml_module.method("exec", []() { qmlwrap::ApplicationManager::instance().exec(); });
-
+  qml_module.method("exec_async", []() { qmlwrap::ApplicationManager::instance().exec_async(); });
 
   qml_module.add_type<QTimer>("QTimer", julia_type<QObject>());
 

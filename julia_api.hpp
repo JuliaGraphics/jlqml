@@ -53,7 +53,7 @@ private:
   QJSEngine* m_engine = nullptr;
   // This is the root js object, accessible as Julia in QML
   QJSValue m_julia_js_root;
-  JuliaAPI() {}
+  JuliaAPI();
   std::vector<QString> m_registered_functions;
 };
 
