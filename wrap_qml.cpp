@@ -49,18 +49,34 @@ void set_context_property(QQmlContext* ctx, const QString& name, jl_value_t* v)
 struct ApplicationManager
 {
 
+  ApplicationManager()
+  {
+    if(m_instance != nullptr)
+    {
+      throw std::runtime_error("ApplicationManager can only be instantiated once");
+    }
+    m_instance = this;
+  }
+
   // Singleton implementation
   static ApplicationManager& instance()
   {
-    static ApplicationManager app_manager;
-    return app_manager;
+    if(m_instance == nullptr)
+    {
+      throw std::runtime_error("No ApplicationManager instance created");
+    }
+    return *m_instance;
   }
 
   ~ApplicationManager()
   {
-    if(m_app != nullptr)
+    if(m_timer != nullptr)
     {
-      m_app->quit();
+      uv_timer_stop(m_timer);
+      uv_close((uv_handle_t*)m_timer, ApplicationManager::handle_quit);
+      while(uv_is_active((uv_handle_t*)m_timer))
+      {
+      }
     }
     cleanup();
   }
@@ -83,15 +99,6 @@ struct ApplicationManager
       argv_buffer.push_back(const_cast<char*>("julia"));
     }
     m_app = new QGuiApplication(argc, &argv_buffer[0]);
-    QObject::connect(m_app, &QGuiApplication::aboutToQuit, [this]()
-    {
-      m_quit_called = true;
-      if(m_timer != nullptr)
-      {
-        uv_timer_stop(m_timer);
-        uv_close((uv_handle_t*)m_timer, ApplicationManager::handle_quit);
-      }
-    });
   }
 
   // Init the app with a new QQmlApplicationEngine
@@ -139,7 +146,6 @@ struct ApplicationManager
   // Blocking call to exec, running the Qt event loop
   void exec()
   {
-    m_running = true;
     QGuiApplication::exec();
     cleanup();
   }
@@ -147,16 +153,16 @@ struct ApplicationManager
   // Non-blocking exec, polling for Qt events in the uv event loop using a uv_timer_t
   void exec_async()
   {
+    if(jl_global_event_loop() == nullptr)
+    {
+      return;
+    }
     m_timer = new uv_timer_t();
     uv_timer_init(jl_global_event_loop(), m_timer);
     uv_timer_start(m_timer, ApplicationManager::process_events, 15, 15);
   }
 
 private:
-
-  ApplicationManager()
-  {
-  }
 
   void cleanup()
   {
@@ -167,7 +173,6 @@ private:
     m_engine = nullptr;
     m_app = nullptr;
     m_timer = nullptr;
-    m_running = false;
     m_quit_called = false;
   }
 
@@ -191,9 +196,18 @@ private:
   {
     m_engine = e;
     m_root_ctx = e->rootContext();
+    QObject::connect(m_engine, &QQmlEngine::quit, [this]()
+    {
+      m_quit_called = true;
+      if(m_timer != nullptr)
+      {
+        uv_timer_stop(m_timer);
+        uv_close((uv_handle_t*)m_timer, ApplicationManager::handle_quit);
+      }
+    });
   }
 
-  static void process_events(uv_timer_t*)
+  static void process_events(uv_timer_t* timer)
   {
     QGuiApplication::sendPostedEvents();
     QGuiApplication::processEvents();
@@ -202,16 +216,17 @@ private:
   static void handle_quit(uv_handle_t* handle)
   {
     uv_unref(handle);
-    ApplicationManager::instance().cleanup();
   }
 
   QGuiApplication* m_app = nullptr;
   QQmlEngine* m_engine = nullptr;
   QQmlContext* m_root_ctx = nullptr;
   uv_timer_t* m_timer = nullptr;
-  bool m_running = false;
   bool m_quit_called = false;
+  static ApplicationManager* m_instance;
 };
+
+ApplicationManager* ApplicationManager::m_instance = nullptr;
 
 void load_qml_app(const QString& path, cxx_wrap::ArrayRef<jl_value_t*> property_names, cxx_wrap::ArrayRef<jl_value_t*> context_properties)
 {
@@ -278,6 +293,7 @@ JULIA_CPP_MODULE_BEGIN(registry)
   });
 
   // App manager functions
+  qml_module.add_type<qmlwrap::ApplicationManager>("ApplicationManager");
   qml_module.method("init_application", []() { qmlwrap::ApplicationManager::instance().init_application(); });
   qml_module.method("init_qmlapplicationengine", []() { return qmlwrap::ApplicationManager::instance().init_qmlapplicationengine(); });
   qml_module.method("init_qmlengine", []() { return qmlwrap::ApplicationManager::instance().init_qmlengine(); });
