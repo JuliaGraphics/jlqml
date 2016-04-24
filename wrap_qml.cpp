@@ -68,6 +68,10 @@ struct ApplicationManager
   // Initialize the QGuiApplication instance
   void init_application()
   {
+    if(m_app != nullptr && !m_quit_called)
+    {
+      return;
+    }
     if(m_quit_called)
     {
       cleanup();
@@ -76,11 +80,10 @@ struct ApplicationManager
     static std::vector<char*> argv_buffer;
     if(argv_buffer.empty())
     {
-      argv_buffer.push_back(const_cast<char*>("JuliaQML"));
+      argv_buffer.push_back(const_cast<char*>("julia"));
     }
-
-    QGuiApplication* app = new QGuiApplication(argc, &argv_buffer[0]);
-    QObject::connect(app, &QGuiApplication::aboutToQuit, [this]()
+    m_app = new QGuiApplication(argc, &argv_buffer[0]);
+    QObject::connect(m_app, &QGuiApplication::aboutToQuit, [this]()
     {
       m_quit_called = true;
       if(m_timer != nullptr)
