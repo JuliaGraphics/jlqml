@@ -74,8 +74,9 @@ struct ApplicationManager
     {
       uv_timer_stop(m_timer);
       uv_close((uv_handle_t*)m_timer, ApplicationManager::handle_quit);
-      while(uv_is_active((uv_handle_t*)m_timer))
+      while(m_timer != nullptr)
       {
+        jl_run_once(jl_global_event_loop());
       }
     }
     cleanup();
@@ -169,10 +170,8 @@ private:
     JuliaAPI::instance()->on_about_to_quit();
     delete m_engine;
     delete m_app;
-    delete m_timer;
     m_engine = nullptr;
     m_app = nullptr;
-    m_timer = nullptr;
     m_quit_called = false;
   }
 
@@ -216,6 +215,8 @@ private:
   static void handle_quit(uv_handle_t* handle)
   {
     uv_unref(handle);
+    delete m_instance->m_timer;
+    m_instance->m_timer = nullptr;
   }
 
   QGuiApplication* m_app = nullptr;
