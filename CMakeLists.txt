@@ -45,9 +45,9 @@ target_link_libraries(qmlwrap Qt5::Core Qt5::Quick Qt5::Widgets CxxWrap::cxx_wra
 
 install(TARGETS
   qmlwrap
-LIBRARY DESTINATION lib
-ARCHIVE DESTINATION lib
-RUNTIME DESTINATION lib)
+LIBRARY DESTINATION lib${LIBDIR_SUFFIX}
+ARCHIVE DESTINATION lib${LIBDIR_SUFFIX}
+RUNTIME DESTINATION lib${LIBDIR_SUFFIX})
 if(WIN32)
   install (SCRIPT "${CMAKE_BINARY_DIR}/WinDeployQt.cmake")
 endif(WIN32)
