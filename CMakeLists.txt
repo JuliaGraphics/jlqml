@@ -37,6 +37,8 @@ add_library(qmlwrap SHARED
   julia_object.cpp
   julia_signals.hpp
   julia_signals.cpp
+  julia_viewport.hpp
+  julia_viewport.cpp
   type_conversion.hpp
   type_conversion.cpp
   wrap_qml.cpp

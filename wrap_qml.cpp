@@ -5,6 +5,7 @@
 #include <QQmlContext>
 #include <QQuickItem>
 #include <QQuickView>
+#include <QSurfaceFormat>
 #include <QTimer>
 #include <QtQml>
 
@@ -12,6 +13,7 @@
 #include "julia_display.hpp"
 #include "julia_object.hpp"
 #include "julia_signals.hpp"
+#include "julia_viewport.hpp"
 #include "type_conversion.hpp"
 
 namespace qmlwrap
@@ -100,6 +102,13 @@ struct ApplicationManager
       argv_buffer.push_back(const_cast<char*>("julia"));
     }
     m_app = new QGuiApplication(argc, &argv_buffer[0]);
+
+    QSurfaceFormat format = QSurfaceFormat::defaultFormat();
+  	format.setProfile(QSurfaceFormat::CoreProfile);
+  	format.setMajorVersion(4);
+  	format.setMinorVersion(3); // 4.3 for debugging output
+  	format.setOption(QSurfaceFormat::DebugContext);
+  	QSurfaceFormat::setDefaultFormat(format);
   }
 
   // Init the app with a new QQmlApplicationEngine
@@ -247,6 +256,7 @@ JULIA_CPP_MODULE_BEGIN(registry)
   qmlRegisterSingletonType("org.julialang", 1, 0, "Julia", qmlwrap::julia_js_singletontype_provider);
   qmlRegisterType<qmlwrap::JuliaSignals>("org.julialang", 1, 0, "JuliaSignals");
   qmlRegisterType<qmlwrap::JuliaDisplay>("org.julialang", 1, 0, "JuliaDisplay");
+  qmlRegisterType<qmlwrap::JuliaViewport>("org.julialang", 1, 0, "JuliaViewport");
 
   qml_module.add_abstract<QObject>("QObject");
 

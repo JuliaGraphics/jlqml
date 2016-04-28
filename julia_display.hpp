@@ -10,7 +10,7 @@
 namespace qmlwrap
 {
 
-/// Groups signals (defined using QML) that can be emitted from Julia
+/// Multimedia display for Julia
 class JuliaDisplay : public QQuickPaintedItem
 {
   Q_OBJECT
