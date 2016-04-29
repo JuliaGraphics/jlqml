@@ -1,4 +1,4 @@
-#include <QGuiApplication>
+#include <QApplication>
 #include <QLibraryInfo>
 #include <QQmlApplicationEngine>
 #include <QQmlComponent>
@@ -84,7 +84,7 @@ struct ApplicationManager
     cleanup();
   }
 
-  // Initialize the QGuiApplication instance
+  // Initialize the QApplication instance
   void init_application()
   {
     if(m_app != nullptr && !m_quit_called)
@@ -101,7 +101,7 @@ struct ApplicationManager
     {
       argv_buffer.push_back(const_cast<char*>("julia"));
     }
-    m_app = new QGuiApplication(argc, &argv_buffer[0]);
+    m_app = new QApplication(argc, &argv_buffer[0]);
 
     QSurfaceFormat format = QSurfaceFormat::defaultFormat();
   	format.setProfile(QSurfaceFormat::CoreProfile);
@@ -156,7 +156,7 @@ struct ApplicationManager
   // Blocking call to exec, running the Qt event loop
   void exec()
   {
-    QGuiApplication::exec();
+    QApplication::exec();
     cleanup();
   }
 
@@ -217,8 +217,8 @@ private:
 
   static void process_events(uv_timer_t* timer)
   {
-    QGuiApplication::sendPostedEvents();
-    QGuiApplication::processEvents();
+    QApplication::sendPostedEvents();
+    QApplication::processEvents();
   }
 
   static void handle_quit(uv_handle_t* handle)
@@ -228,7 +228,7 @@ private:
     m_instance->m_timer = nullptr;
   }
 
-  QGuiApplication* m_app = nullptr;
+  QApplication* m_app = nullptr;
   QQmlEngine* m_engine = nullptr;
   QQmlContext* m_root_ctx = nullptr;
   uv_timer_t* m_timer = nullptr;
