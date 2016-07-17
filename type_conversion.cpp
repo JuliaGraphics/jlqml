@@ -128,11 +128,11 @@ jl_value_t* ConvertToJulia<QString, false, false, false>::operator()(const QStri
 
 QString ConvertToCpp<QString, false, false, false>::operator()(jl_value_t* julia_string) const
 {
-  if(julia_string == nullptr || !jl_is_byte_string(julia_string))
+  if(julia_string == nullptr || !cxx_wrap::is_julia_string(julia_string))
   {
     throw std::runtime_error("Any type to convert to string is not a string");
   }
-  return QString(jl_bytestring_ptr(julia_string));
+  return QString(cxx_wrap::julia_string(julia_string));
 }
 
 jl_value_t* ConvertToJulia<QUrl, false, false, false>::operator()(const QUrl& url) const
@@ -143,12 +143,12 @@ jl_value_t* ConvertToJulia<QUrl, false, false, false>::operator()(const QUrl& ur
 
 QUrl ConvertToCpp<QUrl, false, false, false>::operator()(jl_value_t* julia_string) const
 {
-  if(julia_string == nullptr || !jl_is_byte_string(julia_string))
+  if(julia_string == nullptr || !cxx_wrap::is_julia_string(julia_string))
   {
     throw std::runtime_error("Any type to convert to string is not a string");
   }
 
-  QString qstr(jl_bytestring_ptr(julia_string));
+  QString qstr(cxx_wrap::julia_string(julia_string));
   QFileInfo finfo(qstr);
   if(!finfo.exists())
   {
