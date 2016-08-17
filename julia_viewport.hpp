@@ -52,6 +52,7 @@ protected:
 private:
   QString m_render_function;
   QVariantList m_render_arguments;
+  Q_INVOKABLE void render();
   class JuliaRenderer;
 };
 

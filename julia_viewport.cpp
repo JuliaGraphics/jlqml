@@ -8,12 +8,6 @@
 namespace qmlwrap
 {
 
-JuliaViewport::JuliaViewport(QQuickItem *parent) : QQuickFramebufferObject(parent)
-{
-  QObject::connect(this, &JuliaViewport::renderFunctionChanged, this, &JuliaViewport::update);
-  QObject::connect(this, &JuliaViewport::renderArgumentsChanged, this, &JuliaViewport::update);
-}
-
 class JuliaViewport::JuliaRenderer : public QQuickFramebufferObject::Renderer
 {
 public:
@@ -23,15 +17,13 @@ public:
 
   void render()
   {
-    JuliaAPI::instance()->call(m_render_function, m_render_arguments);
+    m_vp->render();
   }
 
   void synchronize(QQuickFramebufferObject *item)
   {
-    JuliaViewport* vp = dynamic_cast<JuliaViewport*>(item);
-    assert(vp != nullptr);
-    m_render_function = vp->m_render_function;
-    m_render_arguments = vp->m_render_arguments;
+    m_vp = dynamic_cast<JuliaViewport*>(item);
+    assert(m_vp != nullptr);
   }
 
   QOpenGLFramebufferObject *createFramebufferObject(const QSize &size)
@@ -42,9 +34,19 @@ public:
     return new QOpenGLFramebufferObject(size, format);
   }
 private:
-  QString m_render_function;
-  QVariantList m_render_arguments;
+  JuliaViewport* m_vp;
 };
+
+JuliaViewport::JuliaViewport(QQuickItem *parent) : QQuickFramebufferObject(parent)
+{
+  QObject::connect(this, &JuliaViewport::renderFunctionChanged, this, &JuliaViewport::update);
+  QObject::connect(this, &JuliaViewport::renderArgumentsChanged, this, &JuliaViewport::update);
+}
+
+void JuliaViewport::render()
+{
+  JuliaAPI::instance()->call(m_render_function, m_render_arguments);
+}
 
 QQuickFramebufferObject::Renderer* JuliaViewport::createRenderer() const
 {

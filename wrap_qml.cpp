@@ -212,13 +212,14 @@ private:
         uv_timer_stop(m_timer);
         uv_close((uv_handle_t*)m_timer, ApplicationManager::handle_quit);
       }
+      m_app->quit();
     });
   }
 
   static void process_events(uv_timer_t* timer)
   {
     QApplication::sendPostedEvents();
-    QApplication::processEvents();
+    QApplication::processEvents(QEventLoop::AllEvents, 15);
   }
 
   static void handle_quit(uv_handle_t* handle)
