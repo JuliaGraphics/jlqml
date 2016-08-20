@@ -46,13 +46,8 @@ QVariant JuliaAPI::call(const QString& fname, const QVariantList& args)
   result = jl_call(func, julia_args, nb_args);
   if (jl_exception_occurred())
   {
-    std::stringstream errmsg;
-    errmsg << cxx_wrap::julia_type_name((jl_datatype_t*)jl_typeof(jl_exception_occurred()));
-    if(jl_nfields(jl_exception_occurred()) != 0)
-    {
-      errmsg << ": " << jl_string_data(jl_fieldref(jl_exception_occurred(),0));
-    }
-    qWarning() << "Exception in Julia callback " << fname << ": " <<  errmsg.str().c_str();
+    jl_show(jl_stderr_obj(), jl_exception_occurred());
+    jl_printf(jl_stderr_stream(), "\n");
     JL_GC_POP();
     JL_GC_POP();
     return QVariant();
