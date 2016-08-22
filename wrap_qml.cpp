@@ -13,7 +13,7 @@
 #include "julia_display.hpp"
 #include "julia_object.hpp"
 #include "julia_signals.hpp"
-#include "julia_viewport.hpp"
+#include "opengl_viewport.hpp"
 #include "type_conversion.hpp"
 
 namespace qmlwrap
@@ -257,7 +257,7 @@ JULIA_CPP_MODULE_BEGIN(registry)
   qmlRegisterSingletonType("org.julialang", 1, 0, "Julia", qmlwrap::julia_js_singletontype_provider);
   qmlRegisterType<qmlwrap::JuliaSignals>("org.julialang", 1, 0, "JuliaSignals");
   qmlRegisterType<qmlwrap::JuliaDisplay>("org.julialang", 1, 0, "JuliaDisplay");
-  qmlRegisterType<qmlwrap::JuliaViewport>("org.julialang", 1, 0, "JuliaViewport");
+  qmlRegisterType<qmlwrap::OpenGLViewport>("org.julialang", 1, 0, "OpenGLViewport");
 
   qml_module.add_abstract<QObject>("QObject");
 

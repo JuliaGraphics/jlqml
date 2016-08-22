@@ -3,12 +3,12 @@
 #include <QSGSimpleTextureNode>
 
 #include "julia_api.hpp"
-#include "julia_viewport.hpp"
+#include "opengl_viewport.hpp"
 
 namespace qmlwrap
 {
 
-class JuliaViewport::JuliaRenderer : public QQuickFramebufferObject::Renderer
+class OpenGLViewport::JuliaRenderer : public QQuickFramebufferObject::Renderer
 {
 public:
   JuliaRenderer()
@@ -22,7 +22,7 @@ public:
 
   void synchronize(QQuickFramebufferObject *item)
   {
-    m_vp = dynamic_cast<JuliaViewport*>(item);
+    m_vp = dynamic_cast<OpenGLViewport*>(item);
     assert(m_vp != nullptr);
   }
 
@@ -34,26 +34,26 @@ public:
     return new QOpenGLFramebufferObject(size, format);
   }
 private:
-  JuliaViewport* m_vp;
+  OpenGLViewport* m_vp;
 };
 
-JuliaViewport::JuliaViewport(QQuickItem *parent) : QQuickFramebufferObject(parent)
+OpenGLViewport::OpenGLViewport(QQuickItem *parent) : QQuickFramebufferObject(parent)
 {
-  QObject::connect(this, &JuliaViewport::renderFunctionChanged, this, &JuliaViewport::update);
-  QObject::connect(this, &JuliaViewport::renderArgumentsChanged, this, &JuliaViewport::update);
+  QObject::connect(this, &OpenGLViewport::renderFunctionChanged, this, &OpenGLViewport::update);
+  QObject::connect(this, &OpenGLViewport::renderArgumentsChanged, this, &OpenGLViewport::update);
 }
 
-void JuliaViewport::render()
+void OpenGLViewport::render()
 {
   JuliaAPI::instance()->call(m_render_function, m_render_arguments);
 }
 
-QQuickFramebufferObject::Renderer* JuliaViewport::createRenderer() const
+QQuickFramebufferObject::Renderer* OpenGLViewport::createRenderer() const
 {
   return new JuliaRenderer();
 }
 
-QSGNode* JuliaViewport::updatePaintNode(QSGNode *node, QQuickItem::UpdatePaintNodeData *nodeData)
+QSGNode* OpenGLViewport::updatePaintNode(QSGNode *node, QQuickItem::UpdatePaintNodeData *nodeData)
 {
   // This is needed to prevent the image from being upside-down
   if(!node)

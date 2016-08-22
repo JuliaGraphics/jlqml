@@ -1,5 +1,5 @@
-#ifndef QML_JULIA_VIEWPORT_H
-#define QML_JULIA_VIEWPORT_H
+#ifndef QML_opengl_viewport_H
+#define QML_opengl_viewport_H
 
 #include <cxx_wrap.hpp>
 
@@ -10,13 +10,13 @@ namespace qmlwrap
 {
 
 /// Multimedia display for Julia
-class JuliaViewport : public QQuickFramebufferObject
+class OpenGLViewport : public QQuickFramebufferObject
 {
   Q_OBJECT
   Q_PROPERTY(QString renderFunction READ renderFunction WRITE setRenderFunction NOTIFY renderFunctionChanged)
 	Q_PROPERTY(QVariantList renderArguments READ renderArguments WRITE setRenderArguments NOTIFY renderArgumentsChanged)
 public:
-  JuliaViewport(QQuickItem *parent = 0);
+  OpenGLViewport(QQuickItem *parent = 0);
 
   Renderer *createRenderer() const;
 
