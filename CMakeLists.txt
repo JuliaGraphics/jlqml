@@ -25,7 +25,7 @@ if(WIN32)
   get_filename_component(QML_DIR "${CMAKE_SOURCE_DIR}" DIRECTORY) # Go up to the package test dir for QML examples
   get_filename_component(QML_DIR "${QML_DIR}" DIRECTORY)
   get_filename_component(QML_DIR "${QML_DIR}" DIRECTORY)
-  set(QML_DIR "${QML_DIR}/test/qml")
+  set(QML_DIR "${QML_DIR}/example/qml")
   configure_file("${CMAKE_SOURCE_DIR}/cmake/WinDeployQt.cmake" "${CMAKE_BINARY_DIR}/WinDeployQt.cmake")
   qt5_add_resources(RESOURCES ${CMAKE_SOURCE_DIR}/resources/resources.qrc)
 endif(WIN32)

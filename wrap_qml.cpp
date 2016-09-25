@@ -87,6 +87,7 @@ struct ApplicationManager
   // Initialize the QApplication instance
   void init_application()
   {
+    qputenv("QML_PREFIX_PATH", QProcessEnvironment::systemEnvironment().value("QML_PREFIX_PATH").toLocal8Bit());
     if(m_app != nullptr && !m_quit_called)
     {
       return;
@@ -293,7 +294,7 @@ JULIA_CPP_MODULE_BEGIN(registry)
   {
     if(!comp.isReady())
     {
-      qWarning() << "QQmlComponent is not ready, aborting create";
+      qWarning() << "QQmlComponent is not ready, aborting create. Errors were: " << comp.errors();
       return;
     }
 
