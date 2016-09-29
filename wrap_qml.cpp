@@ -14,6 +14,7 @@
 #include "julia_object.hpp"
 #include "julia_signals.hpp"
 #include "opengl_viewport.hpp"
+#include "glvisualize_viewport.hpp"
 #include "type_conversion.hpp"
 
 namespace qmlwrap
@@ -259,6 +260,7 @@ JULIA_CPP_MODULE_BEGIN(registry)
   qmlRegisterType<qmlwrap::JuliaSignals>("org.julialang", 1, 0, "JuliaSignals");
   qmlRegisterType<qmlwrap::JuliaDisplay>("org.julialang", 1, 0, "JuliaDisplay");
   qmlRegisterType<qmlwrap::OpenGLViewport>("org.julialang", 1, 0, "OpenGLViewport");
+  qmlRegisterType<qmlwrap::GLVisualizeViewport>("org.julialang", 1, 0, "GLVisualizeViewport");
 
   qml_module.add_abstract<QObject>("QObject");
 
@@ -320,7 +322,7 @@ JULIA_CPP_MODULE_BEGIN(registry)
 
   qml_module.add_type<qmlwrap::JuliaObject>("JuliaObject", julia_type<QObject>())
     .method("set", &qmlwrap::JuliaObject::set) // Not exported, use @qmlset
-    .method("value", &qmlwrap::JuliaObject::value); // Not exported, use @qmlget
+    .method("julia_object_value", &qmlwrap::JuliaObject::value); // Not exported, use @qmlget
 
   // Emit signals helper
   qml_module.method("emit", [](const char* signal_name, cxx_wrap::ArrayRef<jl_value_t*> args)

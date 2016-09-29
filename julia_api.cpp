@@ -32,7 +32,7 @@ QVariant JuliaAPI::call(const QString& fname, const QVariantList& args)
   // Process arguments
   for(int i = 0; i != nb_args; ++i)
   {
-    julia_args[i] = cxx_wrap::convert_to_julia<QVariant>(args.at(i));
+    julia_args[i] = cxx_wrap::convert_to_julia(args.at(i));
     if(julia_args[i] == nullptr)
     {
       qWarning() << "Julia argument type for function " << fname << " is unsupported:" << args[i].typeName();

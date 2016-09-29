@@ -31,6 +31,8 @@ if(WIN32)
 endif(WIN32)
 
 add_library(qmlwrap SHARED
+  glvisualize_viewport.hpp
+  glvisualize_viewport.cpp
   julia_api.hpp
   julia_api.cpp
   julia_display.hpp

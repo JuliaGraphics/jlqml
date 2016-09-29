@@ -4,6 +4,7 @@
 #include <cxx_wrap.hpp>
 
 #include <QObject>
+#include <QOpenGLFramebufferObject>
 #include <QQuickFramebufferObject>
 
 namespace qmlwrap
@@ -46,10 +47,17 @@ signals:
   void renderFunctionChanged(QString);
   void renderArgumentsChanged(QVariantList);
 
-protected:
-  QSGNode* updatePaintNode(QSGNode *node, QQuickItem::UpdatePaintNodeData *nodeData);
-
 private:
+  /// Hook to do extra setup the first time an FBO is used. The FBO is called in render, i.e. when the FBO is bound
+  virtual void setup_buffer(GLuint handle, int width, int height)
+  {
+  }
+
+  /// Called after the user-defined rendering function
+  virtual void post_render()
+  {
+  }
+
   QString m_render_function;
   QVariantList m_render_arguments;
   Q_INVOKABLE void render();
