@@ -113,11 +113,33 @@ namespace cxx_wrap
 
 QVariant ConvertToCpp<QVariant, false, false, false>::operator()(jl_value_t* julia_value) const
 {
+  if(jl_is_array(julia_value))
+  {
+    cxx_wrap::ArrayRef<jl_value_t*> arr_ref((jl_array_t*)julia_value);
+    QVariantList result;
+    for(jl_value_t* val : arr_ref)
+    {
+      result.push_back(cxx_wrap::convert_to_cpp<QVariant>(val));
+    }
+    return result;
+  }
   return qmlwrap::detail::try_convert_to_qt<bool, float, double, int32_t, int64_t, uint32_t, uint64_t, QString>(julia_value);
 }
 
 jl_value_t* ConvertToJulia<QVariant, false, false, false>::operator()(const QVariant& v) const
 {
+  if (v.canConvert<QVariantList>())
+  {
+    QSequentialIterable iterable = v.template value<QSequentialIterable>();
+    cxx_wrap::Array<jl_value_t*> arr;
+    JL_GC_PUSH1(arr.gc_pointer());
+    for (const QVariant& item : iterable)
+    {
+      arr.push_back(cxx_wrap::convert_to_julia(item));
+    }
+    JL_GC_POP();
+    return (jl_value_t*)(arr.wrapped());
+  }
   return qmlwrap::detail::try_convert_to_julia<bool, float, double, int32_t, int64_t, uint32_t, uint64_t, QString, QObject*>(v);
 }
 
