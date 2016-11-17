@@ -41,6 +41,8 @@ add_library(qmlwrap SHARED
   julia_object.cpp
   julia_signals.hpp
   julia_signals.cpp
+  listmodel.hpp
+  listmodel.cpp
   opengl_viewport.hpp
   opengl_viewport.cpp
   type_conversion.hpp

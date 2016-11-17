@@ -13,6 +13,7 @@
 #include "julia_display.hpp"
 #include "julia_object.hpp"
 #include "julia_signals.hpp"
+#include "listmodel.hpp"
 #include "opengl_viewport.hpp"
 #include "glvisualize_viewport.hpp"
 #include "type_conversion.hpp"
@@ -30,6 +31,12 @@ void set_context_property(QQmlContext* ctx, const QString& name, jl_value_t* v)
 
   if(jl_type_morespecific(jl_typeof(v), (jl_value_t*)cxx_wrap::julia_type<QObject>()))
   {
+    // Protect object from garbage collection in case the caller did not bind it to a Julia variable
+    cxx_wrap::protect_from_gc(v);
+
+    // Make sure it gets freed on context destruction
+    QObject::connect(ctx, &QQmlContext::destroyed, [=] (QObject*) { cxx_wrap::unprotect_from_gc(v); });
+
     ctx->setContextProperty(name, cxx_wrap::convert_to_cpp<QObject*>(v));
     return;
   }
@@ -43,6 +50,7 @@ void set_context_property(QQmlContext* ctx, const QString& name, jl_value_t* v)
 
   if(jl_is_structtype(jl_typeof(v)))
   {
+    // ctx is the parent for the JuliaObject, so cleanup is automatic
     ctx->setContextProperty(name, new qmlwrap::JuliaObject(v, ctx));
     return;
   }
@@ -348,6 +356,12 @@ JULIA_CPP_MODULE_BEGIN(registry)
   qml_module.add_type<qmlwrap::JuliaDisplay>("JuliaDisplay", julia_type("CppDisplay"))
     .method("load_png", &qmlwrap::JuliaDisplay::load_png);
 
+  qml_module.add_type<qmlwrap::ListModel>("ListModel", julia_type<QObject>())
+    .constructor<const cxx_wrap::ArrayRef<jl_value_t*>&>()
+    .constructor<const cxx_wrap::ArrayRef<jl_value_t*>&, jl_function_t*>()
+    .method("setrolenames", &qmlwrap::ListModel::setrolenames)
+    .method("setconstructor", &qmlwrap::ListModel::setconstructor);
+
   // Exports:
-  qml_module.export_symbols("QQmlContext", "set_context_property", "root_context", "load", "qt_prefix_path", "set_source", "engine", "QByteArray", "QQmlComponent", "set_data", "create", "QQuickItem", "content_item", "JuliaObject", "QTimer", "context_property", "emit", "JuliaDisplay", "init_application", "qmlcontext", "init_qmlapplicationengine", "init_qmlengine", "init_qquickview", "exec", "exec_async");
+  qml_module.export_symbols("QQmlContext", "set_context_property", "root_context", "load", "qt_prefix_path", "set_source", "engine", "QByteArray", "QQmlComponent", "set_data", "create", "QQuickItem", "content_item", "JuliaObject", "QTimer", "context_property", "emit", "JuliaDisplay", "init_application", "qmlcontext", "init_qmlapplicationengine", "init_qmlengine", "init_qquickview", "exec", "exec_async", "ListModel", "setrolenames", "setconstructor");
 JULIA_CPP_MODULE_END
