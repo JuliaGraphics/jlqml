@@ -251,9 +251,9 @@ void ListModel::addrole(const std::string& name, jl_function_t* getter, jl_funct
   m_setters.push_back(setter);
 }
 
-void ListModel::setconstructor(const std::string& constructor)
+void ListModel::setconstructor(jl_function_t* constructor)
 {
-  m_constructor = cxx_wrap::julia_function(constructor);
+  m_constructor = constructor;
 }
 
 jl_function_t* ListModel::rolegetter(int role) const

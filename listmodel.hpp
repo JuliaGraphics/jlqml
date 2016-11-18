@@ -45,7 +45,7 @@ public:
 
   // Called from Julia
   void addrole(const std::string& name, jl_function_t* getter, jl_function_t* setter = nullptr);
-  void setconstructor(const std::string& constructor);
+  void setconstructor(jl_function_t* constructor);
 
 private:
   // Update the original array in case we are working with a boxed copy
