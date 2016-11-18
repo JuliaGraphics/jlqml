@@ -359,9 +359,10 @@ JULIA_CPP_MODULE_BEGIN(registry)
   qml_module.add_type<qmlwrap::ListModel>("ListModel", julia_type<QObject>())
     .constructor<const cxx_wrap::ArrayRef<jl_value_t*>&>()
     .constructor<const cxx_wrap::ArrayRef<jl_value_t*>&, jl_function_t*>()
-    .method("setrolenames", &qmlwrap::ListModel::setrolenames)
     .method("setconstructor", &qmlwrap::ListModel::setconstructor);
+  qml_module.method("addrole", [] (qmlwrap::ListModel& m, const std::string& role, jl_function_t* getter) { m.addrole(role, getter); });
+  qml_module.method("addrole", [] (qmlwrap::ListModel& m, const std::string& role, jl_function_t* getter, jl_function_t* setter) { m.addrole(role, getter, setter); });
 
   // Exports:
-  qml_module.export_symbols("QQmlContext", "set_context_property", "root_context", "load", "qt_prefix_path", "set_source", "engine", "QByteArray", "QQmlComponent", "set_data", "create", "QQuickItem", "content_item", "JuliaObject", "QTimer", "context_property", "emit", "JuliaDisplay", "init_application", "qmlcontext", "init_qmlapplicationengine", "init_qmlengine", "init_qquickview", "exec", "exec_async", "ListModel", "setrolenames", "setconstructor");
+  qml_module.export_symbols("QQmlContext", "set_context_property", "root_context", "load", "qt_prefix_path", "set_source", "engine", "QByteArray", "QQmlComponent", "set_data", "create", "QQuickItem", "content_item", "JuliaObject", "QTimer", "context_property", "emit", "JuliaDisplay", "init_application", "qmlcontext", "init_qmlapplicationengine", "init_qmlengine", "init_qquickview", "exec", "exec_async", "ListModel", "addrole", "setconstructor");
 JULIA_CPP_MODULE_END

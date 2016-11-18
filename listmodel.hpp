@@ -44,18 +44,22 @@ public:
   Q_INVOKABLE void insert(int index, const QVariantList& argvariants);
 
   // Called from Julia
-  void setrolenames(cxx_wrap::ArrayRef<std::string> names);
+  void addrole(const std::string& name, jl_function_t* getter, jl_function_t* setter = nullptr);
   void setconstructor(const std::string& constructor);
 
 private:
   // Update the original array in case we are working with a boxed copy
   void do_update();
 
-  jl_function_t* rolefunction(int role) const;
+  jl_function_t* rolesetter(int role) const;
+  jl_function_t* rolegetter(int role) const;
   cxx_wrap::ArrayRef<jl_value_t*> m_array;
   QHash<int, QByteArray> m_rolenames;
   jl_function_t* m_constructor = nullptr;
   jl_function_t* m_update_array = nullptr; // Function used to update an array with non-boxed contents
+  bool m_custom_roles = false;
+  std::vector<jl_function_t*> m_getters;
+  std::vector<jl_function_t*> m_setters;
 };
 
 }
