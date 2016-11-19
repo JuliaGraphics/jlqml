@@ -4,6 +4,7 @@
 
 #include "julia_display.hpp"
 #include "julia_object.hpp"
+#include "listmodel.hpp"
 #include "type_conversion.hpp"
 
 namespace qmlwrap
@@ -85,7 +86,7 @@ jl_value_t* convert_to_julia<QObject*>(const QVariant& v)
   if(v.type() == qMetaTypeId<QObject*>())
   {
     // Add new types here
-    return try_qobject_cast<JuliaObject, JuliaDisplay>(v.value<QObject*>());
+    return try_qobject_cast<JuliaObject, JuliaDisplay, ListModel>(v.value<QObject*>());
   }
 
   return nullptr;
@@ -123,7 +124,7 @@ QVariant ConvertToCpp<QVariant, false, false, false>::operator()(jl_value_t* jul
     }
     return result;
   }
-  return qmlwrap::detail::try_convert_to_qt<bool, float, double, int32_t, int64_t, uint32_t, uint64_t, QString>(julia_value);
+  return qmlwrap::detail::try_convert_to_qt<bool, float, double, int32_t, int64_t, uint32_t, uint64_t, QString, QObject*>(julia_value);
 }
 
 jl_value_t* ConvertToJulia<QVariant, false, false, false>::operator()(const QVariant& v) const

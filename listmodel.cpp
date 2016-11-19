@@ -108,19 +108,26 @@ void ListModel::append(const QVariantList& argvariants)
     julia_args[i] = cxx_wrap::convert_to_julia(argvariants[i]);
   }
 
-  m_array.push_back(jl_call(m_constructor, julia_args, nb_args));
+  result = jl_call(m_constructor, julia_args, nb_args);
+  if(result == nullptr)
+  {
+    qWarning() << "Error appending ListModel element " << argvariants << ", did you define all required roles for the constructor?";
+  }
+  m_array.push_back(result);
 
-  JL_GC_POP();
-  JL_GC_POP();
   do_update();
+  JL_GC_POP();
+  JL_GC_POP();
   endInsertRows();
 }
 
 void ListModel::append(const QJSValue& record)
 {
   QVariantList argvariants;
-  for(const auto& rolename : m_rolenames)
+  const int nb_roles = m_rolenames.size();
+  for(int i =0; i != nb_roles; ++i)
   {
+    auto rolename = m_rolenames[i];
     if(record.hasProperty(rolename))
     {
       argvariants.push_back(record.property(QString(rolename)).toVariant());
@@ -254,6 +261,7 @@ void ListModel::addrole(const std::string& name, jl_function_t* getter, jl_funct
 void ListModel::setconstructor(jl_function_t* constructor)
 {
   m_constructor = constructor;
+  cxx_wrap::protect_from_gc(m_constructor);
 }
 
 jl_function_t* ListModel::rolegetter(int role) const
