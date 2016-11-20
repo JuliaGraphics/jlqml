@@ -61,6 +61,18 @@ jl_value_t* convert_to_julia<QString>(const QVariant& v)
   return nullptr;
 }
 
+// QVariantMap
+template<>
+jl_value_t* convert_to_julia<QVariantMap>(const QVariant& v)
+{
+  if(v.canConvert<QVariantMap>())
+  {
+    return cxx_wrap::create<QVariantMap>(v.toMap());
+  }
+
+  return nullptr;
+}
+
 template<int T = 0>
 jl_value_t* try_qobject_cast(QObject* o)
 {
@@ -141,7 +153,7 @@ jl_value_t* ConvertToJulia<QVariant, false, false, false>::operator()(const QVar
     JL_GC_POP();
     return (jl_value_t*)(arr.wrapped());
   }
-  return qmlwrap::detail::try_convert_to_julia<bool, float, double, int32_t, int64_t, uint32_t, uint64_t, QString, QObject*>(v);
+  return qmlwrap::detail::try_convert_to_julia<bool, float, double, int32_t, int64_t, uint32_t, uint64_t, QString, QObject*, QVariantMap>(v);
 }
 
 jl_value_t* ConvertToJulia<QString, false, false, false>::operator()(const QString& str) const
