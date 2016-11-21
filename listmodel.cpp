@@ -12,7 +12,7 @@ ListModel::ListModel(const cxx_wrap::ArrayRef<jl_value_t*>& array, jl_function_t
   m_rolenames[0] = "string";
   m_getters.push_back(cxx_wrap::julia_function("string"));
   m_setters.push_back(nullptr);
-  cxx_wrap::protect_from_gc(array.wrapped());
+  cxx_wrap::protect_from_gc(m_array.wrapped());
   if(f != nullptr)
   {
     cxx_wrap::protect_from_gc(f);

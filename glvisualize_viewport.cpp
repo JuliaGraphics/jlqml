@@ -23,6 +23,7 @@ GLVisualizeViewport::GLVisualizeViewport(QQuickItem *parent) : OpenGLViewport(pa
       return;
     }
 
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 3, 0))
     connect(w, &QQuickWindow::openglContextCreated, [this] (QOpenGLContext* context)
     {
       connect(context, &QOpenGLContext::aboutToBeDestroyed, [] ()
@@ -31,6 +32,9 @@ GLVisualizeViewport::GLVisualizeViewport(QQuickItem *parent) : OpenGLViewport(pa
         cxx_wrap::julia_call(on_context_destroy);
       });
     });
+#else
+    qWarning() << "Proper GLVisualizeViewport cleanup not available in Qt versions prior to 5.3";
+#endif
   });
 }
 

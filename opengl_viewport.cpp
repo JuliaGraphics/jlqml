@@ -58,7 +58,11 @@ OpenGLViewport::OpenGLViewport(QQuickItem *parent) : QQuickFramebufferObject(par
 {
   QObject::connect(this, &OpenGLViewport::renderFunctionChanged, this, &OpenGLViewport::update);
   QObject::connect(this, &OpenGLViewport::renderArgumentsChanged, this, &OpenGLViewport::update);
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 6, 0))
   setMirrorVertically(true);
+#else
+  qWarning() << "setMirrorVertically not available before Qt 5.6, OpenGLViewport image will be upside-down";
+#endif
 }
 
 void OpenGLViewport::render()
