@@ -78,7 +78,7 @@ bool ListModel::setData(const QModelIndex& index, const QVariant& value, int rol
   }
 
   cxx_wrap::julia_call(setter, (jl_value_t*)m_array.wrapped(), cxx_wrap::box(value), index.row()+1);
-  do_update();
+  do_update(index.row(), 1, QVector<int>() << role);
   return true;
 }
 
@@ -95,8 +95,6 @@ void ListModel::append(const QVariantList& argvariants)
     return;
   }
 
-  beginInsertRows(QModelIndex(), m_array.size(), m_array.size());
-
   const int nb_args = argvariants.size();
 
   jl_value_t* result = nullptr;
@@ -112,13 +110,20 @@ void ListModel::append(const QVariantList& argvariants)
   if(result == nullptr)
   {
     qWarning() << "Error appending ListModel element " << argvariants << ", did you define all required roles for the constructor?";
+    JL_GC_POP();
+    JL_GC_POP();
+    return;
   }
+
+  beginInsertRows(QModelIndex(), m_array.size(), m_array.size());
+
   m_array.push_back(result);
 
   do_update();
   JL_GC_POP();
   JL_GC_POP();
   endInsertRows();
+  emit countChanged();
 }
 
 void ListModel::append(const QJSValue& record)
@@ -174,6 +179,7 @@ void ListModel::remove(int index)
   do_update();
 
   endRemoveRows();
+  emit countChanged();
 }
 
 void ListModel::move(int from, int to, int count)
@@ -195,6 +201,8 @@ void ListModel::move(int from, int to, int count)
     return;
   }
 
+  beginMoveRows(QModelIndex(), from, from + count - 1, QModelIndex(), to+count);
+
   jl_value_t** removed_elems;
   JL_GC_PUSHARGS(removed_elems, count);
 
@@ -215,14 +223,21 @@ void ListModel::move(int from, int to, int count)
   }
 
   do_update();
-
   JL_GC_POP();
+  endMoveRows();
 }
 
 void ListModel::clear()
 {
+  beginRemoveRows(QModelIndex(), 0, m_array.size());
   jl_array_del_end(m_array.wrapped(), m_array.size());
   do_update();
+  endRemoveRows();
+}
+
+int ListModel::count() const
+{
+  return m_array.size();
 }
 
 void ListModel::addrole(const std::string& name, jl_function_t* getter, jl_function_t* setter)
@@ -284,6 +299,12 @@ jl_function_t* ListModel::rolesetter(int role) const
   }
 
   return m_setters[role];
+}
+
+void ListModel::do_update(int index, int count, const QVector<int> &roles)
+{
+  do_update();
+  emit dataChanged(createIndex(index, 0), createIndex(index + count - 1, 0), roles);
 }
 
 void ListModel::do_update()
