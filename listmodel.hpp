@@ -40,11 +40,6 @@ public:
   Q_INVOKABLE void clear();
   int count() const;
 
-  // Additional QML interface
-  /// This overloads append and insert to take a list of variants instead of a dictionary
-  Q_INVOKABLE void append(const QVariantList& argvariants);
-  Q_INVOKABLE void insert(int index, const QVariantList& argvariants);
-
   // Called from Julia
   void addrole(const std::string& name, jl_function_t* getter, jl_function_t* setter = nullptr);
   void setconstructor(jl_function_t* constructor);
@@ -56,6 +51,10 @@ private:
   // Update the original array in case we are working with a boxed copy
   void do_update(int index, int count, const QVector<int> &roles);
   void do_update();
+
+  /// This overloads append and insert to take a list of variants instead of a dictionary
+  void append_list(const QVariantList& argvariants);
+  void insert_list(int index, const QVariantList& argvariants);
 
   jl_function_t* rolesetter(int role) const;
   jl_function_t* rolegetter(int role) const;

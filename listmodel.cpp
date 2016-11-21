@@ -87,7 +87,7 @@ Qt::ItemFlags ListModel::flags(const QModelIndex&) const
   return Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsEditable;
 }
 
-void ListModel::append(const QVariantList& argvariants)
+void ListModel::append_list(const QVariantList& argvariants)
 {
   if(m_constructor == nullptr)
   {
@@ -128,6 +128,12 @@ void ListModel::append(const QVariantList& argvariants)
 
 void ListModel::append(const QJSValue& record)
 {
+  if(record.isArray())
+  {
+    append_list(record.toVariant().toList());
+    return;
+  }
+  
   QVariantList argvariants;
   const int nb_roles = m_rolenames.size();
   for(int i =0; i != nb_roles; ++i)
@@ -138,7 +144,7 @@ void ListModel::append(const QJSValue& record)
       argvariants.push_back(record.property(QString(rolename)).toVariant());
     }
   }
-  append(argvariants);
+  append_list(argvariants);
 }
 
 Q_INVOKABLE void ListModel::insert(int index, const QJSValue& record)
@@ -147,9 +153,9 @@ Q_INVOKABLE void ListModel::insert(int index, const QJSValue& record)
   move(m_array.size()-1, index, 1);
 }
 
-Q_INVOKABLE void ListModel::insert(int index, const QVariantList& argvariants)
+Q_INVOKABLE void ListModel::insert_list(int index, const QVariantList& argvariants)
 {
-  append(argvariants);
+  append_list(argvariants);
   move(m_array.size()-1, index, 1);
 }
 

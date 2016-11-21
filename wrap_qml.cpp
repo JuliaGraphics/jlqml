@@ -97,6 +97,7 @@ struct ApplicationManager
   void init_application()
   {
     qputenv("QML_PREFIX_PATH", QProcessEnvironment::systemEnvironment().value("QML_PREFIX_PATH").toLocal8Bit());
+    qputenv("QSG_RENDER_LOOP", QProcessEnvironment::systemEnvironment().value("QSG_RENDER_LOOP").toLocal8Bit());
     if(m_app != nullptr && !m_quit_called)
     {
       return;
@@ -113,12 +114,12 @@ struct ApplicationManager
     }
     m_app = new QApplication(argc, &argv_buffer[0]);
 
-    QSurfaceFormat format = QSurfaceFormat::defaultFormat();
-  	format.setProfile(QSurfaceFormat::CoreProfile);
-  	format.setMajorVersion(4);
-  	format.setMinorVersion(3); // 4.3 for debugging output
-  	format.setOption(QSurfaceFormat::DebugContext);
-  	QSurfaceFormat::setDefaultFormat(format);
+    // QSurfaceFormat format = QSurfaceFormat::defaultFormat();
+    // format.setProfile(QSurfaceFormat::CoreProfile);
+    // format.setMajorVersion(4);
+    // format.setMinorVersion(3); // 4.3 is needed for debugging output
+    // format.setOption(QSurfaceFormat::DebugContext);
+    // QSurfaceFormat::setDefaultFormat(format);
   }
 
   // Init the app with a new QQmlApplicationEngine
