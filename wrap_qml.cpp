@@ -113,13 +113,16 @@ struct ApplicationManager
       argv_buffer.push_back(const_cast<char*>("julia"));
     }
     m_app = new QApplication(argc, &argv_buffer[0]);
-
-    // QSurfaceFormat format = QSurfaceFormat::defaultFormat();
-    // format.setProfile(QSurfaceFormat::CoreProfile);
-    // format.setMajorVersion(4);
-    // format.setMinorVersion(3); // 4.3 is needed for debugging output
-    // format.setOption(QSurfaceFormat::DebugContext);
-    // QSurfaceFormat::setDefaultFormat(format);
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 4, 0))
+    QSurfaceFormat format = QSurfaceFormat::defaultFormat();
+    format.setProfile(QSurfaceFormat::CoreProfile);
+    format.setMajorVersion(4);
+    format.setMinorVersion(1);
+    //format.setOption(QSurfaceFormat::DebugContext); // note: this needs OpenGL 4.3
+    QSurfaceFormat::setDefaultFormat(format);
+#else
+    qWarning() << "Qt 5.4 is required to override OpenGL version, shader examples may fail";
+#endif
   }
 
   // Init the app with a new QQmlApplicationEngine
