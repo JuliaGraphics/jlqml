@@ -116,8 +116,8 @@ struct ApplicationManager
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 4, 0))
     QSurfaceFormat format = QSurfaceFormat::defaultFormat();
     format.setProfile(QSurfaceFormat::CoreProfile);
-    format.setMajorVersion(4);
-    format.setMinorVersion(1);
+    format.setMajorVersion(3);
+    format.setMinorVersion(2);
     //format.setOption(QSurfaceFormat::DebugContext); // note: this needs OpenGL 4.3
     QSurfaceFormat::setDefaultFormat(format);
 #else
