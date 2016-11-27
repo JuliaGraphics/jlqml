@@ -21,7 +21,9 @@ if(WIN32)
   add_definitions(-DWIN32_LEAN_AND_MEAN)
   get_filename_component(VC_DIR "${CMAKE_LINKER}" DIRECTORY) # Visual studio dir is 3 levels up from the linker
   get_filename_component(VC_DIR "${VC_DIR}" DIRECTORY)
-  get_filename_component(VC_DIR "${VC_DIR}" DIRECTORY)
+  if(CMAKE_GENERATOR STREQUAL "Visual Studio 14 2015 Win64")
+    get_filename_component(VC_DIR "${VC_DIR}" DIRECTORY)
+  endif()
   get_filename_component(QML_DIR "${CMAKE_SOURCE_DIR}" DIRECTORY) # Go up to the package test dir for QML examples
   get_filename_component(QML_DIR "${QML_DIR}" DIRECTORY)
   get_filename_component(QML_DIR "${QML_DIR}" DIRECTORY)
@@ -53,9 +55,9 @@ target_link_libraries(qmlwrap Qt5::Core Qt5::Quick Qt5::Widgets CxxWrap::cxx_wra
 
 install(TARGETS
   qmlwrap
-LIBRARY DESTINATION lib${LIBDIR_SUFFIX}
-ARCHIVE DESTINATION lib${LIBDIR_SUFFIX}
-RUNTIME DESTINATION lib${LIBDIR_SUFFIX})
+LIBRARY DESTINATION lib
+ARCHIVE DESTINATION lib
+RUNTIME DESTINATION lib)
 if(WIN32)
   install (SCRIPT "${CMAKE_BINARY_DIR}/WinDeployQt.cmake")
 endif(WIN32)
