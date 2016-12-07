@@ -10,7 +10,7 @@ namespace qmlwrap
 ListModel::ListModel(const cxx_wrap::ArrayRef<jl_value_t*>& array, jl_function_t* f, QObject* parent) : QAbstractListModel(parent), m_array(array), m_update_array(f)
 {
   m_rolenames[0] = "string";
-  m_getters.push_back(cxx_wrap::julia_function("string"));
+  m_getters.push_back(cxx_wrap::JuliaFunction("string").pointer());
   m_setters.push_back(nullptr);
   cxx_wrap::protect_from_gc(m_array.wrapped());
   if(f != nullptr)
@@ -53,7 +53,7 @@ QVariant ListModel::data(const QModelIndex& index, int role) const
     qWarning() << "Row index " << index << " is out of range for ListModel";
     return QVariant();
   }
-  QVariant result = cxx_wrap::convert_to_cpp<QVariant>(cxx_wrap::julia_call(rolegetter(role), m_array[index.row()]));
+  QVariant result = cxx_wrap::convert_to_cpp<QVariant>(rolegetter(role)(m_array[index.row()]));
   return result;
 }
 
@@ -70,16 +70,17 @@ bool ListModel::setData(const QModelIndex& index, const QVariant& value, int rol
     return false;
   }
 
-  jl_function_t* setter = rolesetter(role);
-  if(setter == nullptr)
+  try
+  {
+    rolesetter(role)((jl_value_t*)m_array.wrapped(), cxx_wrap::box(value), index.row()+1);
+    do_update(index.row(), 1, QVector<int>() << role);
+    return true;
+  }
+  catch(const std::runtime_error&)
   {
     qWarning() << "Null setter for role " << m_rolenames[role] << ", not changing value";
     return false;
   }
-
-  cxx_wrap::julia_call(setter, (jl_value_t*)m_array.wrapped(), cxx_wrap::box(value), index.row()+1);
-  do_update(index.row(), 1, QVector<int>() << role);
-  return true;
 }
 
 Qt::ItemFlags ListModel::flags(const QModelIndex&) const
@@ -133,7 +134,7 @@ void ListModel::append(const QJSValue& record)
     append_list(record.toVariant().toList());
     return;
   }
-  
+
   QVariantList argvariants;
   const int nb_roles = m_rolenames.size();
   for(int i =0; i != nb_roles; ++i)
@@ -285,26 +286,26 @@ void ListModel::setconstructor(jl_function_t* constructor)
   cxx_wrap::protect_from_gc(m_constructor);
 }
 
-jl_function_t* ListModel::rolegetter(int role) const
+cxx_wrap::JuliaFunction ListModel::rolegetter(int role) const
 {
   if(role < 0 || role >= m_rolenames.size())
   {
     qWarning() << "Role index " << role << " is out of range for ListModel, defaulting to string conversion";
-    return cxx_wrap::julia_function("string");
+    return cxx_wrap::JuliaFunction("string");
   }
 
-  return m_getters[role];
+  return cxx_wrap::JuliaFunction(m_getters[role]);
 }
 
-jl_function_t* ListModel::rolesetter(int role) const
+cxx_wrap::JuliaFunction ListModel::rolesetter(int role) const
 {
   if(role < 0 || role >= m_rolenames.size())
   {
     qWarning() << "Role index " << role << " is out of range for ListModel, returning null setter";
-    return nullptr;
+    throw std::runtime_error("Role index out of range");
   }
 
-  return m_setters[role];
+  return cxx_wrap::JuliaFunction(m_setters[role]);
 }
 
 void ListModel::do_update(int index, int count, const QVector<int> &roles)

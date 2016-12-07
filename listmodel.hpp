@@ -56,8 +56,8 @@ private:
   void append_list(const QVariantList& argvariants);
   void insert_list(int index, const QVariantList& argvariants);
 
-  jl_function_t* rolesetter(int role) const;
-  jl_function_t* rolegetter(int role) const;
+  cxx_wrap::JuliaFunction rolesetter(int role) const;
+  cxx_wrap::JuliaFunction rolegetter(int role) const;
   cxx_wrap::ArrayRef<jl_value_t*> m_array;
   QHash<int, QByteArray> m_rolenames;
   jl_function_t* m_constructor = nullptr;
