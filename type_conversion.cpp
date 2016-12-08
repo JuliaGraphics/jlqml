@@ -2,10 +2,14 @@
 #include <QFileInfo>
 #include <QUrl>
 
+#include <functions.hpp>
+
 #include "julia_display.hpp"
 #include "julia_object.hpp"
 #include "listmodel.hpp"
 #include "type_conversion.hpp"
+
+Q_DECLARE_METATYPE(cxx_wrap::SafeCFunction)
 
 namespace qmlwrap
 {
@@ -136,7 +140,7 @@ QVariant ConvertToCpp<QVariant, false, false, false>::operator()(jl_value_t* jul
     }
     return result;
   }
-  return qmlwrap::detail::try_convert_to_qt<bool, float, double, int32_t, int64_t, uint32_t, uint64_t, QString, QObject*>(julia_value);
+  return qmlwrap::detail::try_convert_to_qt<bool, float, double, int32_t, int64_t, uint32_t, uint64_t, QString, QObject*, void*, cxx_wrap::SafeCFunction>(julia_value);
 }
 
 jl_value_t* ConvertToJulia<QVariant, false, false, false>::operator()(const QVariant& v) const
@@ -153,7 +157,7 @@ jl_value_t* ConvertToJulia<QVariant, false, false, false>::operator()(const QVar
     JL_GC_POP();
     return (jl_value_t*)(arr.wrapped());
   }
-  return qmlwrap::detail::try_convert_to_julia<bool, float, double, int32_t, int64_t, uint32_t, uint64_t, QString, QObject*, QVariantMap>(v);
+  return qmlwrap::detail::try_convert_to_julia<bool, float, double, int32_t, int64_t, uint32_t, uint64_t, QString, QObject*, QVariantMap, void*>(v);
 }
 
 jl_value_t* ConvertToJulia<QString, false, false, false>::operator()(const QString& str) const

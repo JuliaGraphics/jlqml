@@ -1,5 +1,6 @@
 #include <QApplication>
 #include <QLibraryInfo>
+#include <QPainter>
 #include <QQmlApplicationEngine>
 #include <QQmlComponent>
 #include <QQmlContext>
@@ -12,6 +13,7 @@
 #include "julia_api.hpp"
 #include "julia_display.hpp"
 #include "julia_object.hpp"
+#include "julia_painteditem.hpp"
 #include "julia_signals.hpp"
 #include "listmodel.hpp"
 #include "opengl_viewport.hpp"
@@ -54,6 +56,7 @@ void set_context_property(QQmlContext* ctx, const QString& name, jl_value_t* v)
     ctx->setContextProperty(name, new qmlwrap::JuliaObject(v, ctx));
     return;
   }
+  qWarning() << "Unsupported type for context property " << name;
 }
 
 /// Manage creation and destruction of the application and the QML engine,
@@ -271,6 +274,7 @@ JULIA_CPP_MODULE_BEGIN(registry)
   qmlRegisterSingletonType("org.julialang", 1, 0, "Julia", qmlwrap::julia_js_singletontype_provider);
   qmlRegisterType<qmlwrap::JuliaSignals>("org.julialang", 1, 0, "JuliaSignals");
   qmlRegisterType<qmlwrap::JuliaDisplay>("org.julialang", 1, 0, "JuliaDisplay");
+  qmlRegisterType<qmlwrap::JuliaPaintedItem>("org.julialang", 1, 1, "JuliaPaintedItem");
   qmlRegisterType<qmlwrap::OpenGLViewport>("org.julialang", 1, 0, "OpenGLViewport");
   qmlRegisterType<qmlwrap::GLVisualizeViewport>("org.julialang", 1, 0, "GLVisualizeViewport");
 
@@ -359,6 +363,8 @@ JULIA_CPP_MODULE_BEGIN(registry)
 
   qml_module.add_type<qmlwrap::JuliaDisplay>("JuliaDisplay", julia_type("CppDisplay"))
     .method("load_png", &qmlwrap::JuliaDisplay::load_png);
+
+  qml_module.add_type<QPainter>("QPainter");
 
   qml_module.add_type<qmlwrap::ListModel>("ListModel", julia_type<QObject>())
     .constructor<const cxx_wrap::ArrayRef<jl_value_t*>&>()

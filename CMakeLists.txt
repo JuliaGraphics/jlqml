@@ -41,6 +41,8 @@ add_library(qmlwrap SHARED
   julia_display.cpp
   julia_object.hpp
   julia_object.cpp
+  julia_painteditem.hpp
+  julia_painteditem.cpp
   julia_signals.hpp
   julia_signals.cpp
   listmodel.hpp
