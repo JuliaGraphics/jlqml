@@ -55,6 +55,10 @@ private:
 
 OpenGLViewport::OpenGLViewport(QQuickItem *parent) : QQuickFramebufferObject(parent)
 {
+  if(qgetenv("QSG_RENDER_LOOP") != "basic")
+  {
+    qFatal("QSG_RENDER_LOOP must be set to basic to use OpenGLViewport or GLVisualizeViewport. Add the line\nENV[\"QSG_RENDER_LOOP\"] = \"basic\"\nat the top of your Julia program");
+  }
   QObject::connect(this, &OpenGLViewport::renderFunctionChanged, this, &OpenGLViewport::update);
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 6, 0))
   setMirrorVertically(true);

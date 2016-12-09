@@ -13,7 +13,7 @@ JuliaPaintedItem::JuliaPaintedItem(QQuickItem *parent) : QQuickPaintedItem(paren
 {
   if(qgetenv("QSG_RENDER_LOOP") != "basic")
   {
-    qCritical() << "QSG_RENDER_LOOP must be set to basic to use JuliaPaintedItem. Add the line\n" << "ENV[\"QSG_RENDER_LOOP\"] = \"basic\"" << "\nat the top of your Julia program";
+    qFatal("QSG_RENDER_LOOP must be set to basic to use JuliaPaintedItem. Add the line\nENV[\"QSG_RENDER_LOOP\"] = \"basic\"\nat the top of your Julia program");
   }
 }
 
