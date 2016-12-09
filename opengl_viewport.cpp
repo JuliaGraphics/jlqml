@@ -3,7 +3,6 @@
 #include <QSGNode>
 #include <QSGSimpleTextureNode>
 
-#include "julia_api.hpp"
 #include "opengl_viewport.hpp"
 
 namespace qmlwrap
@@ -57,7 +56,6 @@ private:
 OpenGLViewport::OpenGLViewport(QQuickItem *parent) : QQuickFramebufferObject(parent)
 {
   QObject::connect(this, &OpenGLViewport::renderFunctionChanged, this, &OpenGLViewport::update);
-  QObject::connect(this, &OpenGLViewport::renderArgumentsChanged, this, &OpenGLViewport::update);
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 6, 0))
   setMirrorVertically(true);
 #else
@@ -67,12 +65,18 @@ OpenGLViewport::OpenGLViewport(QQuickItem *parent) : QQuickFramebufferObject(par
 
 void OpenGLViewport::render()
 {
-  JuliaAPI::instance()->call(m_render_function, m_render_arguments);
+  m_render_function();
 }
 
 QQuickFramebufferObject::Renderer* OpenGLViewport::createRenderer() const
 {
   return new JuliaRenderer();
+}
+
+void OpenGLViewport::setRenderFunction(cxx_wrap::SafeCFunction f)
+{
+  m_render_function = cxx_wrap::make_function_pointer<void(void)>(f);
+  emit renderFunctionChanged();
 }
 
 } // namespace qmlwrap

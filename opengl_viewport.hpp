@@ -2,6 +2,7 @@
 #define QML_opengl_viewport_H
 
 #include <cxx_wrap.hpp>
+#include <functions.hpp>
 
 #include <QObject>
 #include <QOpenGLFramebufferObject>
@@ -14,38 +15,17 @@ namespace qmlwrap
 class OpenGLViewport : public QQuickFramebufferObject
 {
   Q_OBJECT
-  Q_PROPERTY(QString renderFunction READ renderFunction WRITE setRenderFunction NOTIFY renderFunctionChanged)
-	Q_PROPERTY(QVariantList renderArguments READ renderArguments WRITE setRenderArguments NOTIFY renderArgumentsChanged)
+  Q_PROPERTY(cxx_wrap::SafeCFunction renderFunction READ renderFunction WRITE setRenderFunction NOTIFY renderFunctionChanged)
+  typedef void (*render_callback_t)();
 public:
   OpenGLViewport(QQuickItem *parent = 0);
 
   Renderer *createRenderer() const;
 
-  const QString& renderFunction() const
-  {
-    return m_render_function;
-  }
-
-  const QVariantList& renderArguments() const
-  {
-    return m_render_arguments;
-  }
-
-  void setRenderFunction(const QString name)
-  {
-    m_render_function = name;
-    emit renderFunctionChanged(m_render_function);
-  }
-
-  void setRenderArguments(const QVariantList args)
-  {
-    m_render_arguments = args;
-    emit renderArgumentsChanged(m_render_arguments);
-  }
+  void setRenderFunction(cxx_wrap::SafeCFunction f);
 
 signals:
-  void renderFunctionChanged(QString);
-  void renderArgumentsChanged(QVariantList);
+  void renderFunctionChanged();
 
 private:
   /// Hook to do extra setup the first time an FBO is used. The FBO is called in render, i.e. when the FBO is bound
@@ -58,8 +38,13 @@ private:
   {
   }
 
-  QString m_render_function;
-  QVariantList m_render_arguments;
+  /// Dummy read value
+  cxx_wrap::SafeCFunction renderFunction() const
+  {
+    return cxx_wrap::SafeCFunction({nullptr, nullptr, nullptr});
+  }
+
+  render_callback_t m_render_function;
   Q_INVOKABLE void render();
   class JuliaRenderer;
 };
