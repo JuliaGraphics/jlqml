@@ -1,6 +1,7 @@
 #include <QApplication>
 #include <QLibraryInfo>
 #include <QPainter>
+#include <QPaintDevice>
 #include <QQmlApplicationEngine>
 #include <QQmlComponent>
 #include <QQmlContext>
@@ -364,7 +365,13 @@ JULIA_CPP_MODULE_BEGIN(registry)
   qml_module.add_type<qmlwrap::JuliaDisplay>("JuliaDisplay", julia_type("CppDisplay"))
     .method("load_png", &qmlwrap::JuliaDisplay::load_png);
 
-  qml_module.add_type<QPainter>("QPainter");
+  qml_module.add_type<QPaintDevice>("QPaintDevice")
+    .method("width", &QPaintDevice::width)
+    .method("height", &QPaintDevice::height)
+    .method("logicalDpiX", &QPaintDevice::logicalDpiX)
+    .method("logicalDpiY", &QPaintDevice::logicalDpiY);
+  qml_module.add_type<QPainter>("QPainter")
+    .method("device", &QPainter::device);
 
   qml_module.add_type<qmlwrap::ListModel>("ListModel", julia_type<QObject>())
     .constructor<const cxx_wrap::ArrayRef<jl_value_t*>&>()
@@ -378,4 +385,5 @@ JULIA_CPP_MODULE_BEGIN(registry)
 
   // Exports:
   qml_module.export_symbols("QQmlContext", "set_context_property", "root_context", "load", "qt_prefix_path", "set_source", "engine", "QByteArray", "QQmlComponent", "set_data", "create", "QQuickItem", "content_item", "JuliaObject", "QTimer", "context_property", "emit", "JuliaDisplay", "init_application", "qmlcontext", "init_qmlapplicationengine", "init_qmlengine", "init_qquickview", "exec", "exec_async", "ListModel", "addrole", "setconstructor", "QVariantMap");
+  qml_module.export_symbols("QPainter", "device", "width", "height", "logicalDpiX", "logicalDpiY");
 JULIA_CPP_MODULE_END

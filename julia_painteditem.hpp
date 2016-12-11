@@ -15,7 +15,7 @@ class JuliaPaintedItem : public QQuickPaintedItem
 {
   Q_OBJECT
   Q_PROPERTY(cxx_wrap::SafeCFunction paintFunction WRITE setPaintFunction)
-  typedef void (*callback_t)(void*);
+  typedef void (*callback_t)(QPainter*);
 public:
   JuliaPaintedItem(QQuickItem *parent = 0);
 

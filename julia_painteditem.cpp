@@ -24,7 +24,7 @@ void JuliaPaintedItem::paint(QPainter* painter)
 
 void JuliaPaintedItem::setPaintFunction(cxx_wrap::SafeCFunction f)
 {
-  m_callback = cxx_wrap::make_function_pointer<void(void*)>(f);
+  m_callback = cxx_wrap::make_function_pointer<void(QPainter*)>(f);
 }
 
 } // namespace qmlwrap
