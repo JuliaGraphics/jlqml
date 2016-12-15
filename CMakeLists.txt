@@ -33,6 +33,8 @@ if(WIN32)
 endif(WIN32)
 
 add_library(qmlwrap SHARED
+  application_manager.hpp
+  application_manager.cpp
   glvisualize_viewport.hpp
   glvisualize_viewport.cpp
   julia_api.hpp
