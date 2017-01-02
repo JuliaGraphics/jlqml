@@ -5,7 +5,7 @@ set(CMAKE_MACOSX_RPATH 1)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
-list(APPEND CMAKE_CXX_FLAGS "-std=c++11")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 add_definitions(-DJULIA_ENABLE_THREADING)
 
 find_package(Qt5Quick)
@@ -18,6 +18,11 @@ get_filename_component(QtCore_location ${QtCore_location} DIRECTORY)
 set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib;${CxxWrap_DIR}/../;${QtCore_location}")
 
 if(WIN32)
+  if(DEFINED ENV{MSYSTEM})
+    if($ENV{MSYSTEM} STREQUAL "MINGW32")
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=pentium4 -static-libstdc++ -static-libgcc")
+    endif()
+  endif()
   add_definitions(-DWIN32_LEAN_AND_MEAN)
   get_filename_component(VC_DIR "${CMAKE_LINKER}" DIRECTORY) # Visual studio dir is 3 levels up from the linker
   get_filename_component(VC_DIR "${VC_DIR}" DIRECTORY)
@@ -28,6 +33,20 @@ if(WIN32)
   get_filename_component(QML_DIR "${QML_DIR}" DIRECTORY)
   get_filename_component(QML_DIR "${QML_DIR}" DIRECTORY)
   set(QML_DIR "${QML_DIR}/example/qml")
+  if(CMAKE_GENERATOR STREQUAL "Unix Makefiles")
+    # set(CMAKE_AUTOSTATICPLUGINS ON) # Static build on MinGW
+    set(LIB_PREFIX_STR "lib")
+    # set(static_qt5_extralibs
+    #   Qt5::QLocalClientConnectionFactory
+    #   Qt5::QQmlDebugServerFactory
+    #   Qt5::QQmlDebuggerServiceFactory
+    #   Qt5::QQmlInspectorServiceFactory
+    #   Qt5::QQmlNativeDebugConnectorFactory
+    #   Qt5::QQmlProfilerServiceFactory
+    #   Qt5::QTcpServerConnectionFactory
+    #   "$ENV{QT_ROOT}/share/qt5/qml/QtQuick.2/libqtquick2plugin.a"
+    # )
+  endif()
   configure_file("${CMAKE_SOURCE_DIR}/cmake/WinDeployQt.cmake" "${CMAKE_BINARY_DIR}/WinDeployQt.cmake")
   qt5_add_resources(RESOURCES ${CMAKE_SOURCE_DIR}/resources/resources.qrc)
 endif(WIN32)
@@ -55,6 +74,7 @@ add_library(qmlwrap SHARED
   type_conversion.cpp
   wrap_qml.cpp
 ${MOC_BUILT_SOURCES} ${UI_BUILT_SOURCES} ${RESOURCES})
+
 target_link_libraries(qmlwrap Qt5::Core Qt5::Quick Qt5::Widgets CxxWrap::cxx_wrap)
 
 install(TARGETS
