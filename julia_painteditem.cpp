@@ -19,12 +19,12 @@ JuliaPaintedItem::JuliaPaintedItem(QQuickItem *parent) : QQuickPaintedItem(paren
 
 void JuliaPaintedItem::paint(QPainter* painter)
 {
-  m_callback(painter);
+  m_callback(painter, this);
 }
 
 void JuliaPaintedItem::setPaintFunction(cxx_wrap::SafeCFunction f)
 {
-  m_callback = cxx_wrap::make_function_pointer<void(QPainter*)>(f);
+  m_callback = cxx_wrap::make_function_pointer<void(QPainter*,JuliaPaintedItem*)>(f);
 }
 
 } // namespace qmlwrap

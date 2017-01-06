@@ -62,16 +62,20 @@ JULIA_CPP_MODULE_BEGIN(registry)
 
   qml_module.method("qt_prefix_path", []() { return QLibraryInfo::location(QLibraryInfo::PrefixPath); });
 
-  qml_module.add_abstract<QQuickItem>("QQuickItem");
-
   qml_module.add_abstract<QQuickWindow>("QQuickWindow")
-    .method("content_item", &QQuickWindow::contentItem);
+    .method("content_item", &QQuickWindow::contentItem)
+    .method("effectiveDevicePixelRatio", &QQuickWindow::effectiveDevicePixelRatio);
 
   qml_module.add_type<QQuickView>("QQuickView", julia_type<QQuickWindow>())
     .method("set_source", &QQuickView::setSource)
     .method("show", &QQuickView::show) // not exported: conflicts with Base.show
     .method("engine", &QQuickView::engine)
     .method("root_object", &QQuickView::rootObject);
+
+  qml_module.add_abstract<QQuickItem>("QQuickItem")
+    .method("window", &QQuickItem::window);
+
+  qml_module.add_type<qmlwrap::JuliaPaintedItem>("JuliaPaintedItem", julia_type<QQuickItem>());
 
   qml_module.add_type<QByteArray>("QByteArray").constructor<const char*>();
   qml_module.add_type<QQmlComponent>("QQmlComponent", julia_type<QObject>())
@@ -153,5 +157,5 @@ JULIA_CPP_MODULE_BEGIN(registry)
 
   // Exports:
   qml_module.export_symbols("QQmlContext", "set_context_property", "root_context", "load", "qt_prefix_path", "set_source", "engine", "QByteArray", "QQmlComponent", "set_data", "create", "QQuickItem", "content_item", "JuliaObject", "QTimer", "context_property", "emit", "JuliaDisplay", "init_application", "qmlcontext", "init_qmlapplicationengine", "init_qmlengine", "init_qquickview", "exec", "exec_async", "ListModel", "addrole", "setconstructor", "QVariantMap");
-  qml_module.export_symbols("QPainter", "device", "width", "height", "logicalDpiX", "logicalDpiY");
+  qml_module.export_symbols("QPainter", "device", "width", "height", "logicalDpiX", "logicalDpiY", "QQuickWindow", "effectiveDevicePixelRatio", "window", "JuliaPaintedItem");
 JULIA_CPP_MODULE_END

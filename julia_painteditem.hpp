@@ -14,15 +14,22 @@ namespace qmlwrap
 class JuliaPaintedItem : public QQuickPaintedItem
 {
   Q_OBJECT
-  Q_PROPERTY(cxx_wrap::SafeCFunction paintFunction WRITE setPaintFunction)
-  typedef void (*callback_t)(QPainter*);
+  Q_PROPERTY(cxx_wrap::SafeCFunction paintFunction READ paintFunction WRITE setPaintFunction)
+  typedef void (*callback_t)(QPainter*,JuliaPaintedItem*);
 public:
   JuliaPaintedItem(QQuickItem *parent = 0);
 
   void paint(QPainter* painter);
 
   void setPaintFunction(cxx_wrap::SafeCFunction f);
+
 private:
+  // Dummy read value for callback
+  cxx_wrap::SafeCFunction paintFunction() const
+  {
+    return cxx_wrap::SafeCFunction({nullptr, nullptr, nullptr});
+  }
+
   callback_t m_callback;
 };
 
