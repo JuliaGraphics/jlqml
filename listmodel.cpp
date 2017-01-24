@@ -249,14 +249,6 @@ int ListModel::count() const
 
 void ListModel::addrole(const std::string& name, jl_function_t* getter, jl_function_t* setter)
 {
-  if(!m_custom_roles)
-  {
-    m_rolenames.clear();
-    m_getters.clear();
-    m_setters.clear();
-    m_custom_roles = true;
-  }
-
   if(m_rolenames.values().contains(name.c_str()))
   {
     qWarning() << "Role " << name.c_str() << "exists, aborting add";
@@ -269,6 +261,14 @@ void ListModel::addrole(const std::string& name, jl_function_t* getter, jl_funct
     return;
   }
 
+  if(!m_custom_roles)
+  {
+    m_rolenames.clear();
+    m_getters.clear();
+    m_setters.clear();
+    m_custom_roles = true;
+  }
+
   cxx_wrap::protect_from_gc(getter);
   if(setter != nullptr)
   {
@@ -278,6 +278,90 @@ void ListModel::addrole(const std::string& name, jl_function_t* getter, jl_funct
   m_rolenames[m_rolenames.size()] = name.c_str();
   m_getters.push_back(getter);
   m_setters.push_back(setter);
+
+  emit rolesChanged();
+}
+
+void ListModel::setrole(const int idx, const std::string& name, jl_function_t* getter, jl_function_t* setter)
+{
+  if(idx >= m_getters.size() || idx < 0)
+  {
+    qWarning() << "Listmodel index " << idx << " is out of range, aborting setrole";
+    return;
+  }
+  if(m_rolenames.values().contains(name.c_str()) && m_rolenames.key(name.c_str()) != idx)
+  {
+    qWarning() << "Role " << name.c_str() << "exists, aborting setrole";
+    return;
+  }
+
+  if(getter == nullptr)
+  {
+    qWarning() << "Invalid getter for role " << name.c_str() << ", aborting setrole";
+    return;
+  }
+
+  cxx_wrap::unprotect_from_gc(m_getters[idx]);
+  if(m_setters[idx] != nullptr)
+  {
+    cxx_wrap::unprotect_from_gc(m_setters[idx]);
+  }
+
+  cxx_wrap::protect_from_gc(getter);
+  if(setter != nullptr)
+  {
+    cxx_wrap::protect_from_gc(setter);
+  }
+
+  m_getters[idx] = getter;
+  m_setters[idx] = setter;
+  if(m_rolenames[idx] == name.c_str())
+  {
+    emit dataChanged(createIndex(0, 0), createIndex(m_array.size() - 1, 0), QVector<int>() << idx);
+  }
+  else
+  {
+    m_rolenames[idx] = name.c_str();
+    emit rolesChanged();
+  }
+}
+
+void ListModel::removerole(const int idx)
+{
+  if(!m_rolenames.contains(idx))
+  {
+    qWarning() << "Request to delete non-existing role, aborting";
+    return;
+  }
+
+  cxx_wrap::unprotect_from_gc(m_getters[idx]);
+  if(m_setters[idx] != nullptr)
+  {
+    cxx_wrap::unprotect_from_gc(m_setters[idx]);
+  }
+
+  const int nb_roles = m_getters.size();
+  for(int i = idx; i != (nb_roles-1); ++i)
+  {
+    m_getters[i] = m_getters[i+1];
+    m_setters[i] = m_setters[i+1];
+    m_rolenames[i] = m_rolenames[i+1];
+  }
+  m_getters.resize(nb_roles-1);
+  m_setters.resize(nb_roles-1);
+  m_rolenames.remove(nb_roles-1);
+
+  emit rolesChanged();
+}
+
+void ListModel::removerole(const std::string& name)
+{
+  if(!m_rolenames.values().contains(name.c_str()))
+  {
+    qWarning() << "rolename " << name.c_str() << " not found, aborting removerole";
+    return;
+  }
+  removerole(m_rolenames.key(name.c_str()));
 }
 
 void ListModel::setconstructor(jl_function_t* constructor)
@@ -302,7 +386,6 @@ cxx_wrap::JuliaFunction ListModel::rolesetter(int role) const
   if(role < 0 || role >= m_rolenames.size())
   {
     qWarning() << "Role index " << role << " is out of range for ListModel, returning null setter";
-    throw std::runtime_error("Role index out of range");
   }
 
   return cxx_wrap::JuliaFunction(m_setters[role]);
@@ -320,6 +403,17 @@ void ListModel::do_update()
   {
     jl_call0(m_update_array);
   }
+}
+
+QStringList ListModel::roles() const
+{
+  const int nb_roles = m_rolenames.size();
+  QStringList rolelist;
+  for(int i = 0; i != nb_roles; ++i)
+  {
+    rolelist.push_back(m_rolenames[i]);
+  }
+  return rolelist;
 }
 
 } // namespace qmlwrap

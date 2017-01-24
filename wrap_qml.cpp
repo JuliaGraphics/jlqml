@@ -148,14 +148,18 @@ JULIA_CPP_MODULE_BEGIN(registry)
   qml_module.add_type<qmlwrap::ListModel>("ListModel", julia_type<QObject>())
     .constructor<const cxx_wrap::ArrayRef<jl_value_t*>&>()
     .constructor<const cxx_wrap::ArrayRef<jl_value_t*>&, jl_function_t*>()
-    .method("setconstructor", &qmlwrap::ListModel::setconstructor);
+    .method("setconstructor", &qmlwrap::ListModel::setconstructor)
+    .method("removerole", static_cast<void (qmlwrap::ListModel::*)(const int)>(&qmlwrap::ListModel::removerole))
+    .method("removerole", static_cast<void (qmlwrap::ListModel::*)(const std::string&)>(&qmlwrap::ListModel::removerole));
   qml_module.method("addrole", [] (qmlwrap::ListModel& m, const std::string& role, jl_function_t* getter) { m.addrole(role, getter); });
   qml_module.method("addrole", [] (qmlwrap::ListModel& m, const std::string& role, jl_function_t* getter, jl_function_t* setter) { m.addrole(role, getter, setter); });
+  qml_module.method("setrole", [] (qmlwrap::ListModel& m, const int idx, const std::string& role, jl_function_t* getter) { m.setrole(idx, role, getter); });
+  qml_module.method("setrole", [] (qmlwrap::ListModel& m, const int idx, const std::string& role, jl_function_t* getter, jl_function_t* setter) { m.setrole(idx, role, getter, setter); });
 
   qml_module.add_type<QVariantMap>("QVariantMap");
   qml_module.method("getindex", [](const QVariantMap& m, const QString& key) { return m[key]; });
 
   // Exports:
-  qml_module.export_symbols("QQmlContext", "set_context_property", "root_context", "load", "qt_prefix_path", "set_source", "engine", "QByteArray", "QQmlComponent", "set_data", "create", "QQuickItem", "content_item", "JuliaObject", "QTimer", "context_property", "emit", "JuliaDisplay", "init_application", "qmlcontext", "init_qmlapplicationengine", "init_qmlengine", "init_qquickview", "exec", "exec_async", "ListModel", "addrole", "setconstructor", "QVariantMap");
+  qml_module.export_symbols("QQmlContext", "set_context_property", "root_context", "load", "qt_prefix_path", "set_source", "engine", "QByteArray", "QQmlComponent", "set_data", "create", "QQuickItem", "content_item", "JuliaObject", "QTimer", "context_property", "emit", "JuliaDisplay", "init_application", "qmlcontext", "init_qmlapplicationengine", "init_qmlengine", "init_qquickview", "exec", "exec_async", "ListModel", "addrole", "setconstructor", "removerole", "setrole", "QVariantMap");
   qml_module.export_symbols("QPainter", "device", "width", "height", "logicalDpiX", "logicalDpiY", "QQuickWindow", "effectiveDevicePixelRatio", "window", "JuliaPaintedItem");
 JULIA_CPP_MODULE_END

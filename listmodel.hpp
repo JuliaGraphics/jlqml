@@ -18,6 +18,7 @@ class ListModel : public QAbstractListModel
 {
   Q_OBJECT
   Q_PROPERTY(int count READ count NOTIFY countChanged)
+  Q_PROPERTY(QStringList roles READ roles NOTIFY rolesChanged)
 public:
   /// Construction using an Array{Any,1}. f should be supplied as an update function to update the source array in case it is not an array of boxed values.
   ListModel(const cxx_wrap::ArrayRef<jl_value_t*>& array, jl_function_t* f = nullptr, QObject* parent = 0);
@@ -42,10 +43,17 @@ public:
 
   // Called from Julia
   void addrole(const std::string& name, jl_function_t* getter, jl_function_t* setter = nullptr);
+  void setrole(const int idx, const std::string& name, jl_function_t* getter, jl_function_t* setter = nullptr);
+  void removerole(const int idx);
+  void removerole(const std::string& name);
   void setconstructor(jl_function_t* constructor);
+
+  // Roles property
+  QStringList roles() const;
 
 Q_SIGNALS:
   void countChanged();
+  void rolesChanged();
 
 private:
   // Update the original array in case we are working with a boxed copy
