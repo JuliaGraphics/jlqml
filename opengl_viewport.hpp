@@ -8,6 +8,8 @@
 #include <QOpenGLFramebufferObject>
 #include <QQuickFramebufferObject>
 
+#include "type_conversion.hpp"
+
 namespace qmlwrap
 {
 

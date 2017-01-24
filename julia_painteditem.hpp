@@ -7,6 +7,8 @@
 #include <QObject>
 #include <QQuickPaintedItem>
 
+#include "type_conversion.hpp"
+
 namespace qmlwrap
 {
 

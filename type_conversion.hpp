@@ -2,9 +2,12 @@
 #define QML_TYPE_CONVERSION_H
 
 #include <cxx_wrap.hpp>
+#include <functions.hpp>
 
 #include <QString>
 #include <QVariant>
+
+Q_DECLARE_METATYPE(cxx_wrap::SafeCFunction)
 
 namespace cxx_wrap
 {

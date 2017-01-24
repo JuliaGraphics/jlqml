@@ -2,14 +2,10 @@
 #include <QFileInfo>
 #include <QUrl>
 
-#include <functions.hpp>
-
 #include "julia_display.hpp"
 #include "julia_object.hpp"
 #include "listmodel.hpp"
 #include "type_conversion.hpp"
-
-Q_DECLARE_METATYPE(cxx_wrap::SafeCFunction)
 
 namespace qmlwrap
 {
