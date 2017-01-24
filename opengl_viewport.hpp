@@ -16,8 +16,8 @@ class OpenGLViewport : public QQuickFramebufferObject
 {
   Q_OBJECT
   Q_PROPERTY(cxx_wrap::SafeCFunction renderFunction READ renderFunction WRITE setRenderFunction NOTIFY renderFunctionChanged)
-  typedef void (*render_callback_t)();
 public:
+  typedef void (*render_callback_t)();
   OpenGLViewport(QQuickItem *parent = 0);
 
   Renderer *createRenderer() const;
