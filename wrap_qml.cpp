@@ -63,8 +63,16 @@ JULIA_CPP_MODULE_BEGIN(registry)
   qml_module.method("qt_prefix_path", []() { return QLibraryInfo::location(QLibraryInfo::PrefixPath); });
 
   qml_module.add_abstract<QQuickWindow>("QQuickWindow")
-    .method("content_item", &QQuickWindow::contentItem)
-    .method("effectiveDevicePixelRatio", &QQuickWindow::effectiveDevicePixelRatio);
+    .method("content_item", &QQuickWindow::contentItem);
+
+  qml_module.method("effectiveDevicePixelRatio", [] (QQuickWindow& w)
+  {
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 4, 0))
+      return w.effectiveDevicePixelRatio();
+#else
+      return 1.0;
+#endif
+  });
 
   qml_module.add_type<QQuickView>("QQuickView", julia_type<QQuickWindow>())
     .method("set_source", &QQuickView::setSource)
