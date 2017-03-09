@@ -62,8 +62,12 @@ JULIA_CPP_MODULE_BEGIN(registry)
 
   qml_module.method("qt_prefix_path", []() { return QLibraryInfo::location(QLibraryInfo::PrefixPath); });
 
+  auto qquickitem_type = qml_module.add_abstract<QQuickItem>("QQuickItem");
+
   qml_module.add_abstract<QQuickWindow>("QQuickWindow")
     .method("content_item", &QQuickWindow::contentItem);
+
+  qquickitem_type.method("window", &QQuickItem::window);
 
   qml_module.method("effectiveDevicePixelRatio", [] (QQuickWindow& w)
   {
@@ -79,9 +83,6 @@ JULIA_CPP_MODULE_BEGIN(registry)
     .method("show", &QQuickView::show) // not exported: conflicts with Base.show
     .method("engine", &QQuickView::engine)
     .method("root_object", &QQuickView::rootObject);
-
-  qml_module.add_abstract<QQuickItem>("QQuickItem")
-    .method("window", &QQuickItem::window);
 
   qml_module.add_type<qmlwrap::JuliaPaintedItem>("JuliaPaintedItem", julia_type<QQuickItem>());
 
