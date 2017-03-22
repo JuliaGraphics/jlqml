@@ -73,6 +73,12 @@ struct ConvertToCpp<QUrl, false, false, false>
   QUrl operator()(jl_value_t* julia_string) const;
 };
 
+template<>
+struct ConvertToCpp<QObject*, false, false, false>
+{
+  QObject* operator()(jl_value_t* julia_value) const;
+};
+
 } // namespace cxx_wrap
 
 

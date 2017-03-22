@@ -86,7 +86,7 @@ jl_value_t* try_qobject_cast(QObject* o)
   Type1* cast_o = qobject_cast<Type1*>(o);
   {
     if(cast_o != nullptr)
-      return cxx_wrap::convert_to_julia(cast_o);
+      return cxx_wrap::box(cast_o);
     return try_qobject_cast<TypesT...>(o);
   }
 }
@@ -190,6 +190,11 @@ QUrl ConvertToCpp<QUrl, false, false, false>::operator()(jl_value_t* julia_strin
     return QUrl(qstr);
   }
   return QUrl::fromLocalFile(qstr);
+}
+
+QObject* ConvertToCpp<QObject*, false, false, false>::operator()(jl_value_t* julia_value) const
+{
+  return cxx_wrap::julia_cast<QObject>(julia_value);
 }
 
 } // namespace cxx_wrap

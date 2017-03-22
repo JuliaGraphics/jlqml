@@ -47,7 +47,7 @@ JULIA_CPP_MODULE_BEGIN(registry)
   qmlRegisterType<qmlwrap::OpenGLViewport>("org.julialang", 1, 0, "OpenGLViewport");
   qmlRegisterType<qmlwrap::GLVisualizeViewport>("org.julialang", 1, 0, "GLVisualizeViewport");
 
-  qml_module.add_abstract<QObject>("QObject");
+  qml_module.add_type<QObject>("QObject");
 
   qml_module.add_type<QQmlContext>("QQmlContext", julia_type<QObject>())
     .method("context_property", &QQmlContext::contextProperty);
@@ -62,9 +62,9 @@ JULIA_CPP_MODULE_BEGIN(registry)
 
   qml_module.method("qt_prefix_path", []() { return QLibraryInfo::location(QLibraryInfo::PrefixPath); });
 
-  auto qquickitem_type = qml_module.add_abstract<QQuickItem>("QQuickItem");
+  auto qquickitem_type = qml_module.add_type<QQuickItem>("QQuickItem");
 
-  qml_module.add_abstract<QQuickWindow>("QQuickWindow")
+  qml_module.add_type<QQuickWindow>("QQuickWindow")
     .method("content_item", &QQuickWindow::contentItem);
 
   qquickitem_type.method("window", &QQuickItem::window);
