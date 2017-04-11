@@ -42,7 +42,9 @@ namespace detail
     MAKE_Q_ARG(bool)
     MAKE_Q_ARG(double)
     MAKE_Q_ARG(int)
-    if(jl_type_morespecific(jl_typeof(v), (jl_value_t*)cxx_wrap::julia_type<QString>()))
+    jl_value_t* from_t = jl_typeof(v);
+    jl_value_t* to_t = (jl_value_t*)cxx_wrap::julia_type<QString>();
+    if(from_t == to_t || jl_type_morespecific(from_t, to_t))
     {
       auto ptr = std::make_shared<argument_wrapper_impl<QString>>();
       wrappers.push_back(ptr);

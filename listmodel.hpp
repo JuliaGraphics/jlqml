@@ -1,8 +1,8 @@
 #ifndef QML_LISTMODEL_H
 #define QML_LISTMODEL_H
 
-#include <string>
 #include <map>
+#include <string>
 
 #include <QAbstractListModel>
 #include <QJSValue>
@@ -12,6 +12,23 @@
 
 namespace qmlwrap
 {
+
+/// Encapsulate a list of functions, managing their lifetime using (un)protect_from_gc
+class FunctionList
+{
+public:
+  jl_function_t* get(const size_t i) const;
+  void set(const size_t i, jl_function_t* val);
+  void clear();
+  void push_back(jl_function_t* f);
+  void erase(const size_t idx);
+  size_t size() const;
+  ~FunctionList();
+private:
+  void protect(jl_function_t* f);
+  void unprotect(jl_function_t* f);
+  std::vector<jl_function_t*> m_functions;
+};
 
 /// Wrap Julia composite types
 class ListModel : public QAbstractListModel
@@ -71,8 +88,8 @@ private:
   jl_function_t* m_constructor = nullptr;
   jl_function_t* m_update_array = nullptr; // Function used to update an array with non-boxed contents
   bool m_custom_roles = false;
-  std::vector<jl_function_t*> m_getters;
-  std::vector<jl_function_t*> m_setters;
+  FunctionList m_getters;
+  FunctionList m_setters;
 };
 
 }

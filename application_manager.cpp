@@ -14,7 +14,9 @@ void set_context_property(QQmlContext* ctx, const QString& name, jl_value_t* v)
     return;
   }
 
-  if(jl_type_morespecific(jl_typeof(v), (jl_value_t*)cxx_wrap::julia_type<QObject>()))
+  jl_value_t* from_t = jl_typeof(v);
+  jl_value_t* to_t = (jl_value_t*)cxx_wrap::julia_type<QObject>();
+  if(from_t == to_t || jl_type_morespecific(from_t, to_t))
   {
     // Protect object from garbage collection in case the caller did not bind it to a Julia variable
     cxx_wrap::protect_from_gc(v);

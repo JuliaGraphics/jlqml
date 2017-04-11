@@ -7,6 +7,75 @@
 namespace qmlwrap
 {
 
+jl_function_t* FunctionList::get(const size_t i) const
+{
+  assert(i < m_functions.size());
+  return m_functions[i];
+}
+
+void FunctionList::set(const size_t i, jl_function_t* val)
+{
+  assert(i < m_functions.size());
+  protect(val);
+  unprotect(m_functions[i]);
+  m_functions[i] = val;
+}
+
+void FunctionList::clear()
+{
+  for(jl_function_t* f : m_functions)
+  {
+    unprotect(f);
+  }
+  m_functions.clear();
+}
+
+void FunctionList::push_back(jl_function_t* f)
+{
+  protect(f);
+  m_functions.push_back(f);
+}
+
+void FunctionList::erase(const size_t idx)
+{
+  assert(idx < m_functions.size());
+  unprotect(m_functions[idx]);
+  const int nb_functions = size();
+  for(int i = idx; i != (nb_functions-1); ++i)
+  {
+    m_functions[i] = m_functions[i+1];
+  }
+  m_functions.resize(nb_functions-1);
+}
+
+size_t FunctionList::size() const
+{
+  return m_functions.size();
+}
+
+FunctionList::~FunctionList()
+{
+  clear();
+}
+
+void FunctionList::protect(jl_function_t* f)
+{
+  if(f == nullptr)
+  {
+    return;
+  }
+  cxx_wrap::protect_from_gc(f);
+}
+
+void FunctionList::unprotect(jl_function_t* f)
+{
+  if(f == nullptr)
+  {
+    return;
+  }
+  cxx_wrap::unprotect_from_gc(f);
+}
+
 ListModel::ListModel(const cxx_wrap::ArrayRef<jl_value_t*>& array, jl_function_t* f, QObject* parent) : QAbstractListModel(parent), m_array(array), m_update_array(f)
 {
   m_rolenames[0] = "string";
@@ -26,18 +95,9 @@ ListModel::~ListModel()
   {
     cxx_wrap::unprotect_from_gc(m_update_array);
   }
-
-  for(jl_function_t* f : m_getters)
+  if(m_constructor != nullptr)
   {
-    cxx_wrap::unprotect_from_gc(f);
-  }
-
-  for(jl_function_t* f : m_setters)
-  {
-    if(f != nullptr)
-    {
-      cxx_wrap::unprotect_from_gc(f);
-    }
+    cxx_wrap::unprotect_from_gc(m_constructor);
   }
 }
 
@@ -269,12 +329,6 @@ void ListModel::addrole(const std::string& name, jl_function_t* getter, jl_funct
     m_custom_roles = true;
   }
 
-  cxx_wrap::protect_from_gc(getter);
-  if(setter != nullptr)
-  {
-    cxx_wrap::protect_from_gc(setter);
-  }
-
   m_rolenames[m_rolenames.size()] = name.c_str();
   m_getters.push_back(getter);
   m_setters.push_back(setter);
@@ -301,20 +355,8 @@ void ListModel::setrole(const int idx, const std::string& name, jl_function_t* g
     return;
   }
 
-  cxx_wrap::unprotect_from_gc(m_getters[idx]);
-  if(m_setters[idx] != nullptr)
-  {
-    cxx_wrap::unprotect_from_gc(m_setters[idx]);
-  }
-
-  cxx_wrap::protect_from_gc(getter);
-  if(setter != nullptr)
-  {
-    cxx_wrap::protect_from_gc(setter);
-  }
-
-  m_getters[idx] = getter;
-  m_setters[idx] = setter;
+  m_getters.set(idx, getter);
+  m_setters.set(idx, setter);
   if(m_rolenames[idx] == name.c_str())
   {
     emit dataChanged(createIndex(0, 0), createIndex(m_array.size() - 1, 0), QVector<int>() << idx);
@@ -334,22 +376,15 @@ void ListModel::removerole(const int idx)
     return;
   }
 
-  cxx_wrap::unprotect_from_gc(m_getters[idx]);
-  if(m_setters[idx] != nullptr)
-  {
-    cxx_wrap::unprotect_from_gc(m_setters[idx]);
-  }
-
   const int nb_roles = m_getters.size();
   for(int i = idx; i != (nb_roles-1); ++i)
   {
-    m_getters[i] = m_getters[i+1];
-    m_setters[i] = m_setters[i+1];
     m_rolenames[i] = m_rolenames[i+1];
   }
-  m_getters.resize(nb_roles-1);
-  m_setters.resize(nb_roles-1);
   m_rolenames.remove(nb_roles-1);
+
+  m_getters.erase(idx);
+  m_setters.erase(idx);
 
   emit rolesChanged();
 }
@@ -378,7 +413,7 @@ cxx_wrap::JuliaFunction ListModel::rolegetter(int role) const
     return cxx_wrap::JuliaFunction("string");
   }
 
-  return cxx_wrap::JuliaFunction(m_getters[role]);
+  return cxx_wrap::JuliaFunction(m_getters.get(role));
 }
 
 cxx_wrap::JuliaFunction ListModel::rolesetter(int role) const
@@ -388,7 +423,7 @@ cxx_wrap::JuliaFunction ListModel::rolesetter(int role) const
     qWarning() << "Role index " << role << " is out of range for ListModel, returning null setter";
   }
 
-  return cxx_wrap::JuliaFunction(m_setters[role]);
+  return cxx_wrap::JuliaFunction(m_setters.get(role));
 }
 
 void ListModel::do_update(int index, int count, const QVector<int> &roles)

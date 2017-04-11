@@ -22,6 +22,14 @@
 #include "glvisualize_viewport.hpp"
 #include "type_conversion.hpp"
 
+namespace cxx_wrap
+{
+
+template<> struct SuperType<QQuickView> { typedef QQuickWindow type; };
+template<> struct SuperType<qmlwrap::JuliaPaintedItem> { typedef QQuickItem type; };
+
+}
+
 namespace qmlwrap
 {
 

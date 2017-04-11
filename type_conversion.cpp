@@ -16,7 +16,9 @@ namespace detail
 template<typename CppT>
 QVariant convert_to_qt(jl_value_t* v)
 {
-  if(jl_type_morespecific(jl_typeof(v), (jl_value_t*)cxx_wrap::julia_type<CppT>()))
+  jl_value_t* from_t = jl_typeof(v);
+  jl_value_t* to_t = (jl_value_t*)cxx_wrap::julia_type<CppT>();
+  if(from_t == to_t || jl_type_morespecific(from_t, to_t))
   {
     return QVariant::fromValue(cxx_wrap::convert_to_cpp<CppT>(v));
   }
@@ -86,7 +88,9 @@ jl_value_t* try_qobject_cast(QObject* o)
   Type1* cast_o = qobject_cast<Type1*>(o);
   {
     if(cast_o != nullptr)
+    {
       return cxx_wrap::box(cast_o);
+    }
     return try_qobject_cast<TypesT...>(o);
   }
 }
@@ -194,7 +198,7 @@ QUrl ConvertToCpp<QUrl, false, false, false>::operator()(jl_value_t* julia_strin
 
 QObject* ConvertToCpp<QObject*, false, false, false>::operator()(jl_value_t* julia_value) const
 {
-  return cxx_wrap::julia_cast<QObject>(julia_value);
+  return cxx_wrap::unbox_wrapped_ptr<QObject>(julia_value);
 }
 
 } // namespace cxx_wrap
