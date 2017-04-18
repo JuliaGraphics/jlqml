@@ -46,7 +46,7 @@ QVariant JuliaAPI::call(const QString& fname, const QVariantList& args)
   result = jl_call(func, julia_args, nb_args);
   if (jl_exception_occurred())
   {
-    jl_show(jl_stderr_obj(), jl_exception_occurred());
+    jl_call2(jl_get_function(jl_base_module, "show"), jl_stderr_obj(), jl_exception_occurred());
     jl_printf(jl_stderr_stream(), "\n");
     JL_GC_POP();
     JL_GC_POP();
