@@ -1,4 +1,4 @@
-#include <functions.hpp>
+#include "jlcxx/functions.hpp"
 
 #include <QDebug>
 #include <QQmlListProperty>
@@ -64,7 +64,7 @@ void FunctionList::protect(jl_function_t* f)
   {
     return;
   }
-  cxx_wrap::protect_from_gc(f);
+  jlcxx::protect_from_gc(f);
 }
 
 void FunctionList::unprotect(jl_function_t* f)
@@ -73,31 +73,31 @@ void FunctionList::unprotect(jl_function_t* f)
   {
     return;
   }
-  cxx_wrap::unprotect_from_gc(f);
+  jlcxx::unprotect_from_gc(f);
 }
 
-ListModel::ListModel(const cxx_wrap::ArrayRef<jl_value_t*>& array, jl_function_t* f, QObject* parent) : QAbstractListModel(parent), m_array(array), m_update_array(f)
+ListModel::ListModel(const jlcxx::ArrayRef<jl_value_t*>& array, jl_function_t* f, QObject* parent) : QAbstractListModel(parent), m_array(array), m_update_array(f)
 {
   m_rolenames[0] = "string";
-  m_getters.push_back(cxx_wrap::JuliaFunction("string").pointer());
+  m_getters.push_back(jlcxx::JuliaFunction("string").pointer());
   m_setters.push_back(nullptr);
-  cxx_wrap::protect_from_gc(m_array.wrapped());
+  jlcxx::protect_from_gc(m_array.wrapped());
   if(f != nullptr)
   {
-    cxx_wrap::protect_from_gc(f);
+    jlcxx::protect_from_gc(f);
   }
 }
 
 ListModel::~ListModel()
 {
-  cxx_wrap::unprotect_from_gc(m_array.wrapped());
+  jlcxx::unprotect_from_gc(m_array.wrapped());
   if(m_update_array != nullptr)
   {
-    cxx_wrap::unprotect_from_gc(m_update_array);
+    jlcxx::unprotect_from_gc(m_update_array);
   }
   if(m_constructor != nullptr)
   {
-    cxx_wrap::unprotect_from_gc(m_constructor);
+    jlcxx::unprotect_from_gc(m_constructor);
   }
 }
 
@@ -113,7 +113,7 @@ QVariant ListModel::data(const QModelIndex& index, int role) const
     qWarning() << "Row index " << index << " is out of range for ListModel";
     return QVariant();
   }
-  QVariant result = cxx_wrap::convert_to_cpp<QVariant>(rolegetter(role)(m_array[index.row()]));
+  QVariant result = jlcxx::convert_to_cpp<QVariant>(rolegetter(role)(m_array[index.row()]));
   return result;
 }
 
@@ -132,7 +132,7 @@ bool ListModel::setData(const QModelIndex& index, const QVariant& value, int rol
 
   try
   {
-    rolesetter(role)((jl_value_t*)m_array.wrapped(), cxx_wrap::box(value), index.row()+1);
+    rolesetter(role)((jl_value_t*)m_array.wrapped(), jlcxx::box(value), index.row()+1);
     do_update(index.row(), 1, QVector<int>() << role);
     return true;
   }
@@ -164,7 +164,7 @@ void ListModel::append_list(const QVariantList& argvariants)
   JL_GC_PUSHARGS(julia_args, nb_args);
   for(int i = 0; i != nb_args; ++i)
   {
-    julia_args[i] = cxx_wrap::convert_to_julia(argvariants[i]);
+    julia_args[i] = jlcxx::convert_to_julia(argvariants[i]);
   }
 
   result = jl_call(m_constructor, julia_args, nb_args);
@@ -402,28 +402,28 @@ void ListModel::removerole(const std::string& name)
 void ListModel::setconstructor(jl_function_t* constructor)
 {
   m_constructor = constructor;
-  cxx_wrap::protect_from_gc(m_constructor);
+  jlcxx::protect_from_gc(m_constructor);
 }
 
-cxx_wrap::JuliaFunction ListModel::rolegetter(int role) const
+jlcxx::JuliaFunction ListModel::rolegetter(int role) const
 {
   if(role < 0 || role >= m_rolenames.size())
   {
     qWarning() << "Role index " << role << " is out of range for ListModel, defaulting to string conversion";
-    return cxx_wrap::JuliaFunction("string");
+    return jlcxx::JuliaFunction("string");
   }
 
-  return cxx_wrap::JuliaFunction(m_getters.get(role));
+  return jlcxx::JuliaFunction(m_getters.get(role));
 }
 
-cxx_wrap::JuliaFunction ListModel::rolesetter(int role) const
+jlcxx::JuliaFunction ListModel::rolesetter(int role) const
 {
   if(role < 0 || role >= m_rolenames.size())
   {
     qWarning() << "Role index " << role << " is out of range for ListModel, returning null setter";
   }
 
-  return cxx_wrap::JuliaFunction(m_setters.get(role));
+  return jlcxx::JuliaFunction(m_setters.get(role));
 }
 
 void ListModel::do_update(int index, int count, const QVector<int> &roles)

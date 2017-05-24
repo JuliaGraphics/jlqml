@@ -1,8 +1,8 @@
 #ifndef QML_JULIA_PAINTEDITEM_H
 #define QML_JULIA_PAINTEDITEM_H
 
-#include <cxx_wrap.hpp>
-#include <functions.hpp>
+#include "jlcxx/jlcxx.hpp"
+#include "jlcxx/functions.hpp"
 
 #include <QObject>
 #include <QQuickPaintedItem>
@@ -16,20 +16,20 @@ namespace qmlwrap
 class JuliaPaintedItem : public QQuickPaintedItem
 {
   Q_OBJECT
-  Q_PROPERTY(cxx_wrap::SafeCFunction paintFunction READ paintFunction WRITE setPaintFunction)
+  Q_PROPERTY(jlcxx::SafeCFunction paintFunction READ paintFunction WRITE setPaintFunction)
 public:
   typedef void (*callback_t)(QPainter*,JuliaPaintedItem*);
   JuliaPaintedItem(QQuickItem *parent = 0);
 
   void paint(QPainter* painter);
 
-  void setPaintFunction(cxx_wrap::SafeCFunction f);
+  void setPaintFunction(jlcxx::SafeCFunction f);
 
 private:
   // Dummy read value for callback
-  cxx_wrap::SafeCFunction paintFunction() const
+  jlcxx::SafeCFunction paintFunction() const
   {
-    return cxx_wrap::SafeCFunction({nullptr, nullptr, nullptr});
+    return jlcxx::SafeCFunction({nullptr, nullptr, nullptr});
   }
 
   callback_t m_callback;

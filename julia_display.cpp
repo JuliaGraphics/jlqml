@@ -14,7 +14,7 @@ void JuliaDisplay::paint(QPainter *painter)
   painter->drawPixmap(0,0,m_pixmap);
 }
 
-void JuliaDisplay::load_png(cxx_wrap::ArrayRef<unsigned char> data)
+void JuliaDisplay::load_png(jlcxx::ArrayRef<unsigned char> data)
 {
   if(m_pixmap.isNull())
   {

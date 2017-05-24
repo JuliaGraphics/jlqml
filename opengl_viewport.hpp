@@ -1,8 +1,8 @@
 #ifndef QML_opengl_viewport_H
 #define QML_opengl_viewport_H
 
-#include <cxx_wrap.hpp>
-#include <functions.hpp>
+#include "jlcxx/jlcxx.hpp"
+#include "jlcxx/functions.hpp"
 
 #include <QObject>
 #include <QOpenGLFramebufferObject>
@@ -17,14 +17,14 @@ namespace qmlwrap
 class OpenGLViewport : public QQuickFramebufferObject
 {
   Q_OBJECT
-  Q_PROPERTY(cxx_wrap::SafeCFunction renderFunction READ renderFunction WRITE setRenderFunction NOTIFY renderFunctionChanged)
+  Q_PROPERTY(jlcxx::SafeCFunction renderFunction READ renderFunction WRITE setRenderFunction NOTIFY renderFunctionChanged)
 public:
   typedef void (*render_callback_t)();
   OpenGLViewport(QQuickItem *parent = 0);
 
   Renderer *createRenderer() const;
 
-  void setRenderFunction(cxx_wrap::SafeCFunction f);
+  void setRenderFunction(jlcxx::SafeCFunction f);
 
 signals:
   void renderFunctionChanged();
@@ -41,9 +41,9 @@ private:
   }
 
   /// Dummy read value
-  cxx_wrap::SafeCFunction renderFunction() const
+  jlcxx::SafeCFunction renderFunction() const
   {
-    return cxx_wrap::SafeCFunction({nullptr, nullptr, nullptr});
+    return jlcxx::SafeCFunction({nullptr, nullptr, nullptr});
   }
 
   render_callback_t m_render_function;

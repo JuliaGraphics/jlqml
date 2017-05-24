@@ -32,7 +32,7 @@ QVariant JuliaAPI::call(const QString& fname, const QVariantList& args)
   // Process arguments
   for(int i = 0; i != nb_args; ++i)
   {
-    julia_args[i] = cxx_wrap::convert_to_julia(args.at(i));
+    julia_args[i] = jlcxx::convert_to_julia(args.at(i));
     if(julia_args[i] == nullptr)
     {
       qWarning() << "Julia argument type for function " << fname << " is unsupported:" << args[i].typeName();
@@ -60,10 +60,10 @@ QVariant JuliaAPI::call(const QString& fname, const QVariantList& args)
   }
   else if(!jl_is_nothing(result))
   {
-    result_var = cxx_wrap::convert_to_cpp<QVariant>(result);
+    result_var = jlcxx::convert_to_cpp<QVariant>(result);
     if(result_var.isNull())
     {
-      qWarning() << "Julia method " << fname << " returns unsupported " << QString(cxx_wrap::julia_type_name((jl_datatype_t*)jl_typeof(result)).c_str());
+      qWarning() << "Julia method " << fname << " returns unsupported " << QString(jlcxx::julia_type_name((jl_datatype_t*)jl_typeof(result)).c_str());
     }
   }
   JL_GC_POP();

@@ -11,7 +11,7 @@
 #include <QSurfaceFormat>
 #include <QtQml>
 
-#include <cxx_wrap.hpp>
+#include "jlcxx/jlcxx.hpp"
 
 namespace qmlwrap
 {
@@ -37,7 +37,7 @@ public:
   QQmlEngine* init_qmlengine();
   QQuickView* init_qquickview();
 
-  void add_context_properties(cxx_wrap::ArrayRef<jl_value_t*> property_names, cxx_wrap::ArrayRef<jl_value_t*> properties);
+  void add_context_properties(jlcxx::ArrayRef<jl_value_t*> property_names, jlcxx::ArrayRef<jl_value_t*> properties);
 
   QQmlContext* root_context();
 

@@ -1,4 +1,4 @@
-#include <functions.hpp>
+#include "jlcxx/functions.hpp"
 
 #include <QPainter>
 
@@ -22,9 +22,9 @@ void JuliaPaintedItem::paint(QPainter* painter)
   m_callback(painter, this);
 }
 
-void JuliaPaintedItem::setPaintFunction(cxx_wrap::SafeCFunction f)
+void JuliaPaintedItem::setPaintFunction(jlcxx::SafeCFunction f)
 {
-  m_callback = cxx_wrap::make_function_pointer<void(QPainter*,JuliaPaintedItem*)>(f);
+  m_callback = jlcxx::make_function_pointer<void(QPainter*,JuliaPaintedItem*)>(f);
 }
 
 } // namespace qmlwrap

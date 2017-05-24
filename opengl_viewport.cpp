@@ -77,9 +77,9 @@ QQuickFramebufferObject::Renderer* OpenGLViewport::createRenderer() const
   return new JuliaRenderer();
 }
 
-void OpenGLViewport::setRenderFunction(cxx_wrap::SafeCFunction f)
+void OpenGLViewport::setRenderFunction(jlcxx::SafeCFunction f)
 {
-  m_render_function = cxx_wrap::make_function_pointer<void(void)>(f);
+  m_render_function = jlcxx::make_function_pointer<void(void)>(f);
   emit renderFunctionChanged();
 }
 

@@ -1,18 +1,18 @@
 #ifndef QML_TYPE_CONVERSION_H
 #define QML_TYPE_CONVERSION_H
 
-#include <cxx_wrap.hpp>
-#include <functions.hpp>
+#include "jlcxx/jlcxx.hpp"
+#include "jlcxx/functions.hpp"
 
 #include <QString>
 #include <QVariant>
 
-Q_DECLARE_METATYPE(cxx_wrap::SafeCFunction)
+Q_DECLARE_METATYPE(jlcxx::SafeCFunction)
 
-namespace cxx_wrap
+namespace jlcxx
 {
 
-/// Some helper functions for conversion between Julia and Qt, added to the cxx_wrap namespace to make them automatic
+/// Some helper functions for conversion between Julia and Qt, added to the jlcxx namespace to make them automatic
 
 template<>
 struct ConvertToCpp<QVariant, false, false, false>
@@ -79,7 +79,7 @@ struct ConvertToCpp<QObject*, false, false, false>
   QObject* operator()(jl_value_t* julia_value) const;
 };
 
-} // namespace cxx_wrap
+} // namespace jlcxx
 
 
 #endif

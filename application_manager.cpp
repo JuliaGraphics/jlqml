@@ -15,20 +15,20 @@ void set_context_property(QQmlContext* ctx, const QString& name, jl_value_t* v)
   }
 
   jl_value_t* from_t = jl_typeof(v);
-  jl_value_t* to_t = (jl_value_t*)cxx_wrap::julia_type<QObject>();
+  jl_value_t* to_t = (jl_value_t*)jlcxx::julia_type<QObject>();
   if(from_t == to_t || jl_type_morespecific(from_t, to_t))
   {
     // Protect object from garbage collection in case the caller did not bind it to a Julia variable
-    cxx_wrap::protect_from_gc(v);
+    jlcxx::protect_from_gc(v);
 
     // Make sure it gets freed on context destruction
-    QObject::connect(ctx, &QQmlContext::destroyed, [=] (QObject*) { cxx_wrap::unprotect_from_gc(v); });
+    QObject::connect(ctx, &QQmlContext::destroyed, [=] (QObject*) { jlcxx::unprotect_from_gc(v); });
 
-    ctx->setContextProperty(name, cxx_wrap::convert_to_cpp<QObject*>(v));
+    ctx->setContextProperty(name, jlcxx::convert_to_cpp<QObject*>(v));
     return;
   }
 
-  QVariant qt_var = cxx_wrap::convert_to_cpp<QVariant>(v);
+  QVariant qt_var = jlcxx::convert_to_cpp<QVariant>(v);
   if(!qt_var.isNull())
   {
     ctx->setContextProperty(name, qt_var);
@@ -112,7 +112,7 @@ QQuickView* ApplicationManager::init_qquickview()
   return view;
 }
 
-void ApplicationManager::add_context_properties(cxx_wrap::ArrayRef<jl_value_t*> property_names, cxx_wrap::ArrayRef<jl_value_t*> properties)
+void ApplicationManager::add_context_properties(jlcxx::ArrayRef<jl_value_t*> property_names, jlcxx::ArrayRef<jl_value_t*> properties)
 {
   if(property_names.size() != properties.size())
   {
@@ -121,7 +121,7 @@ void ApplicationManager::add_context_properties(cxx_wrap::ArrayRef<jl_value_t*> 
   const std::size_t nb_props = properties.size();
   for(std::size_t i = 0; i != nb_props; ++i)
   {
-    set_context_property(m_root_ctx, cxx_wrap::convert_to_cpp<QString>(property_names[i]), properties[i]);
+    set_context_property(m_root_ctx, jlcxx::convert_to_cpp<QString>(property_names[i]), properties[i]);
   }
 }
 

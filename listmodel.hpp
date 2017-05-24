@@ -38,7 +38,7 @@ class ListModel : public QAbstractListModel
   Q_PROPERTY(QStringList roles READ roles NOTIFY rolesChanged)
 public:
   /// Construction using an Array{Any,1}. f should be supplied as an update function to update the source array in case it is not an array of boxed values.
-  ListModel(const cxx_wrap::ArrayRef<jl_value_t*>& array, jl_function_t* f = nullptr, QObject* parent = 0);
+  ListModel(const jlcxx::ArrayRef<jl_value_t*>& array, jl_function_t* f = nullptr, QObject* parent = 0);
   virtual ~ListModel();
 
   // QAbstractItemModel interface
@@ -81,9 +81,9 @@ private:
   void append_list(const QVariantList& argvariants);
   void insert_list(int index, const QVariantList& argvariants);
 
-  cxx_wrap::JuliaFunction rolesetter(int role) const;
-  cxx_wrap::JuliaFunction rolegetter(int role) const;
-  cxx_wrap::ArrayRef<jl_value_t*> m_array;
+  jlcxx::JuliaFunction rolesetter(int role) const;
+  jlcxx::JuliaFunction rolegetter(int role) const;
+  jlcxx::ArrayRef<jl_value_t*> m_array;
   QHash<int, QByteArray> m_rolenames;
   jl_function_t* m_constructor = nullptr;
   jl_function_t* m_update_array = nullptr; // Function used to update an array with non-boxed contents

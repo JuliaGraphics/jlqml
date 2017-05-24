@@ -12,9 +12,9 @@ JuliaObject::JuliaObject(jl_value_t* julia_object, QObject* parent) : QQmlProper
     const uint32_t nb_fields = jl_datatype_nfields(dt);
     for(uint32_t i = 0; i != nb_fields; ++i)
     {
-      const std::string fname = cxx_wrap::symbol_name(jl_field_name(dt, i));
+      const std::string fname = jlcxx::symbol_name(jl_field_name(dt, i));
       jl_value_t* field_val = jl_fieldref(julia_object, i);
-      QVariant qt_fd = cxx_wrap::convert_to_cpp<QVariant>(field_val);
+      QVariant qt_fd = jlcxx::convert_to_cpp<QVariant>(field_val);
       if(!qt_fd.isNull())
       {
         m_field_mapping[fname] = i;
@@ -27,7 +27,7 @@ JuliaObject::JuliaObject(jl_value_t* julia_object, QObject* parent) : QQmlProper
       }
       else
       {
-        qWarning() << "not converting unsupported field " << fname.c_str() << " of type " << cxx_wrap::julia_type_name((jl_datatype_t*)jl_typeof(field_val)).c_str();
+        qWarning() << "not converting unsupported field " << fname.c_str() << " of type " << jlcxx::julia_type_name((jl_datatype_t*)jl_typeof(field_val)).c_str();
       }
     }
   }
@@ -51,7 +51,7 @@ void JuliaObject::onValueChanged(const QString &key, const QVariant &value)
     qWarning() << "value change on unmapped field: " << key << ": " << value;
     return;
   }
-  jl_value_t* val = cxx_wrap::convert_to_julia(value);
+  jl_value_t* val = jlcxx::convert_to_julia(value);
   JL_GC_PUSH1(&val);
   jl_set_nth_field(m_julia_object, map_it->second, val);
   JL_GC_POP();

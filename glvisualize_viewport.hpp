@@ -1,7 +1,7 @@
 #ifndef QML_glvisualize_viewport_H
 #define QML_glvisualize_viewport_H
 
-#include <cxx_wrap.hpp>
+#include "jlcxx/jlcxx.hpp"
 
 #include "opengl_viewport.hpp"
 

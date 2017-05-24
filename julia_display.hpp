@@ -1,7 +1,7 @@
 #ifndef QML_JULIA_DISPLAY_H
 #define QML_JULIA_DISPLAY_H
 
-#include <cxx_wrap.hpp>
+#include "jlcxx/jlcxx.hpp"
 
 #include <QObject>
 #include <QPixmap>
@@ -20,7 +20,7 @@ public:
 
   void paint(QPainter *painter);
 
-  void load_png(cxx_wrap::ArrayRef<unsigned char> data);
+  void load_png(jlcxx::ArrayRef<unsigned char> data);
 
   void clear();
 

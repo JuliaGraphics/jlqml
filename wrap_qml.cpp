@@ -22,7 +22,7 @@
 #include "glvisualize_viewport.hpp"
 #include "type_conversion.hpp"
 
-namespace cxx_wrap
+namespace jlcxx
 {
 
 template<> struct SuperType<QQuickView> { typedef QQuickWindow type; };
@@ -33,7 +33,7 @@ template<> struct SuperType<qmlwrap::JuliaPaintedItem> { typedef QQuickItem type
 namespace qmlwrap
 {
 
-void load_qml_app(const QString& path, cxx_wrap::ArrayRef<jl_value_t*> property_names, cxx_wrap::ArrayRef<jl_value_t*> context_properties)
+void load_qml_app(const QString& path, jlcxx::ArrayRef<jl_value_t*> property_names, jlcxx::ArrayRef<jl_value_t*> context_properties)
 {
   auto e = ApplicationManager::instance().init_qmlapplicationengine();
   ApplicationManager::instance().add_context_properties(property_names, context_properties);
@@ -44,7 +44,7 @@ void load_qml_app(const QString& path, cxx_wrap::ArrayRef<jl_value_t*> property_
 } // namespace qmlwrap
 
 JULIA_CPP_MODULE_BEGIN(registry)
-  using namespace cxx_wrap;
+  using namespace jlcxx;
 
   Module& qml_module = registry.create_module("QML");
 
@@ -131,7 +131,7 @@ JULIA_CPP_MODULE_BEGIN(registry)
     .method("julia_object_value", &qmlwrap::JuliaObject::value); // Not exported, use @qmlget
 
   // Emit signals helper
-  qml_module.method("emit", [](const char* signal_name, cxx_wrap::ArrayRef<jl_value_t*> args)
+  qml_module.method("emit", [](const char* signal_name, jlcxx::ArrayRef<jl_value_t*> args)
   {
     using namespace qmlwrap;
     JuliaSignals* julia_signals = JuliaAPI::instance()->juliaSignals();
@@ -143,7 +143,7 @@ JULIA_CPP_MODULE_BEGIN(registry)
   });
 
   // Function to register a function
-  qml_module.method("register_function", [](cxx_wrap::ArrayRef<jl_value_t*> args)
+  qml_module.method("register_function", [](jlcxx::ArrayRef<jl_value_t*> args)
   {
     for(jl_value_t* arg : args)
     {
@@ -163,8 +163,8 @@ JULIA_CPP_MODULE_BEGIN(registry)
     .method("device", &QPainter::device);
 
   qml_module.add_type<qmlwrap::ListModel>("ListModel", julia_type<QObject>())
-    .constructor<const cxx_wrap::ArrayRef<jl_value_t*>&>()
-    .constructor<const cxx_wrap::ArrayRef<jl_value_t*>&, jl_function_t*>()
+    .constructor<const jlcxx::ArrayRef<jl_value_t*>&>()
+    .constructor<const jlcxx::ArrayRef<jl_value_t*>&, jl_function_t*>()
     .method("setconstructor", &qmlwrap::ListModel::setconstructor)
     .method("removerole", static_cast<void (qmlwrap::ListModel::*)(const int)>(&qmlwrap::ListModel::removerole))
     .method("removerole", static_cast<void (qmlwrap::ListModel::*)(const std::string&)>(&qmlwrap::ListModel::removerole));

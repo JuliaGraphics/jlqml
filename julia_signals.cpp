@@ -11,11 +11,11 @@
 
 // Q_ARG is a macro, so we use one too
 #define MAKE_Q_ARG(cpptype) \
-if(jl_types_equal(jl_typeof(v), (jl_value_t*)cxx_wrap::julia_type<cpptype>())) \
+if(jl_types_equal(jl_typeof(v), (jl_value_t*)jlcxx::julia_type<cpptype>())) \
 { \
   auto ptr = std::make_shared<argument_wrapper_impl<cpptype>>(); \
   wrappers.push_back(ptr); \
-  ptr->value = cxx_wrap::convert_to_cpp<cpptype>(v); \
+  ptr->value = jlcxx::convert_to_cpp<cpptype>(v); \
   return Q_ARG(cpptype, ptr->value); \
 }
 
@@ -43,22 +43,22 @@ namespace detail
     MAKE_Q_ARG(double)
     MAKE_Q_ARG(int)
     jl_value_t* from_t = jl_typeof(v);
-    jl_value_t* to_t = (jl_value_t*)cxx_wrap::julia_type<QString>();
+    jl_value_t* to_t = (jl_value_t*)jlcxx::julia_type<QString>();
     if(from_t == to_t || jl_type_morespecific(from_t, to_t))
     {
       auto ptr = std::make_shared<argument_wrapper_impl<QString>>();
       wrappers.push_back(ptr);
-      ptr->value = cxx_wrap::convert_to_cpp<QString>(v);
+      ptr->value = jlcxx::convert_to_cpp<QString>(v);
       return Q_ARG(QString, ptr->value);
     }
 
-    throw std::runtime_error("Failed to convert signal argument of type " + cxx_wrap::julia_type_name((jl_datatype_t*)jl_typeof(v)));
+    throw std::runtime_error("Failed to convert signal argument of type " + jlcxx::julia_type_name((jl_datatype_t*)jl_typeof(v)));
   }
 
   template<std::size_t... Is>
   struct ApplyVectorArgs
   {
-    void operator()(QObject* o, const char* signal_name, cxx_wrap::ArrayRef<jl_value_t*> args)
+    void operator()(QObject* o, const char* signal_name, jlcxx::ArrayRef<jl_value_t*> args)
     {
       if(sizeof...(Is) == args.size())
       {
@@ -79,7 +79,7 @@ namespace detail
   template<>
   struct ApplyVectorArgs<0,1,2,3,4,5,6,7,8,9,10>
   {
-    void operator()(QObject* o, const char* signal_name, cxx_wrap::ArrayRef<jl_value_t*> args)
+    void operator()(QObject* o, const char* signal_name, jlcxx::ArrayRef<jl_value_t*> args)
     {
       throw std::runtime_error("Too many arguments for signal " + std::string(signal_name));
     }
@@ -95,7 +95,7 @@ JuliaSignals::~JuliaSignals()
 {
 }
 
-void JuliaSignals::emit_signal(const char* signal_name, cxx_wrap::ArrayRef<jl_value_t*> args)
+void JuliaSignals::emit_signal(const char* signal_name, jlcxx::ArrayRef<jl_value_t*> args)
 {
   detail::ApplyVectorArgs<>()(this, signal_name, args);
 }

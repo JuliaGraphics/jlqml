@@ -11,11 +11,11 @@ add_definitions(-DJULIA_ENABLE_THREADING)
 find_package(Qt5Quick)
 find_package(Qt5Core)
 find_package(Qt5Widgets)
-find_package(CxxWrap)
+find_package(JlCxx)
 
 get_target_property(QtCore_location Qt5::Core LOCATION)
 get_filename_component(QtCore_location ${QtCore_location} DIRECTORY)
-set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib;${CxxWrap_DIR}/../;${QtCore_location}")
+set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib;${JlCxx_DIR}/../;${QtCore_location}")
 
 if(WIN32)
   if(DEFINED ENV{MSYSTEM})
@@ -75,7 +75,7 @@ add_library(qmlwrap SHARED
   wrap_qml.cpp
 ${MOC_BUILT_SOURCES} ${UI_BUILT_SOURCES} ${RESOURCES})
 
-target_link_libraries(qmlwrap Qt5::Core Qt5::Quick Qt5::Widgets CxxWrap::cxx_wrap)
+target_link_libraries(qmlwrap Qt5::Core Qt5::Quick Qt5::Widgets JlCxx::jlcxx)
 
 install(TARGETS
   qmlwrap
