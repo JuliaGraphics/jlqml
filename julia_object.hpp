@@ -21,6 +21,7 @@ public:
   virtual ~JuliaObject();
   /// Update a value. Updating a non-existant key is an error.
   void set(const QString& key, const QVariant& value);
+  jl_value_t* julia_value() const { return m_julia_object; }
 private slots:
   void onValueChanged(const QString &key, const QVariant &value);
 private:

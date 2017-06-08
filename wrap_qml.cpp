@@ -128,6 +128,7 @@ JULIA_CPP_MODULE_BEGIN(registry)
 
   qml_module.add_type<qmlwrap::JuliaObject>("JuliaObject", julia_type<QObject>())
     .method("set", &qmlwrap::JuliaObject::set) // Not exported, use @qmlset
+    .method("julia_value", &qmlwrap::JuliaObject::julia_value)
     .method("julia_object_value", &qmlwrap::JuliaObject::value); // Not exported, use @qmlget
 
   // Emit signals helper
