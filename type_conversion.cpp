@@ -43,7 +43,7 @@ QVariant try_convert_to_qt(jl_value_t* v)
 template<typename CppT>
 jl_value_t* convert_to_julia(const QVariant& v)
 {
-  if(v.type() == qMetaTypeId<CppT>())
+  if(v.userType() == qMetaTypeId<CppT>())
   {
     return jlcxx::box(v.template value<CppT>());
   }
@@ -99,7 +99,7 @@ jl_value_t* try_qobject_cast(QObject* o)
 template<>
 jl_value_t* convert_to_julia<QObject*>(const QVariant& v)
 {
-  if(v.type() == qMetaTypeId<QObject*>())
+  if(v.canConvert<QObject*>())
   {
     // Add new types here
     return try_qobject_cast<JuliaObject, JuliaDisplay, ListModel>(v.value<QObject*>());
@@ -140,7 +140,7 @@ QVariant ConvertToCpp<QVariant, false, false, false>::operator()(jl_value_t* jul
     }
     return result;
   }
-  return qmlwrap::detail::try_convert_to_qt<bool, float, double, int32_t, int64_t, uint32_t, uint64_t, QString, QObject*, void*, jlcxx::SafeCFunction>(julia_value);
+  return qmlwrap::detail::try_convert_to_qt<bool, float, double, int32_t, int64_t, uint32_t, uint64_t, QString, QObject*, void*, jlcxx::SafeCFunction, jl_value_t*>(julia_value);
 }
 
 jl_value_t* ConvertToJulia<QVariant, false, false, false>::operator()(const QVariant& v) const
@@ -157,7 +157,7 @@ jl_value_t* ConvertToJulia<QVariant, false, false, false>::operator()(const QVar
     JL_GC_POP();
     return (jl_value_t*)(arr.wrapped());
   }
-  return qmlwrap::detail::try_convert_to_julia<bool, float, double, int32_t, int64_t, uint32_t, uint64_t, QString, QObject*, QVariantMap, void*>(v);
+  return qmlwrap::detail::try_convert_to_julia<bool, float, double, int32_t, int64_t, uint32_t, uint64_t, QString, QObject*, QVariantMap, void*, jl_value_t*>(v);
 }
 
 jl_value_t* ConvertToJulia<QString, false, false, false>::operator()(const QString& str) const

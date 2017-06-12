@@ -1,6 +1,8 @@
 #include <QDebug>
 #include "julia_object.hpp"
 
+#include <jlcxx/functions.hpp>
+
 namespace qmlwrap
 {
 
@@ -15,7 +17,7 @@ JuliaObject::JuliaObject(jl_value_t* julia_object, QObject* parent) : QQmlProper
       const std::string fname = jlcxx::symbol_name(jl_field_name(dt, i));
       jl_value_t* field_val = jl_fieldref(julia_object, i);
       QVariant qt_fd = jlcxx::convert_to_cpp<QVariant>(field_val);
-      if(!qt_fd.isNull())
+      if(!qt_fd.isNull() && qt_fd.userType() != qMetaTypeId<jl_value_t*>())
       {
         m_field_mapping[fname] = i;
         insert(fname.c_str(), qt_fd);
@@ -45,15 +47,30 @@ JuliaObject::~JuliaObject()
 
 void JuliaObject::onValueChanged(const QString &key, const QVariant &value)
 {
+  static const jlcxx::JuliaFunction convert("convert");
   const auto map_it = m_field_mapping.find(key.toStdString());
+  const size_t fd_idx = map_it->second;
   if(map_it == m_field_mapping.end())
   {
     qWarning() << "value change on unmapped field: " << key << ": " << value;
     return;
   }
   jl_value_t* val = jlcxx::convert_to_julia(value);
+  bool value_set = false;
   JL_GC_PUSH1(&val);
-  jl_set_nth_field(m_julia_object, map_it->second, val);
+  jl_datatype_t* ft = (jl_datatype_t*)jl_field_type(jl_typeof(m_julia_object), fd_idx);
+  if(ft == (jl_datatype_t*)jl_typeof(val))
+  {
+    jl_set_nth_field(m_julia_object, fd_idx, val);
+  }
+  else if(value.userType() == qMetaTypeId<JuliaObject*>())
+  {
+    jl_set_nth_field(m_julia_object, fd_idx, value.value<JuliaObject*>()->julia_value());
+  }
+  else
+  {
+    jl_set_nth_field(m_julia_object, fd_idx, convert(ft,val));
+  }
   JL_GC_POP();
 }
 
@@ -66,6 +83,27 @@ void JuliaObject::set(const QString& key, const QVariant& value)
 
   this->insert(key, value);
   emit valueChanged(key, value);
+}
+
+QString JuliaObject::julia_string() const
+{
+  static const jlcxx::JuliaFunction to_string("string");
+  return QString(jlcxx::convert_to_cpp<const char*>(to_string(m_julia_object)));
+}
+
+QVariant JuliaObject::updateValue(const QString& key, const QVariant& input)
+{
+  if(!this->contains(key))
+  {
+    return QVariant();
+  }
+
+  if(input.userType() == qMetaTypeId<jl_value_t*>() && this->value(key).userType() == qMetaTypeId<JuliaObject*>())
+  {
+    return QVariant::fromValue(new JuliaObject(input.value<jl_value_t*>(), this));
+  }
+
+  return input;
 }
 
 } // namespace qmlwrap

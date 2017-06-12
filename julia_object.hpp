@@ -22,8 +22,12 @@ public:
   /// Update a value. Updating a non-existant key is an error.
   void set(const QString& key, const QVariant& value);
   jl_value_t* julia_value() const { return m_julia_object; }
+
+  Q_INVOKABLE QString julia_string() const;
 private slots:
   void onValueChanged(const QString &key, const QVariant &value);
+protected:
+  virtual QVariant updateValue(const QString& key, const QVariant& input);
 private:
   jl_value_t* m_julia_object;
   std::map<std::string, uint32_t> m_field_mapping;

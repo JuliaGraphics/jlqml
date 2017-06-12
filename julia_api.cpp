@@ -6,6 +6,7 @@
 #include <QVariantList>
 
 #include "julia_api.hpp"
+#include "julia_object.hpp"
 #include "type_conversion.hpp"
 
 namespace qmlwrap
@@ -32,7 +33,19 @@ QVariant JuliaAPI::call(const QString& fname, const QVariantList& args)
   // Process arguments
   for(int i = 0; i != nb_args; ++i)
   {
-    julia_args[i] = jlcxx::convert_to_julia(args.at(i));
+    const auto& qt_arg = args.at(i);
+    if(!qt_arg.isValid())
+    {
+      julia_args[i] = jlcxx::box(static_cast<void*>(nullptr));
+    }
+    else if(qt_arg.canConvert<JuliaObject*>())
+    {
+      julia_args[i] = qt_arg.value<JuliaObject*>()->julia_value();
+    }
+    else
+    {
+      julia_args[i] = jlcxx::convert_to_julia(args.at(i));
+    }
     if(julia_args[i] == nullptr)
     {
       qWarning() << "Julia argument type for function " << fname << " is unsupported:" << args[i].typeName();

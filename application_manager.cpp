@@ -29,7 +29,7 @@ void set_context_property(QQmlContext* ctx, const QString& name, jl_value_t* v)
   }
 
   QVariant qt_var = jlcxx::convert_to_cpp<QVariant>(v);
-  if(!qt_var.isNull())
+  if(!qt_var.isNull() && qt_var.userType() != qMetaTypeId<jl_value_t*>())
   {
     ctx->setContextProperty(name, qt_var);
     return;

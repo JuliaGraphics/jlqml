@@ -8,6 +8,8 @@
 #include <QVariant>
 
 Q_DECLARE_METATYPE(jlcxx::SafeCFunction)
+Q_DECLARE_OPAQUE_POINTER(jl_value_t*)
+Q_DECLARE_METATYPE(jl_value_t*)
 
 namespace jlcxx
 {
