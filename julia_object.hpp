@@ -23,7 +23,11 @@ public:
   void set(const QString& key, const QVariant& value);
   jl_value_t* julia_value() const { return m_julia_object; }
 
+  /// Return the Julia string representation of the stored value
   Q_INVOKABLE QString julia_string() const;
+
+  /// Update the properties in the map from the values in the referred Julia object
+  Q_INVOKABLE void update();
 private slots:
   void onValueChanged(const QString &key, const QVariant &value);
 protected:
