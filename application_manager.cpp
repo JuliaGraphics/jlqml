@@ -112,19 +112,6 @@ QQuickView* ApplicationManager::init_qquickview()
   return view;
 }
 
-void ApplicationManager::add_context_properties(jlcxx::ArrayRef<jl_value_t*> property_names, jlcxx::ArrayRef<jl_value_t*> properties)
-{
-  if(property_names.size() != properties.size())
-  {
-    throw std::runtime_error("Property names and properties arrays sizes dont't match");
-  }
-  const std::size_t nb_props = properties.size();
-  for(std::size_t i = 0; i != nb_props; ++i)
-  {
-    set_context_property(m_root_ctx, jlcxx::convert_to_cpp<QString>(property_names[i]), properties[i]);
-  }
-}
-
 QQmlContext* ApplicationManager::root_context()
 {
   return m_root_ctx;

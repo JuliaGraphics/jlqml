@@ -37,8 +37,6 @@ public:
   QQmlEngine* init_qmlengine();
   QQuickView* init_qquickview();
 
-  void add_context_properties(jlcxx::ArrayRef<jl_value_t*> property_names, jlcxx::ArrayRef<jl_value_t*> properties);
-
   QQmlContext* root_context();
 
   // Blocking call to exec, running the Qt event loop

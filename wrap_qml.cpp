@@ -30,19 +30,6 @@ template<> struct SuperType<qmlwrap::JuliaPaintedItem> { typedef QQuickItem type
 
 }
 
-namespace qmlwrap
-{
-
-void load_qml_app(const QString& path, jlcxx::ArrayRef<jl_value_t*> property_names, jlcxx::ArrayRef<jl_value_t*> context_properties)
-{
-  auto e = ApplicationManager::instance().init_qmlapplicationengine();
-  ApplicationManager::instance().add_context_properties(property_names, context_properties);
-  e->load(path);
-}
-
-
-} // namespace qmlwrap
-
 JULIA_CPP_MODULE_BEGIN(registry)
   using namespace jlcxx;
 
@@ -120,7 +107,6 @@ JULIA_CPP_MODULE_BEGIN(registry)
   qml_module.method("init_qmlengine", []() { return qmlwrap::ApplicationManager::instance().init_qmlengine(); });
   qml_module.method("init_qquickview", []() { return qmlwrap::ApplicationManager::instance().init_qquickview(); });
   qml_module.method("qmlcontext", []() { return qmlwrap::ApplicationManager::instance().root_context(); });
-  qml_module.method("load_qml_app", qmlwrap::load_qml_app);
   qml_module.method("exec", []() { qmlwrap::ApplicationManager::instance().exec(); });
   qml_module.method("exec_async", []() { qmlwrap::ApplicationManager::instance().exec_async(); });
 
