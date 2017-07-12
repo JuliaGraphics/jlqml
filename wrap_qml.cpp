@@ -53,7 +53,18 @@ JULIA_CPP_MODULE_BEGIN(registry)
 
   qml_module.add_type<QQmlApplicationEngine>("QQmlApplicationEngine", julia_type<QQmlEngine>())
     .constructor<QString>() // Construct with path to QML
-    .method("load", static_cast<void (QQmlApplicationEngine::*)(const QString&)>(&QQmlApplicationEngine::load)); // cast needed because load is overloaded
+    .method("load", [] (QQmlApplicationEngine* e, const QString& qmlpath)
+    {
+      bool success = false;
+      auto conn = QObject::connect(e, &QQmlApplicationEngine::objectCreated, [&] (QObject* obj, const QUrl& url) { success = (obj != nullptr); });
+      e->load(qmlpath);
+      QObject::disconnect(conn);
+      if(!success)
+      {
+        e->quit();
+      }
+      return success;
+    });
 
   qml_module.method("qt_prefix_path", []() { return QLibraryInfo::location(QLibraryInfo::PrefixPath); });
 
