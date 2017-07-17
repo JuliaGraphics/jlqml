@@ -11,6 +11,12 @@ namespace qmlwrap
 
 GLVisualizeViewport::GLVisualizeViewport(QQuickItem *parent) : OpenGLViewport(parent)
 {
+  const static std::string callback_include = jlcxx::convert_to_cpp<std::string>(jlcxx::JuliaFunction("glvisualize_include", "QML")());
+#if JULIA_VERSION_MAJOR == 0 && JULIA_VERSION_MINOR < 7
+  static const jl_value_t* glviz_mod = jl_load(callback_include.c_str());
+#else
+  static const jl_value_t* glviz_mod = jl_load((jl_module_t*)jl_get_global(jl_current_module, jl_symbol("QML")), callback_include.c_str());
+#endif
   QObject::connect(this, &QQuickItem::windowChanged, [this] (QQuickWindow* w)
   {
     if(w == nullptr && m_state != nullptr)
