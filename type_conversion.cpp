@@ -157,7 +157,7 @@ jl_value_t* ConvertToJulia<QVariant, false, false, false>::operator()(const QVar
     JL_GC_POP();
     return (jl_value_t*)(arr.wrapped());
   }
-  return qmlwrap::detail::try_convert_to_julia<bool, float, double, int32_t, int64_t, uint32_t, uint64_t, QString, QObject*, QVariantMap, void*, jl_value_t*>(v);
+  return qmlwrap::detail::try_convert_to_julia<bool, float, double, int32_t, int64_t, uint32_t, uint64_t, QString, QUrl, QObject*, QVariantMap, void*, jl_value_t*>(v);
 }
 
 jl_value_t* ConvertToJulia<QString, false, false, false>::operator()(const QString& str) const
@@ -176,7 +176,7 @@ QString ConvertToCpp<QString, false, false, false>::operator()(jl_value_t* julia
 
 jl_value_t* ConvertToJulia<QUrl, false, false, false>::operator()(const QUrl& url) const
 {
-  return jl_cstr_to_string(url.toDisplayString().toStdString().c_str());
+  return jl_cstr_to_string(url.toLocalFile().toStdString().c_str());
 }
 
 
