@@ -6,6 +6,28 @@
 namespace qmlwrap
 {
 
+void julia_message_output(QtMsgType type, const QMessageLogContext &context, const QString &msg)
+{
+  QByteArray localMsg = msg.toLocal8Bit();
+  switch (type) {
+  case QtDebugMsg:
+    jl_safe_printf("Debug: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
+    break;
+  case QtInfoMsg:
+    jl_safe_printf("Info: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
+    break;
+  case QtWarningMsg:
+    jl_safe_printf("Warning: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
+    break;
+  case QtCriticalMsg:
+    jl_errorf("Critical: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
+    break;
+  case QtFatalMsg:
+    jl_errorf("Fatal: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
+    break;
+  }
+}
+
 void set_context_property(QQmlContext* ctx, const QString& name, jl_value_t* v)
 {
   if(ctx == nullptr)
@@ -142,6 +164,7 @@ void ApplicationManager::exec_async()
 
 ApplicationManager::ApplicationManager()
 {
+  qInstallMessageHandler(julia_message_output);
 }
 
 void ApplicationManager::cleanup()
