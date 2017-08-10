@@ -60,6 +60,8 @@ add_library(qmlwrap SHARED
   julia_api.cpp
   julia_display.hpp
   julia_display.cpp
+  julia_function.hpp
+  julia_function.cpp
   julia_object.hpp
   julia_object.cpp
   julia_painteditem.hpp

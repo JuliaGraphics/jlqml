@@ -142,12 +142,9 @@ JULIA_CPP_MODULE_BEGIN(registry)
   });
 
   // Function to register a function
-  qml_module.method("register_function", [](jlcxx::ArrayRef<jl_value_t*> args)
+  qml_module.method("qmlfunction", [](const QString& name, jl_function_t* f)
   {
-    for(jl_value_t* arg : args)
-    {
-      qmlwrap::JuliaAPI::instance()->register_function(convert_to_cpp<QString>(arg));
-    }
+    qmlwrap::JuliaAPI::instance()->register_function(name, f);
   });
 
   qml_module.add_type<qmlwrap::JuliaDisplay>("JuliaDisplay", julia_type("CppDisplay"))

@@ -12,84 +12,6 @@
 namespace qmlwrap
 {
 
-QVariant JuliaAPI::call(const QString& fname, const QVariantList& args)
-{
-  jl_function_t *func = jl_get_function(jl_current_module, fname.toStdString().c_str());
-  if(func == nullptr)
-  {
-    qWarning() << "Julia method " << fname << " was not found.";
-    return QVariant();
-  }
-
-  QVariant result_var;
-
-  const int nb_args = args.size();
-
-  jl_value_t* result = nullptr;
-  jl_value_t** julia_args;
-  JL_GC_PUSH1(&result);
-  JL_GC_PUSHARGS(julia_args, nb_args);
-
-  // Process arguments
-  for(int i = 0; i != nb_args; ++i)
-  {
-    const auto& qt_arg = args.at(i);
-    if(!qt_arg.isValid())
-    {
-      julia_args[i] = jlcxx::box(static_cast<void*>(nullptr));
-    }
-    else if(qt_arg.canConvert<JuliaObject*>())
-    {
-      julia_args[i] = qt_arg.value<JuliaObject*>()->julia_value();
-    }
-    else
-    {
-      julia_args[i] = jlcxx::convert_to_julia(args.at(i));
-    }
-    if(julia_args[i] == nullptr)
-    {
-      qWarning() << "Julia argument type for function " << fname << " is unsupported:" << args[i].typeName();
-      JL_GC_POP();
-      JL_GC_POP();
-      return QVariant();
-    }
-  }
-
-  // Do the call
-  result = jl_call(func, julia_args, nb_args);
-  if (jl_exception_occurred())
-  {
-    jl_call2(jl_get_function(jl_base_module, "show"), jl_stderr_obj(), jl_exception_occurred());
-    jl_printf(jl_stderr_stream(), "\n");
-    JL_GC_POP();
-    JL_GC_POP();
-    return QVariant();
-  }
-
-  // Process result
-  if(result == nullptr)
-  {
-    qWarning() << "Null result calling Julia function " << fname;
-  }
-  else if(!jl_is_nothing(result))
-  {
-    result_var = jlcxx::convert_to_cpp<QVariant>(result);
-    if(result_var.isNull())
-    {
-      qWarning() << "Julia method " << fname << " returns unsupported " << QString(jlcxx::julia_type_name((jl_datatype_t*)jl_typeof(result)).c_str());
-    }
-  }
-  JL_GC_POP();
-  JL_GC_POP();
-
-  return result_var;
-}
-
-QVariant JuliaAPI::call(const QString& fname)
-{
-  return call(fname, QVariantList());
-}
-
 void JuliaAPI::setJuliaSignals(JuliaSignals* julia_signals)
 {
   m_julia_signals = julia_signals;
@@ -100,23 +22,24 @@ void JuliaAPI::set_js_engine(QJSEngine* e)
   m_engine = e;
   if(m_engine != nullptr)
   {
-    for(const QString& fname : m_registered_functions)
+    for(JuliaFunction* f : m_registered_functions)
     {
-      register_function_internal(fname);
+      register_function_internal(f);
     }
     m_registered_functions.clear();
   }
 }
 
-void JuliaAPI::register_function(const QString& name)
+void JuliaAPI::register_function(const QString& name, jl_function_t* f)
 {
+  JuliaFunction* jf = new JuliaFunction(name, f, this);
   if(m_engine == nullptr)
   {
-    m_registered_functions.push_back(name);
+    m_registered_functions.push_back(jf);
   }
   else
   {
-    register_function_internal(name);
+    register_function_internal(jf);
   }
 }
 
@@ -137,21 +60,23 @@ void JuliaAPI::on_about_to_quit()
   m_julia_js_root = QJSValue();
 }
 
-void JuliaAPI::register_function_internal(const QString& fname)
+void JuliaAPI::register_function_internal(JuliaFunction* jf)
 {
   if(m_engine == nullptr)
   {
     throw std::runtime_error("No JS engine, can't register function");
   }
 
-  QJSValue f = m_engine->evaluate("function() { return Qt.julia.call(\"" + fname + "\", arguments.length === 1 ? [arguments[0]] : Array.apply(null, arguments)); }");
+  QJSValue f = m_engine->evaluate("function() { return Qt.julia.julia_root." + jf->name() + ".julia_function.call(arguments.length === 1 ? [arguments[0]] : Array.apply(null, arguments)); }");
 
   if(f.isError() || !f.isCallable())
   {
-    throw std::runtime_error(("Error setting function" + fname).toStdString());
+    throw std::runtime_error(("Error setting function" + jf->name()).toStdString());
   }
 
-  m_julia_js_root.setProperty(fname,f);
+  f.setProperty("julia_function", m_engine->newQObject(jf));
+
+  m_julia_js_root.setProperty(jf->name(), f);
 }
 
 JuliaAPI::JuliaAPI()
@@ -165,7 +90,9 @@ QJSValue julia_js_singletontype_provider(QQmlEngine *engine, QJSEngine *scriptEn
   api->set_julia_js_root(result);
   api->set_js_engine(engine);
   QJSValue qt_api = engine->globalObject().property("Qt");
-  qt_api.setProperty("julia", engine->newQObject(api));
+  QJSValue api_js = engine->newQObject(api);
+  qt_api.setProperty("julia", api_js);
+  api_js.setProperty("julia_root", result);
   QQmlEngine::setObjectOwnership(api, QQmlEngine::CppOwnership);
   return result;
 }
