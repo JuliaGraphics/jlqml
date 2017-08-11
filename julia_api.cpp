@@ -67,7 +67,7 @@ void JuliaAPI::register_function_internal(JuliaFunction* jf)
     throw std::runtime_error("No JS engine, can't register function");
   }
 
-  QJSValue f = m_engine->evaluate("function() { return Qt.julia.julia_root." + jf->name() + ".julia_function.call(arguments.length === 1 ? [arguments[0]] : Array.apply(null, arguments)); }");
+  QJSValue f = m_engine->evaluate("function() { return Julia." + jf->name() + ".julia_function.call(arguments.length === 1 ? [arguments[0]] : Array.apply(null, arguments)); }");
 
   if(f.isError() || !f.isCallable())
   {
@@ -75,7 +75,6 @@ void JuliaAPI::register_function_internal(JuliaFunction* jf)
   }
 
   f.setProperty("julia_function", m_engine->newQObject(jf));
-
   m_julia_js_root.setProperty(jf->name(), f);
 }
 
@@ -86,13 +85,10 @@ JuliaAPI::JuliaAPI()
 QJSValue julia_js_singletontype_provider(QQmlEngine *engine, QJSEngine *scriptEngine)
 {
   QJSValue result = scriptEngine->newObject();
+  engine->globalObject().setProperty("Julia", result);
   JuliaAPI* api = JuliaAPI::instance();
   api->set_julia_js_root(result);
   api->set_js_engine(engine);
-  QJSValue qt_api = engine->globalObject().property("Qt");
-  QJSValue api_js = engine->newQObject(api);
-  qt_api.setProperty("julia", api_js);
-  api_js.setProperty("julia_root", result);
   QQmlEngine::setObjectOwnership(api, QQmlEngine::CppOwnership);
   return result;
 }
