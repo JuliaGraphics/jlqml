@@ -67,7 +67,7 @@ void JuliaAPI::register_function_internal(JuliaFunction* jf)
     throw std::runtime_error("No JS engine, can't register function");
   }
 
-  QJSValue f = m_engine->evaluate("function() { return Julia." + jf->name() + ".julia_function.call(arguments.length === 1 ? [arguments[0]] : Array.apply(null, arguments)); }");
+  QJSValue f = m_engine->evaluate("function() { return this." + jf->name() + ".julia_function.call(arguments.length === 1 ? [arguments[0]] : Array.apply(null, arguments)); }");
 
   if(f.isError() || !f.isCallable())
   {
@@ -85,7 +85,6 @@ JuliaAPI::JuliaAPI()
 QJSValue julia_js_singletontype_provider(QQmlEngine *engine, QJSEngine *scriptEngine)
 {
   QJSValue result = scriptEngine->newObject();
-  engine->globalObject().setProperty("Julia", result);
   JuliaAPI* api = JuliaAPI::instance();
   api->set_julia_js_root(result);
   api->set_js_engine(engine);
