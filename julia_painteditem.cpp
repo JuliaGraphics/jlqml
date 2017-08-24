@@ -4,7 +4,6 @@
 
 #include "julia_api.hpp"
 #include "julia_painteditem.hpp"
-#include "julia_object.hpp"
 
 namespace qmlwrap
 {

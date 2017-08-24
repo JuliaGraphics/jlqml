@@ -1,7 +1,6 @@
 #include <QDebug>
 
 #include "julia_function.hpp"
-#include "julia_object.hpp"
 #include "type_conversion.hpp"
 
 namespace qmlwrap
@@ -34,13 +33,9 @@ QVariant JuliaFunction::call(const QVariantList& args)
     {
       julia_args[i] = jlcxx::box(static_cast<void*>(nullptr));
     }
-    else if(qt_arg.canConvert<JuliaObject*>())
-    {
-      julia_args[i] = qt_arg.value<JuliaObject*>()->julia_value();
-    }
     else
     {
-      julia_args[i] = jlcxx::convert_to_julia(args.at(i));
+      julia_args[i] = jlcxx::convert_to_julia(args.at(i)).value;
     }
     if(julia_args[i] == nullptr)
     {
@@ -69,7 +64,7 @@ QVariant JuliaFunction::call(const QVariantList& args)
   }
   else if(!jl_is_nothing(result))
   {
-    result_var = jlcxx::convert_to_cpp<QVariant>(result);
+    result_var = jlcxx::convert_to_cpp<QVariant>(JuliaQVariant({result}));
     if(result_var.isNull())
     {
       qWarning() << "Julia method " << m_name << " returns unsupported " << QString(jlcxx::julia_type_name((jl_datatype_t*)jl_typeof(result)).c_str());

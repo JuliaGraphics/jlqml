@@ -11,28 +11,50 @@ Q_DECLARE_METATYPE(jlcxx::SafeCFunction)
 Q_DECLARE_OPAQUE_POINTER(jl_value_t*)
 Q_DECLARE_METATYPE(jl_value_t*)
 
+namespace qmlwrap
+{
+// Mirror struct for QVariant
+struct JuliaQVariant
+{
+  jl_value_t *value;
+};
+
+}
+
 namespace jlcxx
 {
 
 /// Some helper functions for conversion between Julia and Qt, added to the jlcxx namespace to make them automatic
 
-template<>
-struct ConvertToCpp<QVariant, false, false, false>
+template <>
+struct IsImmutable<QVariant> : std::true_type
 {
-  QVariant operator()(jl_value_t* julia_value) const;
+};
+
+template <>
+struct ConvertToCpp<QVariant, false, true, false>
+{
+  QVariant operator()(qmlwrap::JuliaQVariant julia_value) const;
+  inline QVariant operator()(jl_value_t* julia_value) const
+  {
+    return this->operator()(qmlwrap::JuliaQVariant({julia_value}));
+  }
 };
 
 template<>
-struct ConvertToJulia<QVariant, false, false, false>
+struct ConvertToJulia<QVariant, false, true, false>
 {
-  jl_value_t* operator()(const QVariant& v) const;
+  qmlwrap::JuliaQVariant operator()(const QVariant &v) const;
 };
 
-template<> struct IsValueType<QVariant> : std::true_type {};
 template<> struct static_type_mapping<QVariant>
 {
-  typedef jl_value_t* type;
-  static jl_datatype_t* julia_type() { return jl_any_type; }
+  typedef qmlwrap::JuliaQVariant type;
+  static jl_datatype_t* julia_type()
+  {
+    static jl_datatype_t* qvariant_dt = (jl_datatype_t*)jlcxx::julia_type("QVariant");
+    return qvariant_dt;
+  }
 };
 
 // Treat QString specially to make conversion transparent
@@ -75,11 +97,11 @@ struct ConvertToCpp<QUrl, false, false, false>
   QUrl operator()(jl_value_t* julia_string) const;
 };
 
-template<>
-struct ConvertToCpp<QObject*, false, false, false>
-{
-  QObject* operator()(jl_value_t* julia_value) const;
-};
+// template<>
+// struct ConvertToCpp<QObject*, false, false, false>
+// {
+//   QObject* operator()(jl_value_t* julia_value) const;
+// };
 
 } // namespace jlcxx
 

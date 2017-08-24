@@ -1,7 +1,5 @@
 #include "application_manager.hpp"
 #include "julia_api.hpp"
-#include "julia_object.hpp"
-
 
 namespace qmlwrap
 {
@@ -29,45 +27,6 @@ void julia_message_output(QtMsgType type, const QMessageLogContext &context, con
     break;
   }
 }
-
-void set_context_property(QQmlContext* ctx, const QString& name, jl_value_t* v)
-{
-  if(ctx == nullptr)
-  {
-    qWarning() << "Can't set property " << name << " on null context";
-    return;
-  }
-
-  jl_value_t* from_t = jl_typeof(v);
-  jl_value_t* to_t = (jl_value_t*)jlcxx::julia_type<QObject>();
-  if(from_t == to_t || jl_type_morespecific(from_t, to_t))
-  {
-    // Protect object from garbage collection in case the caller did not bind it to a Julia variable
-    jlcxx::protect_from_gc(v);
-
-    // Make sure it gets freed on context destruction
-    QObject::connect(ctx, &QQmlContext::destroyed, [=] (QObject*) { jlcxx::unprotect_from_gc(v); });
-
-    ctx->setContextProperty(name, jlcxx::convert_to_cpp<QObject*>(v));
-    return;
-  }
-
-  QVariant qt_var = jlcxx::convert_to_cpp<QVariant>(v);
-  if(!qt_var.isNull() && qt_var.userType() != qMetaTypeId<jl_value_t*>())
-  {
-    ctx->setContextProperty(name, qt_var);
-    return;
-  }
-
-  if(jl_is_structtype(jl_typeof(v)))
-  {
-    // ctx is the parent for the JuliaObject, so cleanup is automatic
-    ctx->setContextProperty(name, new qmlwrap::JuliaObject(v, ctx));
-    return;
-  }
-  qWarning() << "Unsupported type for context property " << name;
-}
-
 
 // Singleton implementation
 ApplicationManager& ApplicationManager::instance()

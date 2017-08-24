@@ -14,7 +14,6 @@
 #include "application_manager.hpp"
 #include "julia_api.hpp"
 #include "julia_display.hpp"
-#include "julia_object.hpp"
 #include "julia_painteditem.hpp"
 #include "julia_signals.hpp"
 #include "listmodel.hpp"
@@ -25,8 +24,12 @@
 namespace jlcxx
 {
 
+template<> struct SuperType<QQmlContext> { typedef QObject type; };
+template<> struct SuperType<QQmlPropertyMap> { typedef QObject type; };
 template<> struct SuperType<QQuickView> { typedef QQuickWindow type; };
+template<> struct SuperType<QTimer> { typedef QObject type; };
 template<> struct SuperType<qmlwrap::JuliaPaintedItem> { typedef QQuickItem type; };
+template<> struct SuperType<qmlwrap::ListModel> { typedef QObject type; };
 
 }
 
@@ -45,8 +48,10 @@ JULIA_CPP_MODULE_BEGIN(registry)
   qml_module.add_type<QObject>("QObject");
 
   qml_module.add_type<QQmlContext>("QQmlContext", julia_type<QObject>())
-    .method("context_property", &QQmlContext::contextProperty);
-  qml_module.method("set_context_property", qmlwrap::set_context_property);
+    .method("context_property", &QQmlContext::contextProperty)
+    .method("set_context_object", &QQmlContext::setContextObject)
+    .method("set_context_property", static_cast<void(QQmlContext::*)(const QString&, const QVariant&)>(&QQmlContext::setContextProperty))
+    .method("set_context_property", static_cast<void(QQmlContext::*)(const QString&, QObject*)>(&QQmlContext::setContextProperty));
 
   qml_module.add_type<QQmlEngine>("QQmlEngine", julia_type<QObject>())
     .method("root_context", &QQmlEngine::rootContext);
@@ -124,11 +129,24 @@ JULIA_CPP_MODULE_BEGIN(registry)
 
   qml_module.add_type<QTimer>("QTimer", julia_type<QObject>());
 
-  qml_module.add_type<qmlwrap::JuliaObject>("JuliaObject", julia_type<QObject>())
-    .method("set", &qmlwrap::JuliaObject::set) // Not exported, use @qmlset
-    .method("julia_value", &qmlwrap::JuliaObject::julia_value)
-    .method("julia_object_value", &qmlwrap::JuliaObject::value) // Not exported, use @qmlget
-    .method("update", &qmlwrap::JuliaObject::update);
+  qml_module.add_type<QQmlPropertyMap>("QQmlPropertyMap", julia_type<QObject>())
+    .constructor<QObject *>(false)
+    .method("insert", &QQmlPropertyMap::insert)
+    .method("value", &QQmlPropertyMap::value)
+    .method("insert_observable", [] (QQmlPropertyMap* propmap, const QString& name, jl_value_t* observable)
+    {
+      static const jlcxx::JuliaFunction getindex("getindex");
+      QVariant value = jlcxx::convert_to_cpp<QVariant>(getindex(observable));
+      propmap->insert(name, value);
+      auto conn = QObject::connect(propmap, &QQmlPropertyMap::valueChanged, [=](const QString &key, const QVariant &newvalue) {
+        static const jlcxx::JuliaFunction update_observable_property("update_observable_property!", "QML");
+        if(key != name)
+        {
+          return;
+        }
+        update_observable_property(observable, jlcxx::convert_to_julia(newvalue).value);
+      });
+    });
 
   // Emit signals helper
   qml_module.method("emit", [](const char* signal_name, jlcxx::ArrayRef<jl_value_t*> args)
@@ -177,7 +195,7 @@ JULIA_CPP_MODULE_BEGIN(registry)
   qml_module.method("setrole", [] (qmlwrap::ListModel& m, const int idx, const std::string& role, jl_function_t* getter, jl_function_t* setter) { m.setrole(idx, role, getter, setter); });
 
   qml_module.add_type<QVariantMap>("QVariantMap");
-  qml_module.method("getindex", [](const QVariantMap& m, const QString& key) { return m[key]; });
+  qml_module.method("getindex", [](const QVariantMap& m, const QString& key) { return jlcxx::convert_to_julia(m[key]).value; });
 
   // Exports:
   qml_module.export_symbols("QQmlContext", "set_context_property", "root_context", "load", "qt_prefix_path", "set_source", "engine", "QByteArray", "to_string", "QQmlComponent", "set_data", "create", "QQuickItem", "content_item", "JuliaObject", "QTimer", "context_property", "emit", "JuliaDisplay", "init_application", "qmlcontext", "init_qmlapplicationengine", "init_qmlengine", "init_qquickview", "exec", "exec_async", "ListModel", "addrole", "setconstructor", "removerole", "setrole", "QVariantMap");

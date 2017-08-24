@@ -17,7 +17,7 @@ namespace qmlwrap
 {
 
 /// Helper to set context properties
-void set_context_property(QQmlContext* ctx, const QString& name, jl_value_t* v);
+//void set_context_property(QQmlContext* ctx, const QString& name, jl_value_t* v);
 
 /// Manage creation and destruction of the application and the QML engine,
 class ApplicationManager
