@@ -24,7 +24,9 @@
 namespace jlcxx
 {
 
+template<> struct SuperType<QQmlApplicationEngine> { typedef QQmlEngine type; };
 template<> struct SuperType<QQmlContext> { typedef QObject type; };
+template<> struct SuperType<QQmlEngine> { typedef QObject type; };
 template<> struct SuperType<QQmlPropertyMap> { typedef QObject type; };
 template<> struct SuperType<QQuickView> { typedef QQuickWindow type; };
 template<> struct SuperType<QTimer> { typedef QObject type; };
@@ -51,14 +53,15 @@ JULIA_CPP_MODULE_BEGIN(registry)
     .method("context_property", &QQmlContext::contextProperty)
     .method("set_context_object", &QQmlContext::setContextObject)
     .method("set_context_property", static_cast<void(QQmlContext::*)(const QString&, const QVariant&)>(&QQmlContext::setContextProperty))
-    .method("set_context_property", static_cast<void(QQmlContext::*)(const QString&, QObject*)>(&QQmlContext::setContextProperty));
+    .method("set_context_property", static_cast<void(QQmlContext::*)(const QString&, QObject*)>(&QQmlContext::setContextProperty))
+    .method("context_object", &QQmlContext::contextObject);
 
   qml_module.add_type<QQmlEngine>("QQmlEngine", julia_type<QObject>())
     .method("root_context", &QQmlEngine::rootContext);
 
   qml_module.add_type<QQmlApplicationEngine>("QQmlApplicationEngine", julia_type<QQmlEngine>())
     .constructor<QString>() // Construct with path to QML
-    .method("load", [] (QQmlApplicationEngine* e, const QString& qmlpath)
+    .method("load_into_engine", [] (QQmlApplicationEngine* e, const QString& qmlpath)
     {
       bool success = false;
       auto conn = QObject::connect(e, &QQmlApplicationEngine::objectCreated, [&] (QObject* obj, const QUrl& url) { success = (obj != nullptr); });
@@ -148,23 +151,21 @@ JULIA_CPP_MODULE_BEGIN(registry)
       });
     });
 
-  // Emit signals helper
-  qml_module.method("emit", [](const char* signal_name, jlcxx::ArrayRef<jl_value_t*> args)
-  {
-    using namespace qmlwrap;
-    JuliaSignals* julia_signals = JuliaAPI::instance()->juliaSignals();
-    if(julia_signals == nullptr)
-    {
-      throw std::runtime_error("No signals available");
-    }
-    julia_signals->emit_signal(signal_name, args);
-  });
+      // Emit signals helper
+      qml_module.method("emit", [](const char *signal_name, jlcxx::ArrayRef<jl_value_t *> args) {
+        using namespace qmlwrap;
+        JuliaSignals *julia_signals = JuliaAPI::instance()->juliaSignals();
+        if (julia_signals == nullptr)
+        {
+          throw std::runtime_error("No signals available");
+        }
+        julia_signals->emit_signal(signal_name, args);
+      });
 
-  // Function to register a function
-  qml_module.method("qmlfunction", [](const QString& name, jl_function_t* f)
-  {
-    qmlwrap::JuliaAPI::instance()->register_function(name, f);
-  });
+      // Function to register a function
+      qml_module.method("qmlfunction", [](const QString &name, jl_function_t *f) {
+        qmlwrap::JuliaAPI::instance()->register_function(name, f);
+      });
 
   qml_module.add_type<qmlwrap::JuliaDisplay>("JuliaDisplay", julia_type("CppDisplay"))
     .method("load_png", &qmlwrap::JuliaDisplay::load_png)

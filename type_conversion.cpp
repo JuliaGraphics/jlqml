@@ -1,5 +1,6 @@
 #include <QDebug>
 #include <QFileInfo>
+#include <QQmlPropertyMap>
 #include <QUrl>
 
 #include "julia_display.hpp"
@@ -114,7 +115,7 @@ jl_value_t* convert_to_julia<QObject*>(const QVariant& v)
   if(v.canConvert<QObject*>())
   {
     // Add new types here
-    return try_qobject_cast<JuliaDisplay, ListModel>(v.value<QObject*>());
+    return try_qobject_cast<JuliaDisplay, ListModel, QQmlPropertyMap>(v.value<QObject*>());
   }
 
   return nullptr;
@@ -124,6 +125,11 @@ jl_value_t* convert_to_julia<QObject*>(const QVariant& v)
 template<typename... TypesT>
 jl_value_t* try_convert_to_julia(const QVariant& v)
 {
+  if(!v.isValid())
+  {
+    return jl_nothing;
+  }
+
   for(auto&& jval : {convert_to_julia<TypesT>(v)...})
   {
     if(jval != nullptr)
