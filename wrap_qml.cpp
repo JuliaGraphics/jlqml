@@ -62,8 +62,8 @@ JULIA_CPP_MODULE_BEGIN(registry)
       if(!success)
       {
         e->quit();
+        jl_error("Error loading QML");
       }
-      return success;
     });
 
   qml_module.method("qt_prefix_path", []() { return QLibraryInfo::location(QLibraryInfo::PrefixPath); });
