@@ -10,6 +10,7 @@ add_definitions(-DJULIA_ENABLE_THREADING)
 
 find_package(Qt5Quick)
 find_package(Qt5Core)
+find_package(Qt5Svg)
 find_package(Qt5Widgets)
 find_package(JlCxx)
 
@@ -77,7 +78,7 @@ add_library(qmlwrap SHARED
   wrap_qml.cpp
 ${MOC_BUILT_SOURCES} ${UI_BUILT_SOURCES} ${RESOURCES})
 
-target_link_libraries(qmlwrap Qt5::Core Qt5::Quick Qt5::Widgets JlCxx::jlcxx)
+target_link_libraries(qmlwrap Qt5::Core Qt5::Quick Qt5::Svg Qt5::Widgets JlCxx::jlcxx)
 
 install(TARGETS
   qmlwrap

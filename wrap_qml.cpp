@@ -148,7 +148,8 @@ JULIA_CPP_MODULE_BEGIN(registry)
   });
 
   qml_module.add_type<qmlwrap::JuliaDisplay>("JuliaDisplay", julia_type("CppDisplay"))
-    .method("load_png", &qmlwrap::JuliaDisplay::load_png);
+    .method("load_png", &qmlwrap::JuliaDisplay::load_png)
+    .method("load_svg", &qmlwrap::JuliaDisplay::load_svg);
 
   qml_module.add_type<QPaintDevice>("QPaintDevice")
     .method("width", &QPaintDevice::width)

@@ -6,6 +6,7 @@
 #include <QObject>
 #include <QPixmap>
 #include <QQuickPaintedItem>
+#include <QSvgRenderer>
 
 namespace qmlwrap
 {
@@ -21,11 +22,14 @@ public:
   void paint(QPainter *painter);
 
   void load_png(jlcxx::ArrayRef<unsigned char> data);
+  void load_svg(jlcxx::ArrayRef<unsigned char> data);
 
   void clear();
 
 private:
   QPixmap m_pixmap;
+  QSvgRenderer* m_svg_renderer = nullptr;
+
 };
 
 } // namespace qmlwrap
