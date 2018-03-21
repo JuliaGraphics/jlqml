@@ -451,4 +451,35 @@ QStringList ListModel::roles() const
   return rolelist;
 }
 
+void ListModel::push_back(jl_value_t* val)
+{
+  beginInsertRows(QModelIndex(), m_array.size(), m_array.size());
+  m_array.push_back(val);
+  do_update();
+  endInsertRows();
+}
+
+jl_value_t* ListModel::getindex(int i)
+{
+  return m_array[i-1];
+}
+
+void ListModel::setindex(jl_value_t* val, int i)
+{
+  m_array[i-1] = val;
+  
+  const int nb_roles = m_rolenames.size();
+  QVector<int> roles(nb_roles);
+  for(int role_i = 0; role_i != nb_roles; ++role_i)
+  {
+    roles[role_i] = role_i;
+  }
+  emit dataChanged(createIndex(i-1, 0), createIndex(i-1, 0), roles);
+}
+
+int ListModel::length()
+{
+  return m_array.size();
+}
+
 } // namespace qmlwrap

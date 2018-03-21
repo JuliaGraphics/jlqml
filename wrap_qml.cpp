@@ -164,7 +164,12 @@ JULIA_CPP_MODULE_BEGIN(registry)
     .constructor<const jlcxx::ArrayRef<jl_value_t*>&, jl_function_t*>()
     .method("setconstructor", &qmlwrap::ListModel::setconstructor)
     .method("removerole", static_cast<void (qmlwrap::ListModel::*)(const int)>(&qmlwrap::ListModel::removerole))
-    .method("removerole", static_cast<void (qmlwrap::ListModel::*)(const std::string&)>(&qmlwrap::ListModel::removerole));
+    .method("removerole", static_cast<void (qmlwrap::ListModel::*)(const std::string&)>(&qmlwrap::ListModel::removerole))
+    .method("getindex", &qmlwrap::ListModel::getindex)
+    .method("setindex!", &qmlwrap::ListModel::setindex)
+    .method("push_back", &qmlwrap::ListModel::push_back)
+    .method("model_length", &qmlwrap::ListModel::length)
+    .method("remove", &qmlwrap::ListModel::remove);
   qml_module.method("addrole", [] (qmlwrap::ListModel& m, const std::string& role, jl_function_t* getter) { m.addrole(role, getter); });
   qml_module.method("addrole", [] (qmlwrap::ListModel& m, const std::string& role, jl_function_t* getter, jl_function_t* setter) { m.addrole(role, getter, setter); });
   qml_module.method("setrole", [] (qmlwrap::ListModel& m, const int idx, const std::string& role, jl_function_t* getter) { m.setrole(idx, role, getter); });

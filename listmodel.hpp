@@ -68,6 +68,12 @@ public:
   // Roles property
   QStringList roles() const;
 
+  // Julia interface
+  void push_back(jl_value_t* val);
+  jl_value_t* getindex(int i);
+  void setindex(jl_value_t* val, int i);
+  int length();
+
 Q_SIGNALS:
   void countChanged();
   void rolesChanged();
