@@ -78,7 +78,7 @@ add_library(qmlwrap SHARED
   wrap_qml.cpp
 ${MOC_BUILT_SOURCES} ${UI_BUILT_SOURCES} ${RESOURCES})
 
-target_link_libraries(qmlwrap Qt5::Core Qt5::Quick Qt5::Svg Qt5::Widgets JlCxx::jlcxx)
+target_link_libraries(qmlwrap Qt5::Core Qt5::Quick Qt5::Svg Qt5::Widgets JlCxx::cxxwrap_julia)
 
 install(TARGETS
   qmlwrap
