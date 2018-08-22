@@ -35,10 +35,9 @@ template<> struct SuperType<qmlwrap::ListModel> { typedef QObject type; };
 
 }
 
-JULIA_CPP_MODULE_BEGIN(registry)
+JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
+{
   using namespace jlcxx;
-
-  Module& qml_module = registry.create_module("QML");
 
   qmlRegisterSingletonType("org.julialang", 1, 0, "Julia", qmlwrap::julia_js_singletontype_provider);
   qmlRegisterType<qmlwrap::JuliaSignals>("org.julialang", 1, 0, "JuliaSignals");
@@ -70,8 +69,8 @@ JULIA_CPP_MODULE_BEGIN(registry)
       if(!success)
       {
         e->quit();
-        jl_error("Error loading QML");
       }
+      return success;
     });
 
   qml_module.method("qt_prefix_path", []() { return QLibraryInfo::location(QLibraryInfo::PrefixPath); });
@@ -197,8 +196,4 @@ JULIA_CPP_MODULE_BEGIN(registry)
 
   qml_module.add_type<QVariantMap>("QVariantMap");
   qml_module.method("getindex", [](const QVariantMap& m, const QString& key) { return jlcxx::convert_to_julia(m[key]).value; });
-
-  // Exports:
-  qml_module.export_symbols("QQmlContext", "set_context_property", "root_context", "load", "qt_prefix_path", "set_source", "engine", "QByteArray", "to_string", "QQmlComponent", "set_data", "create", "QQuickItem", "content_item", "JuliaObject", "QTimer", "context_property", "emit", "JuliaDisplay", "init_application", "qmlcontext", "init_qmlapplicationengine", "init_qmlengine", "init_qquickview", "exec", "exec_async", "ListModel", "addrole", "setconstructor", "removerole", "setrole", "QVariantMap");
-  qml_module.export_symbols("QPainter", "device", "width", "height", "logicalDpiX", "logicalDpiY", "QQuickWindow", "effectiveDevicePixelRatio", "window", "JuliaPaintedItem", "update");
-JULIA_CPP_MODULE_END
+}

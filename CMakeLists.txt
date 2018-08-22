@@ -2,11 +2,10 @@ project(QML)
 
 cmake_minimum_required(VERSION 2.8.12)
 set(CMAKE_MACOSX_RPATH 1)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-add_definitions(-DJULIA_ENABLE_THREADING)
 
 find_package(Qt5Quick)
 find_package(Qt5Core)
@@ -52,7 +51,7 @@ if(WIN32)
   qt5_add_resources(RESOURCES ${CMAKE_SOURCE_DIR}/resources/resources.qrc)
 endif(WIN32)
 
-add_library(qmlwrap SHARED
+add_library(jlqml SHARED
   application_manager.hpp
   application_manager.cpp
   glvisualize_viewport.hpp
@@ -76,10 +75,10 @@ add_library(qmlwrap SHARED
   wrap_qml.cpp
 ${MOC_BUILT_SOURCES} ${UI_BUILT_SOURCES} ${RESOURCES})
 
-target_link_libraries(qmlwrap Qt5::Core Qt5::Quick Qt5::Svg Qt5::Widgets JlCxx::cxxwrap_julia)
+target_link_libraries(jlqml Qt5::Core Qt5::Quick Qt5::Svg Qt5::Widgets JlCxx::cxxwrap_julia)
 
 install(TARGETS
-  qmlwrap
+  jlqml
 LIBRARY DESTINATION lib
 ARCHIVE DESTINATION lib
 RUNTIME DESTINATION lib)
