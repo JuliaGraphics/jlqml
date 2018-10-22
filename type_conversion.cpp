@@ -39,19 +39,6 @@ QVariant convert_to_qt<QObject*>(jl_value_t* v)
   return QVariant();
 }
 
-// Try conversion for a list of types
-template<typename... TypesT>
-QVariant try_convert_to_qt(jl_value_t* v)
-{
-  for(auto&& variant : {convert_to_qt<TypesT>(v)...})
-  {
-    if(!variant.isNull())
-      return variant;
-  }
-
-  return QVariant();
-}
-
 // Generic conversion from QVariant to jl_value_t*
 template<typename CppT>
 jl_value_t* convert_to_julia(const QVariant& v)
@@ -123,22 +110,98 @@ jl_value_t* convert_to_julia<QObject*>(const QVariant& v)
 
 // Try conversion for a list of types
 template<typename... TypesT>
-jl_value_t* try_convert_to_julia(const QVariant& v)
+struct ConversionIterator
+{};
+
+template<>
+struct ConversionIterator<>
 {
-  if(!v.isValid())
+  static QVariant toqt(jl_value_t*)
   {
-    return jl_nothing;
+    return QVariant();
   }
 
-  for(auto&& jval : {convert_to_julia<TypesT>(v)...})
+  static jl_value_t* tojulia(const QVariant& v)
   {
-    if(jval != nullptr)
-      return jval;
+    qWarning() << "Returning null for conversion to Julia of QVariant of type " << v.typeName();
+    return nullptr;
   }
 
-  qWarning() << "returning null julia value for variant of type " << v.typeName();
-  return nullptr;
-}
+  static QVariantList tovariantlist(jl_array_t* arr)
+  {
+    qWarning() << "No conversion found for array with element type " << jlcxx::julia_type_name((jl_datatype_t*)jl_array_eltype((jl_value_t*)arr)).c_str();
+    return QVariantList();
+  }
+};
+
+template<typename FirstT, typename... TypesT>
+struct ConversionIterator<FirstT, TypesT...>
+{
+  static QVariant toqt(jl_value_t* v)
+  {
+    QVariant result = convert_to_qt<FirstT>(v);
+    if(result.isNull())
+    {
+      return ConversionIterator<TypesT...>::toqt(v);
+    }
+
+    return result;
+  }
+
+  static jl_value_t* tojulia(const QVariant& v)
+  {
+    if(!v.isValid())
+    {
+      return jl_nothing;
+    }
+
+    jl_value_t* result = convert_to_julia<FirstT>(v);
+    if(result != nullptr)
+      return result;
+
+    return ConversionIterator<TypesT...>::tojulia(v);
+  }
+
+  template<typename T>
+  static QVariant to_variant(T v)
+  {
+    return QVariant::fromValue(v);
+  }
+
+  static QVariant to_variant(qmlwrap::JuliaQVariant julia_value)
+  {
+    if(jl_is_array(julia_value.value))
+    {
+      return qmlwrap::detail::ConversionIterator<bool, float, double, long long, int32_t, int64_t, uint32_t, uint64_t, jl_value_t*>::tovariantlist((jl_array_t*)julia_value.value);
+    }
+    return qmlwrap::detail::ConversionIterator<bool, float, double, long long, int32_t, int64_t, uint32_t, uint64_t, QString, QObject*, void*, jlcxx::SafeCFunction, jl_value_t*>::toqt(julia_value.value);
+  }
+
+  static QVariant to_variant(jl_value_t* v)
+  {
+    return to_variant(JuliaQVariant({v}));
+  }
+
+  static QVariantList tovariantlist(jl_array_t* arr)
+  {
+    assert(jl_is_datatype(jl_array_eltype((jl_value_t*)arr)));
+    jl_datatype_t* eltype = (jl_datatype_t*)jl_array_eltype((jl_value_t*)arr);
+    QVariantList result;
+    if(eltype == jlcxx::julia_type<FirstT>())
+    {
+      jlcxx::ArrayRef<FirstT> arr_ref(arr);
+    
+      for(FirstT val : arr_ref)
+      {
+        result.push_back(to_variant(val));
+      }
+      return result;
+    }
+    
+    return ConversionIterator<TypesT...>::tovariantlist(arr);
+  }
+
+};
 
 } // namespace detail
 } // namespace qmlwrap
@@ -148,22 +211,20 @@ namespace jlcxx
 
 QVariant ConvertToCpp<QVariant, false, true, false>::operator()(qmlwrap::JuliaQVariant julia_value) const
 {
-  if(jl_is_array(julia_value.value))
-  {
-    jlcxx::ArrayRef<jl_value_t*> arr_ref((jl_array_t*)julia_value.value);
-    QVariantList result;
-    for(jl_value_t* val : arr_ref)
-    {
-      result.push_back(jlcxx::convert_to_cpp<QVariant>(qmlwrap::JuliaQVariant({val})));
-    }
-    return result;
-  }
-  return qmlwrap::detail::try_convert_to_qt<bool, float, double, int32_t, int64_t, uint32_t, uint64_t, QString, QObject*, void*, jlcxx::SafeCFunction, jl_value_t*>(julia_value.value);
+  return qmlwrap::detail::ConversionIterator<jl_value_t*>::to_variant(julia_value);
 }
 
 qmlwrap::JuliaQVariant ConvertToJulia<QVariant, false, true, false>::operator()(const QVariant &v) const
 {
-  if (v.canConvert<QVariantList>())
+  if (v.userType() == QMetaType::type("QJSValue"))
+  {
+    QVariant unpacked = v.value<QJSValue>().toVariant();
+    if(unpacked.isValid())
+    {
+      return ConvertToJulia<QVariant, false, true, false>()(unpacked);
+    }
+  }
+  else if (v.canConvert<QVariantList>())
   {
     QSequentialIterable iterable = v.template value<QSequentialIterable>();
     jlcxx::Array<jl_value_t*> arr;
@@ -175,7 +236,7 @@ qmlwrap::JuliaQVariant ConvertToJulia<QVariant, false, true, false>::operator()(
     JL_GC_POP();
     return {(jl_value_t*)(arr.wrapped())};
   }
-  return {qmlwrap::detail::try_convert_to_julia<bool, float, double, int32_t, int64_t, uint32_t, uint64_t, QString, QUrl, QObject*, QVariantMap, void*, jl_value_t*>(v)};
+  return {qmlwrap::detail::ConversionIterator<bool, float, double, long long, int32_t, int64_t, uint32_t, uint64_t, QString, QUrl, QObject*, QVariantMap, void*, jl_value_t*>::tojulia(v)};
 }
 
 jl_value_t* ConvertToJulia<QString, false, false, false>::operator()(const QString& str) const

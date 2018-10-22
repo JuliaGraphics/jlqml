@@ -15,7 +15,11 @@ find_package(JlCxx)
 
 get_target_property(QtCore_location Qt5::Core LOCATION)
 get_filename_component(QtCore_location ${QtCore_location} DIRECTORY)
-set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib;${JlCxx_DIR}/../;${QtCore_location}")
+get_target_property(JlCxx_location JlCxx::cxxwrap_julia LOCATION)
+get_filename_component(JlCxx_location ${JlCxx_location} DIRECTORY)
+set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib;${JlCxx_location};${QtCore_location}")
+
+message(STATUS "Found JlCxx at ${JlCxx_location}")
 
 if(WIN32)
   if(DEFINED ENV{MSYSTEM})

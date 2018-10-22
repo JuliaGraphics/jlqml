@@ -129,7 +129,9 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
   qml_module.method("exec", []() { qmlwrap::ApplicationManager::instance().exec(); });
   qml_module.method("exec_async", []() { qmlwrap::ApplicationManager::instance().exec_async(); });
 
-  qml_module.add_type<QTimer>("QTimer", julia_type<QObject>());
+  qml_module.add_type<QTimer>("QTimer", julia_type<QObject>())
+    .method("start", [] (QTimer& t) { t.start(); } )
+    .method("stop", &QTimer::stop);
 
   qml_module.add_type<QQmlPropertyMap>("QQmlPropertyMap", julia_type<QObject>())
     .constructor<QObject *>(false)
@@ -150,23 +152,23 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
       });
     });
 
-      // Emit signals helper
-      qml_module.method("emit", [](const char *signal_name, jlcxx::ArrayRef<jl_value_t *> args) {
-        using namespace qmlwrap;
-        JuliaSignals *julia_signals = JuliaAPI::instance()->juliaSignals();
-        if (julia_signals == nullptr)
-        {
-          throw std::runtime_error("No signals available");
-        }
-        julia_signals->emit_signal(signal_name, args);
-      });
+  // Emit signals helper
+  qml_module.method("emit", [](const char *signal_name, jlcxx::ArrayRef<jl_value_t *> args) {
+    using namespace qmlwrap;
+    JuliaSignals *julia_signals = JuliaAPI::instance()->juliaSignals();
+    if (julia_signals == nullptr)
+    {
+      throw std::runtime_error("No signals available");
+    }
+    julia_signals->emit_signal(signal_name, args);
+  });
 
-      // Function to register a function
-      qml_module.method("qmlfunction", [](const QString &name, jl_function_t *f) {
-        qmlwrap::JuliaAPI::instance()->register_function(name, f);
-      });
+  // Function to register a function
+  qml_module.method("qmlfunction", [](const QString &name, jl_function_t *f) {
+    qmlwrap::JuliaAPI::instance()->register_function(name, f);
+  });
 
-  qml_module.add_type<qmlwrap::JuliaDisplay>("JuliaDisplay", julia_type("CppDisplay"))
+  qml_module.add_type<qmlwrap::JuliaDisplay>("JuliaDisplay", julia_type("AbstractDisplay", "Base"))
     .method("load_png", &qmlwrap::JuliaDisplay::load_png)
     .method("load_svg", &qmlwrap::JuliaDisplay::load_svg);
 
