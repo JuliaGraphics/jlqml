@@ -195,6 +195,15 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
   qml_module.method("addrole", [] (qmlwrap::ListModel& m, const std::string& role, jl_function_t* getter, jl_function_t* setter) { m.addrole(role, getter, setter); });
   qml_module.method("setrole", [] (qmlwrap::ListModel& m, const int idx, const std::string& role, jl_function_t* getter) { m.setrole(idx, role, getter); });
   qml_module.method("setrole", [] (qmlwrap::ListModel& m, const int idx, const std::string& role, jl_function_t* getter, jl_function_t* setter) { m.setrole(idx, role, getter, setter); });
+  qml_module.method("roles", [] (qmlwrap::ListModel& m)
+  {
+    jlcxx::Array<std::string> outroles;
+    for(const QString r : m.roles())
+    {
+      outroles.push_back(r.toStdString());
+    }
+    return outroles;
+  });
 
   qml_module.add_type<QVariantMap>("QVariantMap");
   qml_module.method("getindex", [](const QVariantMap& m, const QString& key) { return jlcxx::convert_to_julia(m[key]).value; });
