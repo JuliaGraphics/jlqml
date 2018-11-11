@@ -18,7 +18,7 @@
 #include "julia_signals.hpp"
 #include "listmodel.hpp"
 #include "opengl_viewport.hpp"
-#include "glvisualize_viewport.hpp"
+#include "makie_viewport.hpp"
 #include "type_conversion.hpp"
 
 namespace jlcxx
@@ -44,7 +44,7 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
   qmlRegisterType<qmlwrap::JuliaDisplay>("org.julialang", 1, 0, "JuliaDisplay");
   qmlRegisterType<qmlwrap::JuliaPaintedItem>("org.julialang", 1, 1, "JuliaPaintedItem");
   qmlRegisterType<qmlwrap::OpenGLViewport>("org.julialang", 1, 0, "OpenGLViewport");
-  qmlRegisterType<qmlwrap::GLVisualizeViewport>("org.julialang", 1, 0, "GLVisualizeViewport");
+  qmlRegisterType<qmlwrap::MakieViewport>("org.julialang", 1, 0, "MakieViewport");
 
   qml_module.add_type<QObject>("QObject");
 
@@ -207,4 +207,15 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
 
   qml_module.add_type<QVariantMap>("QVariantMap");
   qml_module.method("getindex", [](const QVariantMap& m, const QString& key) { return jlcxx::convert_to_julia(m[key]).value; });
+
+  qml_module.add_type<QOpenGLFramebufferObject>("QOpenGLFramebufferObject")
+    .method("size", &QOpenGLFramebufferObject::size)
+    .method("handle", &QOpenGLFramebufferObject::handle)
+    .method("isValid", &QOpenGLFramebufferObject::isValid)
+    .method("bind", &QOpenGLFramebufferObject::bind)
+    .method("release", &QOpenGLFramebufferObject::release)
+    .method("printinfo", [] (QOpenGLFramebufferObject& fbo)
+    {
+      qWarning() << "textures: " << fbo.textures();
+    });
 }

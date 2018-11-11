@@ -58,8 +58,6 @@ endif(WIN32)
 add_library(jlqml SHARED
   application_manager.hpp
   application_manager.cpp
-  glvisualize_viewport.hpp
-  glvisualize_viewport.cpp
   julia_api.hpp
   julia_api.cpp
   julia_display.hpp
@@ -72,6 +70,8 @@ add_library(jlqml SHARED
   julia_signals.cpp
   listmodel.hpp
   listmodel.cpp
+  makie_viewport.hpp
+  makie_viewport.cpp
   opengl_viewport.hpp
   opengl_viewport.cpp
   type_conversion.hpp

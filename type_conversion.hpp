@@ -3,7 +3,9 @@
 
 #include "jlcxx/jlcxx.hpp"
 #include "jlcxx/functions.hpp"
+#include "jlcxx/tuple.hpp"
 
+#include <QSize>
 #include <QString>
 #include <QVariant>
 
@@ -97,11 +99,25 @@ struct ConvertToCpp<QUrl, false, false, false>
   QUrl operator()(jl_value_t* julia_string) const;
 };
 
-// template<>
-// struct ConvertToCpp<QObject*, false, false, false>
-// {
-//   QObject* operator()(jl_value_t* julia_value) const;
-// };
+// Map QSize to Tuple
+template<> struct static_type_mapping<QSize>
+{
+  typedef jl_value_t* type;
+
+  static jl_datatype_t* julia_type()
+  {
+    return jlcxx::static_type_mapping<std::tuple<int,int>>::julia_type();
+  }
+};
+
+template<>
+struct ConvertToJulia<QSize, false, false, false>
+{
+  inline jl_value_t* operator()(const QSize& s) const
+  {
+    return jlcxx::convert_to_julia(std::make_tuple(s.width(), s.height()));
+  }
+};
 
 } // namespace jlcxx
 

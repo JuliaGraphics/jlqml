@@ -19,7 +19,7 @@ public:
   {
     if(m_need_setup)
     {
-      m_vp->setup_buffer(m_handle, m_width, m_height);
+      m_vp->setup_buffer(m_fbo);
       m_need_setup = false;
     }
     m_vp->render();
@@ -33,31 +33,30 @@ public:
     assert(m_vp != nullptr);
   }
 
-  QOpenGLFramebufferObject *createFramebufferObject(const QSize &size)
+  QOpenGLFramebufferObject* createFramebufferObject(const QSize &size)
   {
     m_need_setup = true;
     m_width = size.width();
     m_height = size.height();
     QOpenGLFramebufferObjectFormat format;
-    format.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
+    format.setAttachment(QOpenGLFramebufferObject::NoAttachment);
     format.setSamples(4);
-    auto result = new QOpenGLFramebufferObject(size, format);
-    m_handle = result->handle();
-    return result;
+    m_fbo = new QOpenGLFramebufferObject(size, format);
+    return m_fbo;
   }
 private:
   OpenGLViewport* m_vp;
   bool m_need_setup = true;
   int m_width = 0;
   int m_height = 0;
-  GLuint m_handle = 0;
+  QOpenGLFramebufferObject* m_fbo = 0;
 };
 
-OpenGLViewport::OpenGLViewport(QQuickItem *parent) : QQuickFramebufferObject(parent)
+OpenGLViewport::OpenGLViewport(QQuickItem *parent, RenderFunction* render_func) : QQuickFramebufferObject(parent), m_render_function(render_func)
 {
   if(qgetenv("QSG_RENDER_LOOP") != "basic")
   {
-    qFatal("QSG_RENDER_LOOP must be set to basic to use OpenGLViewport or GLVisualizeViewport. Add the line\nENV[\"QSG_RENDER_LOOP\"] = \"basic\"\nat the top of your Julia program");
+    qFatal("QSG_RENDER_LOOP must be set to basic to use OpenGLViewport or MakieViewport. Add the line\nENV[\"QSG_RENDER_LOOP\"] = \"basic\"\nat the top of your Julia program");
   }
   QObject::connect(this, &OpenGLViewport::renderFunctionChanged, this, &OpenGLViewport::update);
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 6, 0))
@@ -69,7 +68,7 @@ OpenGLViewport::OpenGLViewport(QQuickItem *parent) : QQuickFramebufferObject(par
 
 void OpenGLViewport::render()
 {
-  m_render_function();
+  m_render_function->render();
 }
 
 QQuickFramebufferObject::Renderer* OpenGLViewport::createRenderer() const
@@ -79,8 +78,18 @@ QQuickFramebufferObject::Renderer* OpenGLViewport::createRenderer() const
 
 void OpenGLViewport::setRenderFunction(jlcxx::SafeCFunction f)
 {
-  m_render_function = jlcxx::make_function_pointer<void(void)>(f);
+  m_render_function->setRenderFunction(f);
   emit renderFunctionChanged();
+}
+
+void DefaultRenderFunction::setRenderFunction(jlcxx::SafeCFunction f)
+{
+  m_render_function = jlcxx::make_function_pointer<void(void)>(f);
+}
+
+void DefaultRenderFunction::render()
+{
+  m_render_function();
 }
 
 } // namespace qmlwrap
