@@ -1,5 +1,6 @@
 #include <QDebug>
 #include <QPainter>
+#include <QQuickWindow>
 
 #include "julia_display.hpp"
 namespace qmlwrap
@@ -17,7 +18,8 @@ void JuliaDisplay::paint(QPainter *painter)
   }
   else if(m_svg_renderer != nullptr)
   {
-    m_svg_renderer->render(painter);
+    const qreal dpr = this->window()->effectiveDevicePixelRatio();
+    m_svg_renderer->render(painter, QRectF(QPointF(0,0),QSizeF(painter->device()->width()/dpr,painter->device()->height()/dpr)));
   }
 }
 
