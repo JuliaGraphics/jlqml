@@ -132,7 +132,7 @@ bool ListModel::setData(const QModelIndex& index, const QVariant& value, int rol
 
   try
   {
-    rolesetter(role)((jl_value_t*)m_array.wrapped(), jlcxx::convert_to_julia(value).value, index.row()+1);
+    rolesetter(role)((jl_value_t*)m_array.wrapped(), jlcxx::convert_to_julia(static_cast<QVariant>(value)).value, index.row()+1);
     do_update(index.row(), 1, QVector<int>() << role);
     return true;
   }
@@ -164,7 +164,7 @@ void ListModel::append_list(const QVariantList& argvariants)
   JL_GC_PUSHARGS(julia_args, nb_args);
   for(int i = 0; i != nb_args; ++i)
   {
-    julia_args[i] = jlcxx::convert_to_julia(argvariants[i]).value;
+    julia_args[i] = jlcxx::convert_to_julia(static_cast<QVariant>(argvariants[i])).value;
   }
 
   result = jl_call(m_constructor, julia_args, nb_args);

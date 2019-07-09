@@ -48,7 +48,7 @@ namespace detail
     {
       auto ptr = std::make_shared<argument_wrapper_impl<QString>>();
       wrappers.push_back(ptr);
-      ptr->value = jlcxx::convert_to_cpp<QString>(v);
+      ptr->value = jlcxx::unbox<QString>(v);
       return Q_ARG(QString, ptr->value);
     }
 

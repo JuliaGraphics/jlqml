@@ -13,6 +13,8 @@ find_package(Qt5Svg)
 find_package(Qt5Widgets)
 find_package(JlCxx)
 
+set(CMAKE_CXX_STANDARD 17)
+
 get_target_property(QtCore_location Qt5::Core LOCATION)
 get_filename_component(QtCore_location ${QtCore_location} DIRECTORY)
 get_target_property(JlCxx_location JlCxx::cxxwrap_julia LOCATION)

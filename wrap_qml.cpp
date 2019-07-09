@@ -47,6 +47,8 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
   qmlRegisterType<qmlwrap::MakieViewport>("org.julialang", 1, 0, "MakieViewport");
 
   qml_module.add_type<QObject>("QObject");
+  qml_module.add_type<QString>("QString");
+  qml_module.add_type<QUrl>("QUrl");
 
   qml_module.add_type<QQmlContext>("QQmlContext", julia_type<QObject>())
     .method("context_property", &QQmlContext::contextProperty)
@@ -148,7 +150,7 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
         {
           return;
         }
-        update_observable_property(observable, jlcxx::convert_to_julia(newvalue).value);
+        update_observable_property(observable, jlcxx::convert_to_julia(static_cast<QVariant>(newvalue)).value);
       });
     });
 
@@ -206,7 +208,7 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
   });
 
   qml_module.add_type<QVariantMap>("QVariantMap");
-  qml_module.method("getindex", [](const QVariantMap& m, const QString& key) { return jlcxx::convert_to_julia(m[key]).value; });
+  qml_module.method("getindex", [](const QVariantMap& m, const QString& key) { return jlcxx::convert_to_julia(static_cast<QVariant>(m[key])).value; });
 
   qml_module.add_type<QOpenGLFramebufferObject>("QOpenGLFramebufferObject")
     .method("size", &QOpenGLFramebufferObject::size)
@@ -218,4 +220,14 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
     {
       qWarning() << "textures: " << fbo.textures();
     });
+
+  qml_module.method("__test_add_int!", [] (double& result, QVariant var)
+  {
+    result += var.value<double>();
+  });
+
+  qml_module.method("__test_make_qvariant", [] (double val)
+  {
+    return QVariant::fromValue(val);
+  });
 }

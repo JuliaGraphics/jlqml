@@ -20,7 +20,7 @@ QVariant convert_to_qt(jl_value_t* v)
   jl_value_t* to_t = (jl_value_t*)jlcxx::julia_type<CppT>();
   if(from_t == to_t || jl_type_morespecific(from_t, to_t))
   {
-    return QVariant::fromValue(jlcxx::convert_to_cpp<CppT>(v));
+    return QVariant::fromValue(jlcxx::unbox<CppT>(v));
   }
 
   return QVariant();
@@ -45,7 +45,7 @@ jl_value_t* convert_to_julia(const QVariant& v)
 {
   if(v.userType() == qMetaTypeId<CppT>())
   {
-    return jlcxx::box(v.template value<CppT>());
+    return jlcxx::box<CppT>(v.template value<CppT>());
   }
 
   return nullptr;
@@ -89,7 +89,7 @@ jl_value_t* try_qobject_cast(QObject* o)
   {
     if(cast_o != nullptr)
     {
-      return jlcxx::box(cast_o);
+      return jlcxx::box<Type1*>(cast_o);
     }
     return try_qobject_cast<TypesT...>(o);
   }
@@ -209,19 +209,19 @@ struct ConversionIterator<FirstT, TypesT...>
 namespace jlcxx
 {
 
-QVariant ConvertToCpp<QVariant, false, true, false>::operator()(qmlwrap::JuliaQVariant julia_value) const
+QVariant ConvertToCpp<QVariant, QVariantTrait>::operator()(qmlwrap::JuliaQVariant julia_value) const
 {
   return qmlwrap::detail::ConversionIterator<jl_value_t*>::to_variant(julia_value);
 }
 
-qmlwrap::JuliaQVariant ConvertToJulia<QVariant, false, true, false>::operator()(const QVariant &v) const
+qmlwrap::JuliaQVariant ConvertToJulia<QVariant, QVariantTrait>::operator()(const QVariant &v) const
 {
   if (v.userType() == QMetaType::type("QJSValue"))
   {
     QVariant unpacked = v.value<QJSValue>().toVariant();
     if(unpacked.isValid())
     {
-      return ConvertToJulia<QVariant, false, true, false>()(unpacked);
+      return ConvertToJulia<QVariant, QVariantTrait>()(unpacked);
     }
   }
   else if (v.canConvert<QVariantList>())
@@ -231,53 +231,12 @@ qmlwrap::JuliaQVariant ConvertToJulia<QVariant, false, true, false>::operator()(
     JL_GC_PUSH1(arr.gc_pointer());
     for (const QVariant& item : iterable)
     {
-      arr.push_back(jlcxx::convert_to_julia(item).value);
+      arr.push_back(jlcxx::convert_to_julia(static_cast<QVariant>(item)).value);
     }
     JL_GC_POP();
     return {(jl_value_t*)(arr.wrapped())};
   }
   return {qmlwrap::detail::ConversionIterator<bool, float, double, long long, int32_t, int64_t, uint32_t, uint64_t, QString, QUrl, QObject*, QVariantMap, void*, jl_value_t*>::tojulia(v)};
 }
-
-jl_value_t* ConvertToJulia<QString, false, false, false>::operator()(const QString& str) const
-{
-  return jl_cstr_to_string(str.toStdString().c_str());
-}
-
-QString ConvertToCpp<QString, false, false, false>::operator()(jl_value_t* julia_string) const
-{
-  if(julia_string == nullptr || !jlcxx::is_julia_string(julia_string))
-  {
-    throw std::runtime_error("Any type to convert to string is not a string");
-  }
-  return QString(jlcxx::julia_string(julia_string));
-}
-
-jl_value_t* ConvertToJulia<QUrl, false, false, false>::operator()(const QUrl& url) const
-{
-  return jl_cstr_to_string(url.toLocalFile().toStdString().c_str());
-}
-
-
-QUrl ConvertToCpp<QUrl, false, false, false>::operator()(jl_value_t* julia_string) const
-{
-  if(julia_string == nullptr || !jlcxx::is_julia_string(julia_string))
-  {
-    throw std::runtime_error("Any type to convert to string is not a string");
-  }
-
-  QString qstr(jlcxx::julia_string(julia_string));
-  QFileInfo finfo(qstr);
-  if(!finfo.exists())
-  {
-    return QUrl(qstr);
-  }
-  return QUrl::fromLocalFile(qstr);
-}
-
-// QObject* ConvertToCpp<QObject*, false, false, false>::operator()(jl_value_t* julia_value) const
-// {
-//   return jlcxx::unbox_wrapped_ptr<QObject>(julia_value);
-// }
 
 } // namespace jlcxx

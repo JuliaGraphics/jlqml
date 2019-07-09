@@ -31,11 +31,11 @@ QVariant JuliaFunction::call(const QVariantList& args)
     const auto& qt_arg = args.at(i);
     if(!qt_arg.isValid())
     {
-      julia_args[i] = jlcxx::box(static_cast<void*>(nullptr));
+      julia_args[i] = jlcxx::box<void*>(static_cast<void*>(nullptr));
     }
     else
     {
-      julia_args[i] = jlcxx::convert_to_julia(args.at(i)).value;
+      julia_args[i] = jlcxx::convert_to_julia(static_cast<QVariant>(args.at(i))).value;
     }
     if(julia_args[i] == nullptr)
     {
