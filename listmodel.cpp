@@ -113,7 +113,7 @@ QVariant ListModel::data(const QModelIndex& index, int role) const
     qWarning() << "Row index " << index << " is out of range for ListModel";
     return QVariant();
   }
-  QVariant result = jlcxx::convert_to_cpp<QVariant>(rolegetter(role)(m_array[index.row()]));
+  QVariant result = jlcxx::unbox<QVariant>(rolegetter(role)(m_array[index.row()]));
   return result;
 }
 
@@ -132,7 +132,7 @@ bool ListModel::setData(const QModelIndex& index, const QVariant& value, int rol
 
   try
   {
-    rolesetter(role)((jl_value_t*)m_array.wrapped(), jlcxx::convert_to_julia(static_cast<QVariant>(value)).value, index.row()+1);
+    rolesetter(role)((jl_value_t*)m_array.wrapped(), jlcxx::box<QVariant>(value), index.row()+1);
     do_update(index.row(), 1, QVector<int>() << role);
     return true;
   }
@@ -164,7 +164,7 @@ void ListModel::append_list(const QVariantList& argvariants)
   JL_GC_PUSHARGS(julia_args, nb_args);
   for(int i = 0; i != nb_args; ++i)
   {
-    julia_args[i] = jlcxx::convert_to_julia(static_cast<QVariant>(argvariants[i])).value;
+    julia_args[i] = jlcxx::box<QVariant>(argvariants[i]);
   }
 
   result = jl_call(m_constructor, julia_args, nb_args);

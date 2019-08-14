@@ -209,34 +209,6 @@ struct ConversionIterator<FirstT, TypesT...>
 namespace jlcxx
 {
 
-QVariant ConvertToCpp<QVariant, QVariantTrait>::operator()(qmlwrap::JuliaQVariant julia_value) const
-{
-  return qmlwrap::detail::ConversionIterator<jl_value_t*>::to_variant(julia_value);
-}
 
-qmlwrap::JuliaQVariant ConvertToJulia<QVariant, QVariantTrait>::operator()(const QVariant &v) const
-{
-  if (v.userType() == QMetaType::type("QJSValue"))
-  {
-    QVariant unpacked = v.value<QJSValue>().toVariant();
-    if(unpacked.isValid())
-    {
-      return ConvertToJulia<QVariant, QVariantTrait>()(unpacked);
-    }
-  }
-  else if (v.canConvert<QVariantList>())
-  {
-    QSequentialIterable iterable = v.template value<QSequentialIterable>();
-    jlcxx::Array<jl_value_t*> arr;
-    JL_GC_PUSH1(arr.gc_pointer());
-    for (const QVariant& item : iterable)
-    {
-      arr.push_back(jlcxx::convert_to_julia(static_cast<QVariant>(item)).value);
-    }
-    JL_GC_POP();
-    return {(jl_value_t*)(arr.wrapped())};
-  }
-  return {qmlwrap::detail::ConversionIterator<bool, float, double, long long, int32_t, int64_t, uint32_t, uint64_t, QString, QUrl, QObject*, QVariantMap, void*, jl_value_t*>::tojulia(v)};
-}
 
 } // namespace jlcxx
