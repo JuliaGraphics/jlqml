@@ -329,7 +329,12 @@ void ListModel::addrole(const std::string& name, jl_function_t* getter, jl_funct
     m_custom_roles = true;
   }
 
-  m_rolenames[m_rolenames.size()] = name.c_str();
+  std::size_t nb_roles = m_rolenames.size();
+  const char* cname = name.c_str();
+
+  std::cout << "adding role " << cname << " at index " << nb_roles << std::endl;
+
+  m_rolenames[nb_roles] = cname;
   m_getters.push_back(getter);
   m_setters.push_back(setter);
 

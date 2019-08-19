@@ -36,7 +36,7 @@ template<> struct SuperType<qmlwrap::ListModel> { typedef QObject type; };
 
 }
 
-using qvariant_types = jlcxx::ParameterList<bool, float, double, long long, int, unsigned int, unsigned long long, QString, QObject*, void*, jlcxx::SafeCFunction, jl_value_t*, QVariantMap>;
+using qvariant_types = jlcxx::ParameterList<bool, float, double, long long, int, unsigned int, unsigned long long, QString, QObject*, void*, jlcxx::SafeCFunction, jl_value_t*, QVariantMap, QVariantList>;
 // using qvariant_types = jlcxx::ParameterList<double, int32_t, long long>;
 
 namespace qmlwrap
@@ -149,16 +149,16 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
   qml_module.add_type<QUrl>("QUrl");
   auto qvar_type = qml_module.add_type<QVariant>("QVariant");
   qml_module.add_type<QVariantMap>("QVariantMap");
+  qml_module.add_type<Parametric<TypeVar<1>>>("QList", julia_type("AbstractVector"))
+    .apply<QVariantList>(qmlwrap::WrapQList());
   
   jlcxx::for_each_parameter_type<qvariant_types>(qmlwrap::WrapQVariant(qvar_type));
   qml_module.method("type", [] (const QVariant& v)
   {
+    std::cout << "querying variant type " << QMetaType::typeName(v.userType()) << std::endl;
     assert(qmlwrap::g_variant_type_map.count(v.userType()) == 1);
     return qmlwrap::g_variant_type_map[v.userType()];
   });
-
-  qml_module.add_type<Parametric<TypeVar<1>>>("QList", julia_type("AbstractVector"))
-    .apply<QVariantList>(qmlwrap::WrapQList());
 
   qml_module.method("make_qvariant_map", [] ()
   { 
@@ -169,6 +169,8 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
     
 
   qml_module.add_type<QQmlContext>("QQmlContext", julia_type<QObject>())
+    .constructor<QQmlContext*>()
+    .constructor<QQmlContext*, QObject*>()
     .method("context_property", &QQmlContext::contextProperty)
     .method("set_context_object", &QQmlContext::setContextObject)
     .method("set_context_property", static_cast<void(QQmlContext::*)(const QString&, const QVariant&)>(&QQmlContext::setContextProperty))
@@ -257,12 +259,12 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
     .constructor<QObject *>(false)
     .method("insert", &QQmlPropertyMap::insert)
     .method("value", &QQmlPropertyMap::value)
-    .method("insert_observable", [] (QQmlPropertyMap* propmap, const QString& name, jl_value_t* observable)
+    .method("insert_observable", [] (QQmlPropertyMap& propmap, const QString& name, jl_value_t* observable, const QVariant& value)
     {
       static const jlcxx::JuliaFunction getindex("getindex");
-      QVariant value = jlcxx::unbox<QVariant>(getindex(observable));
-      propmap->insert(name, value);
-      auto conn = QObject::connect(propmap, &QQmlPropertyMap::valueChanged, [=](const QString &key, const QVariant &newvalue) {
+      std::cout << "return type of getindex: on property " << name.toStdString() << ": " << typeid(getindex(observable)).name() << std::endl;
+      propmap.insert(name, value);
+      auto conn = QObject::connect(&propmap, &QQmlPropertyMap::valueChanged, [=](const QString &key, const QVariant &newvalue) {
         static const jlcxx::JuliaFunction update_observable_property("update_observable_property!", "QML");
         if(key != name)
         {
