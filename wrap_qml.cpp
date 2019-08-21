@@ -33,6 +33,7 @@ template<> struct SuperType<QQuickView> { typedef QQuickWindow type; };
 template<> struct SuperType<QTimer> { typedef QObject type; };
 template<> struct SuperType<qmlwrap::JuliaPaintedItem> { typedef QQuickItem type; };
 template<> struct SuperType<qmlwrap::ListModel> { typedef QObject type; };
+template<> struct SuperType<QStringList> { typedef QList<QString> type; };
 
 }
 
@@ -56,6 +57,10 @@ struct WrapQVariant
     g_variant_type_map[qMetaTypeId<T>()] = jlcxx::julia_base_type<T>();
     m_wrapper.module().method("value", [] (jlcxx::SingletonType<T>, const QVariant& v)
     {
+      if(v.userType() == qMetaTypeId<QJSValue>())
+      {
+        return v.value<QJSValue>().toVariant().value<T>();
+      }
       return v.value<T>();
     });
       //.method("setValue", &QVariant::setValue<T>);
@@ -150,14 +155,15 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
   auto qvar_type = qml_module.add_type<QVariant>("QVariant");
   qml_module.add_type<QVariantMap>("QVariantMap");
   qml_module.add_type<Parametric<TypeVar<1>>>("QList", julia_type("AbstractVector"))
-    .apply<QVariantList>(qmlwrap::WrapQList());
+    .apply<QVariantList, QList<QString>>(qmlwrap::WrapQList());
+  qml_module.add_type<QStringList>("QStringList", julia_base_type<QList<QString>>());
   
   jlcxx::for_each_parameter_type<qvariant_types>(qmlwrap::WrapQVariant(qvar_type));
   qml_module.method("type", [] (const QVariant& v)
   {
-    std::cout << "querying variant type " << QMetaType::typeName(v.userType()) << std::endl;
-    assert(qmlwrap::g_variant_type_map.count(v.userType()) == 1);
-    return qmlwrap::g_variant_type_map[v.userType()];
+    const int usertype = v.userType() == qMetaTypeId<QJSValue>() ? v.value<QJSValue>().toVariant().userType() : v.userType();
+    assert(qmlwrap::g_variant_type_map.count(usertype) == 1);
+    return qmlwrap::g_variant_type_map[usertype];
   });
 
   qml_module.method("make_qvariant_map", [] ()
@@ -262,7 +268,6 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
     .method("insert_observable", [] (QQmlPropertyMap& propmap, const QString& name, jl_value_t* observable, const QVariant& value)
     {
       static const jlcxx::JuliaFunction getindex("getindex");
-      std::cout << "return type of getindex: on property " << name.toStdString() << ": " << typeid(getindex(observable)).name() << std::endl;
       propmap.insert(name, value);
       auto conn = QObject::connect(&propmap, &QQmlPropertyMap::valueChanged, [=](const QString &key, const QVariant &newvalue) {
         static const jlcxx::JuliaFunction update_observable_property("update_observable_property!", "QML");
