@@ -33,7 +33,7 @@ QVariant convert_to_qt<QObject*>(jl_value_t* v)
   jl_value_t* to_t = (jl_value_t*)jlcxx::julia_type<QObject*>();
   if(from_t == to_t || jl_type_morespecific(from_t, to_t))
   {
-    return QVariant::fromValue(jlcxx::unbox_wrapped_ptr<QObject>(v));
+    return QVariant::fromValue(jlcxx::unbox<QObject*>(v));
   }
 
   return QVariant();

@@ -7,140 +7,51 @@
 namespace qmlwrap
 {
 
-jl_function_t* FunctionList::get(const size_t i) const
-{
-  assert(i < m_functions.size());
-  return m_functions[i];
-}
+jl_module_t* ListModel::m_qml_mod = nullptr;
 
-void FunctionList::set(const size_t i, jl_function_t* val)
+ListModel::ListModel(jl_value_t* data, QObject* parent) : QAbstractListModel(parent), m_data(data)
 {
-  assert(i < m_functions.size());
-  protect(val);
-  unprotect(m_functions[i]);
-  m_functions[i] = val;
-}
-
-void FunctionList::clear()
-{
-  for(jl_function_t* f : m_functions)
-  {
-    unprotect(f);
-  }
-  m_functions.clear();
-}
-
-void FunctionList::push_back(jl_function_t* f)
-{
-  protect(f);
-  m_functions.push_back(f);
-}
-
-void FunctionList::erase(const size_t idx)
-{
-  assert(idx < m_functions.size());
-  unprotect(m_functions[idx]);
-  const int nb_functions = size();
-  for(int i = idx; i != (nb_functions-1); ++i)
-  {
-    m_functions[i] = m_functions[i+1];
-  }
-  m_functions.resize(nb_functions-1);
-}
-
-size_t FunctionList::size() const
-{
-  return m_functions.size();
-}
-
-FunctionList::~FunctionList()
-{
-  clear();
-}
-
-void FunctionList::protect(jl_function_t* f)
-{
-  if(f == nullptr)
-  {
-    return;
-  }
-  jlcxx::protect_from_gc(f);
-}
-
-void FunctionList::unprotect(jl_function_t* f)
-{
-  if(f == nullptr)
-  {
-    return;
-  }
-  jlcxx::unprotect_from_gc(f);
-}
-
-ListModel::ListModel(const jlcxx::ArrayRef<jl_value_t*>& array, jl_function_t* f, QObject* parent) : QAbstractListModel(parent), m_array(array), m_update_array(f)
-{
-  m_rolenames[0] = "string";
-  m_getters.push_back(jlcxx::JuliaFunction("string").pointer());
-  m_setters.push_back(nullptr);
-  jlcxx::protect_from_gc(m_array.wrapped());
-  if(f != nullptr)
-  {
-    jlcxx::protect_from_gc(f);
-  }
+  assert(m_qml_mod != nullptr);
+  jlcxx::protect_from_gc(m_data);
 }
 
 ListModel::~ListModel()
 {
-  jlcxx::unprotect_from_gc(m_array.wrapped());
-  if(m_update_array != nullptr)
-  {
-    jlcxx::unprotect_from_gc(m_update_array);
-  }
-  if(m_constructor != nullptr)
-  {
-    jlcxx::unprotect_from_gc(m_constructor);
-  }
+  jlcxx::unprotect_from_gc(m_data);
 }
 
-int	ListModel::rowCount(const QModelIndex& parent) const
+int	ListModel::rowCount(const QModelIndex&) const
 {
-  return m_array.size();
+  return count();
 }
 
 QVariant ListModel::data(const QModelIndex& index, int role) const
 {
-  if(index.row() < 0 || index.row() >= m_array.size())
-  {
-    qWarning() << "Row index " << index << " is out of range for ListModel";
-    return QVariant();
-  }
-  QVariant result = jlcxx::unbox<QVariant>(rolegetter(role)(m_array[index.row()]));
-  return result;
+  static const jlcxx::JuliaFunction data_f(jl_get_function(m_qml_mod, "data"));
+  return jlcxx::unbox<QVariant&>(data_f(m_data, index.row()+1, role+1));
 }
 
 QHash<int, QByteArray> ListModel::roleNames() const
 {
-  return m_rolenames;
+  QHash<int, QByteArray> result;
+  QStringList rolenames = roles();
+  for(int i = 0; i != rolenames.size(); ++i)
+  {
+    result[i] = rolenames[i].toUtf8();
+  }
+
+  return result;
 }
 
 bool ListModel::setData(const QModelIndex& index, const QVariant& value, int role)
 {
-  if(index.row() < 0 || index.row() >= m_array.size())
+  static const jlcxx::JuliaFunction setdata(jl_get_function(m_qml_mod, "setdata"));
+  const bool success = jlcxx::unbox<bool>(setdata(m_data, index.row()+1, value, role+1));
+  if(success)
   {
-    qWarning() << "Row index " << index << " is out of range for ListModel";
-    return false;
-  }
-
-  try
-  {
-    rolesetter(role)((jl_value_t*)m_array.wrapped(), jlcxx::box<QVariant>(value), index.row()+1);
     do_update(index.row(), 1, QVector<int>() << role);
-    return true;
   }
-  catch(const std::runtime_error&)
-  {
-    qWarning() << "Null setter for role " << m_rolenames[role] << ", not changing value";
-    return false;
-  }
+  return success;
 }
 
 Qt::ItemFlags ListModel::flags(const QModelIndex&) const
@@ -150,39 +61,9 @@ Qt::ItemFlags ListModel::flags(const QModelIndex&) const
 
 void ListModel::append_list(const QVariantList& argvariants)
 {
-  if(m_constructor == nullptr)
-  {
-    qWarning() << "No constructor function set, cannot append item to ListModel";
-    return;
-  }
-
-  const int nb_args = argvariants.size();
-
-  jl_value_t* result = nullptr;
-  jl_value_t** julia_args;
-  JL_GC_PUSH1(&result);
-  JL_GC_PUSHARGS(julia_args, nb_args);
-  for(int i = 0; i != nb_args; ++i)
-  {
-    julia_args[i] = jlcxx::box<QVariant>(argvariants[i]);
-  }
-
-  result = jl_call(m_constructor, julia_args, nb_args);
-  if(result == nullptr)
-  {
-    qWarning() << "Error appending ListModel element " << argvariants << ", did you define all required roles for the constructor?";
-    JL_GC_POP();
-    JL_GC_POP();
-    return;
-  }
-
-  beginInsertRows(QModelIndex(), m_array.size(), m_array.size());
-
-  m_array.push_back(result);
-
-  do_update();
-  JL_GC_POP();
-  JL_GC_POP();
+  static const jlcxx::JuliaFunction append_list_f(jl_get_function(m_qml_mod, "append_list"));
+  beginInsertRows(QModelIndex(), count(), count());
+  append_list_f(m_data, argvariants);
   endInsertRows();
   emit countChanged();
 }
@@ -196,10 +77,11 @@ void ListModel::append(const QJSValue& record)
   }
 
   QVariantList argvariants;
-  const int nb_roles = m_rolenames.size();
+  QStringList rolenames = roles();
+  const int nb_roles = rolenames.size();
   for(int i =0; i != nb_roles; ++i)
   {
-    auto rolename = m_rolenames[i];
+    auto rolename = rolenames[i];
     if(record.hasProperty(rolename))
     {
       argvariants.push_back(record.property(QString(rolename)).toVariant());
@@ -211,48 +93,37 @@ void ListModel::append(const QJSValue& record)
 Q_INVOKABLE void ListModel::insert(int index, const QJSValue& record)
 {
   append(record);
-  move(m_array.size()-1, index, 1);
+  move(count()-1, index, 1);
 }
 
 Q_INVOKABLE void ListModel::insert_list(int index, const QVariantList& argvariants)
 {
   append_list(argvariants);
-  move(m_array.size()-1, index, 1);
+  move(count()-1, index, 1);
 }
 
 void ListModel::setProperty(int index, const QString& property, const QVariant& value)
 {
-  setData(createIndex(index,0), value, m_rolenames.key(property.toUtf8()));
+  setData(createIndex(index,0), value, roles().indexOf(property));
 }
 
 void ListModel::remove(int index)
 {
-  if(index < 0 || index >= m_array.size())
-  {
-    qWarning() << "Row index " << index << " is out of range for ListModel";
-    return;
-  }
+  static const jlcxx::JuliaFunction remove_f(jl_get_function(m_qml_mod, "remove"));
 
   beginRemoveRows(QModelIndex(), index, index);
-
-  int nb_elems = m_array.size();
-  for(int i = index; i != nb_elems-1; ++i)
-  {
-    m_array[i] = m_array[i+1];
-  }
-
-  jl_array_del_end(m_array.wrapped(), 1);
-
-  do_update();
-
+  remove_f(m_data, static_cast<int>(index+1));
   endRemoveRows();
   emit countChanged();
 }
 
 void ListModel::move(int from, int to, int count)
 {
-  if(from == to || count == 0)
+  static const jlcxx::JuliaFunction move_f(jl_get_function(m_qml_mod, "move"));
+  if(to == from)
+  {
     return;
+  }
 
   if(to < from)
   {
@@ -262,229 +133,57 @@ void ListModel::move(int from, int to, int count)
     count = c;
   }
 
-  if(from < 0 || from >= m_array.size() || to < 0 || to >= m_array.size() || to+count > m_array.size())
-  {
-    qWarning() << "Invalid indexing for move in ListModel";
-    return;
-  }
-
   beginMoveRows(QModelIndex(), from, from + count - 1, QModelIndex(), to+count);
-
-  jl_value_t** removed_elems;
-  JL_GC_PUSHARGS(removed_elems, count);
-
-  // Save elements to move
-  for(int i = 0; i != count; ++i)
-  {
-    removed_elems[i] = m_array[from+i];
-  }
-  // Shift elements that remain
-  for(int i = from; i != to; ++i)
-  {
-    m_array[i] = m_array[i+count];
-  }
-  // Place saved elements in to block
-  for(int i = 0; i != count; ++i)
-  {
-    m_array[to+i] = removed_elems[i];
-  }
-
-  do_update();
-  JL_GC_POP();
+  move_f(m_data, from+1, to+1, static_cast<int>(count));
   endMoveRows();
 }
 
 void ListModel::clear()
 {
-  beginRemoveRows(QModelIndex(), 0, m_array.size());
-  jl_array_del_end(m_array.wrapped(), m_array.size());
-  do_update();
+  static const jlcxx::JuliaFunction clear_f(jl_get_function(m_qml_mod, "clear"));
+  beginRemoveRows(QModelIndex(), 0, count());
+  clear_f(m_data);
   endRemoveRows();
 }
 
 int ListModel::count() const
 {
-  return m_array.size();
+  static const jlcxx::JuliaFunction rowcount(jl_get_function(m_qml_mod, "rowcount"));
+  return jlcxx::unbox<int>(rowcount(m_data));
 }
 
-void ListModel::addrole(const std::string& name, jl_function_t* getter, jl_function_t* setter)
+void ListModel::emit_roles_changed()
 {
-  if(m_rolenames.values().contains(name.c_str()))
-  {
-    qWarning() << "Role " << name.c_str() << "exists, aborting add";
-    return;
-  }
-
-  if(getter == nullptr)
-  {
-    qWarning() << "Invalid getter for role " << name.c_str() << ", aborting add";
-    return;
-  }
-
-  if(!m_custom_roles)
-  {
-    m_rolenames.clear();
-    m_getters.clear();
-    m_setters.clear();
-    m_custom_roles = true;
-  }
-
-  std::size_t nb_roles = m_rolenames.size();
-  const char* cname = name.c_str();
-
-  std::cout << "adding role " << cname << " at index " << nb_roles << std::endl;
-
-  m_rolenames[nb_roles] = cname;
-  m_getters.push_back(getter);
-  m_setters.push_back(setter);
-
   emit rolesChanged();
 }
 
-void ListModel::setrole(const int idx, const std::string& name, jl_function_t* getter, jl_function_t* setter)
+void ListModel::emit_data_changed(int index, int count, const std::vector<int>& roles)
 {
-  if(idx >= m_getters.size() || idx < 0)
-  {
-    qWarning() << "Listmodel index " << idx << " is out of range, aborting setrole";
-    return;
-  }
-  if(m_rolenames.values().contains(name.c_str()) && m_rolenames.key(name.c_str()) != idx)
-  {
-    qWarning() << "Role " << name.c_str() << "exists, aborting setrole";
-    return;
-  }
-
-  if(getter == nullptr)
-  {
-    qWarning() << "Invalid getter for role " << name.c_str() << ", aborting setrole";
-    return;
-  }
-
-  m_getters.set(idx, getter);
-  m_setters.set(idx, setter);
-  if(m_rolenames[idx] == name.c_str())
-  {
-    emit dataChanged(createIndex(0, 0), createIndex(m_array.size() - 1, 0), QVector<int>() << idx);
-  }
-  else
-  {
-    m_rolenames[idx] = name.c_str();
-    emit rolesChanged();
-  }
-}
-
-void ListModel::removerole(const int idx)
-{
-  if(!m_rolenames.contains(idx))
-  {
-    qWarning() << "Request to delete non-existing role, aborting";
-    return;
-  }
-
-  const int nb_roles = m_getters.size();
-  for(int i = idx; i != (nb_roles-1); ++i)
-  {
-    m_rolenames[i] = m_rolenames[i+1];
-  }
-  m_rolenames.remove(nb_roles-1);
-
-  m_getters.erase(idx);
-  m_setters.erase(idx);
-
-  emit rolesChanged();
-}
-
-void ListModel::removerole(const std::string& name)
-{
-  if(!m_rolenames.values().contains(name.c_str()))
-  {
-    qWarning() << "rolename " << name.c_str() << " not found, aborting removerole";
-    return;
-  }
-  removerole(m_rolenames.key(name.c_str()));
-}
-
-void ListModel::setconstructor(jl_function_t* constructor)
-{
-  m_constructor = constructor;
-  jlcxx::protect_from_gc(m_constructor);
-}
-
-jlcxx::JuliaFunction ListModel::rolegetter(int role) const
-{
-  if(role < 0 || role >= m_rolenames.size())
-  {
-    qWarning() << "Role index " << role << " is out of range for ListModel, defaulting to string conversion";
-    return jlcxx::JuliaFunction("string");
-  }
-
-  return jlcxx::JuliaFunction(m_getters.get(role));
-}
-
-jlcxx::JuliaFunction ListModel::rolesetter(int role) const
-{
-  if(role < 0 || role >= m_rolenames.size())
-  {
-    qWarning() << "Role index " << role << " is out of range for ListModel, returning null setter";
-  }
-
-  return jlcxx::JuliaFunction(m_setters.get(role));
+  do_update(index, count, QVector<int>::fromStdVector(roles));
 }
 
 void ListModel::do_update(int index, int count, const QVector<int> &roles)
 {
-  do_update();
   emit dataChanged(createIndex(index, 0), createIndex(index + count - 1, 0), roles);
-}
-
-void ListModel::do_update()
-{
-  if(m_update_array != nullptr)
-  {
-    jl_call0(m_update_array);
-  }
 }
 
 QStringList ListModel::roles() const
 {
-  const int nb_roles = m_rolenames.size();
-  QStringList rolelist;
-  for(int i = 0; i != nb_roles; ++i)
-  {
-    rolelist.push_back(m_rolenames[i]);
-  }
-  return rolelist;
+  static const jlcxx::JuliaFunction rolenames(jl_get_function(m_qml_mod, "rolenames"));
+  return jlcxx::unbox<QStringList>(rolenames(m_data));
 }
 
 void ListModel::push_back(jl_value_t* val)
 {
-  beginInsertRows(QModelIndex(), m_array.size(), m_array.size());
-  m_array.push_back(val);
-  do_update();
+  static const jlcxx::JuliaFunction push("push!");
+  beginInsertRows(QModelIndex(), count(), count());
+  push(m_data, val);
   endInsertRows();
 }
 
-jl_value_t* ListModel::getindex(int i)
+jl_value_t* ListModel::get_julia_data() const
 {
-  return m_array[i-1];
-}
-
-void ListModel::setindex(jl_value_t* val, int i)
-{
-  m_array[i-1] = val;
-  
-  const int nb_roles = m_rolenames.size();
-  QVector<int> roles(nb_roles);
-  for(int role_i = 0; role_i != nb_roles; ++role_i)
-  {
-    roles[role_i] = role_i;
-  }
-  emit dataChanged(createIndex(i-1, 0), createIndex(i-1, 0), roles);
-}
-
-int ListModel::length()
-{
-  return m_array.size();
+  return m_data;
 }
 
 } // namespace qmlwrap

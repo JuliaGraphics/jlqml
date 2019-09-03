@@ -87,6 +87,7 @@ struct WrapQList
     wrapped.method("cppgetindex", [] (const WrappedT& list, const int i) -> typename WrappedT::const_reference { return list[i]; });
     wrapped.method("cppsetindex!", [] (WrappedT& list, const typename WrappedT::value_type& v, const int i) { list[i] = v; });
     wrapped.method("push_back", &WrappedT::push_back);
+    wrapped.method("clear", &WrappedT::clear);
   }
 };
 
@@ -307,30 +308,14 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
   qml_module.add_type<QPainter>("QPainter")
     .method("device", &QPainter::device);
 
+  qmlwrap::ListModel::m_qml_mod = qml_module.julia_module();
   qml_module.add_type<qmlwrap::ListModel>("ListModel", julia_type<QObject>())
-    .constructor<const jlcxx::ArrayRef<jl_value_t*>&>()
-    .constructor<const jlcxx::ArrayRef<jl_value_t*>&, jl_function_t*>()
-    .method("setconstructor", &qmlwrap::ListModel::setconstructor)
-    .method("removerole", static_cast<void (qmlwrap::ListModel::*)(const int)>(&qmlwrap::ListModel::removerole))
-    .method("removerole", static_cast<void (qmlwrap::ListModel::*)(const std::string&)>(&qmlwrap::ListModel::removerole))
-    .method("getindex", &qmlwrap::ListModel::getindex)
-    .method("setindex!", &qmlwrap::ListModel::setindex)
+    .constructor<jl_value_t*>()
+    .method("remove", &qmlwrap::ListModel::remove)
+    .method("emit_roles_changed", &qmlwrap::ListModel::emit_roles_changed)
+    .method("emit_data_changed", &qmlwrap::ListModel::emit_data_changed)
     .method("push_back", &qmlwrap::ListModel::push_back)
-    .method("model_length", &qmlwrap::ListModel::length)
-    .method("remove", &qmlwrap::ListModel::remove);
-  qml_module.method("addrole", [] (qmlwrap::ListModel& m, const std::string& role, jl_function_t* getter) { m.addrole(role, getter); });
-  qml_module.method("addrole", [] (qmlwrap::ListModel& m, const std::string& role, jl_function_t* getter, jl_function_t* setter) { m.addrole(role, getter, setter); });
-  qml_module.method("setrole", [] (qmlwrap::ListModel& m, const int idx, const std::string& role, jl_function_t* getter) { m.setrole(idx, role, getter); });
-  qml_module.method("setrole", [] (qmlwrap::ListModel& m, const int idx, const std::string& role, jl_function_t* getter, jl_function_t* setter) { m.setrole(idx, role, getter, setter); });
-  qml_module.method("roles", [] (qmlwrap::ListModel& m)
-  {
-    jlcxx::Array<std::string> outroles;
-    for(const QString r : m.roles())
-    {
-      outroles.push_back(r.toStdString());
-    }
-    return outroles;
-  });
+    .method("get_julia_data", &qmlwrap::ListModel::get_julia_data);
 
   qml_module.method("getindex", [](const QVariantMap& m, const QString& key) { return m[key]; });
 

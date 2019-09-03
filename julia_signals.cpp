@@ -15,7 +15,7 @@ if(jl_types_equal(jl_typeof(v), (jl_value_t*)jlcxx::julia_type<cpptype>())) \
 { \
   auto ptr = std::make_shared<argument_wrapper_impl<cpptype>>(); \
   wrappers.push_back(ptr); \
-  ptr->value = jlcxx::convert_to_cpp<cpptype>(v); \
+  ptr->value = jlcxx::unbox<cpptype>(v); \
   return Q_ARG(cpptype, ptr->value); \
 }
 

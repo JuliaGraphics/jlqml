@@ -13,23 +13,6 @@
 namespace qmlwrap
 {
 
-/// Encapsulate a list of functions, managing their lifetime using (un)protect_from_gc
-class FunctionList
-{
-public:
-  jl_function_t* get(const size_t i) const;
-  void set(const size_t i, jl_function_t* val);
-  void clear();
-  void push_back(jl_function_t* f);
-  void erase(const size_t idx);
-  size_t size() const;
-  ~FunctionList();
-private:
-  void protect(jl_function_t* f);
-  void unprotect(jl_function_t* f);
-  std::vector<jl_function_t*> m_functions;
-};
-
 /// Wrap Julia composite types
 class ListModel : public QAbstractListModel
 {
@@ -37,8 +20,9 @@ class ListModel : public QAbstractListModel
   Q_PROPERTY(int count READ count NOTIFY countChanged)
   Q_PROPERTY(QStringList roles READ roles NOTIFY rolesChanged)
 public:
-  /// Construction using an Array{Any,1}. f should be supplied as an update function to update the source array in case it is not an array of boxed values.
-  ListModel(const jlcxx::ArrayRef<jl_value_t*>& array, jl_function_t* f = nullptr, QObject* parent = 0);
+  static jl_module_t* m_qml_mod;
+
+  ListModel(jl_value_t* data, QObject* parent = 0);
   virtual ~ListModel();
 
   // QAbstractItemModel interface
@@ -59,43 +43,27 @@ public:
   int count() const;
 
   // Called from Julia
-  void addrole(const std::string& name, jl_function_t* getter, jl_function_t* setter = nullptr);
-  void setrole(const int idx, const std::string& name, jl_function_t* getter, jl_function_t* setter = nullptr);
-  void removerole(const int idx);
-  void removerole(const std::string& name);
-  void setconstructor(jl_function_t* constructor);
+  void emit_roles_changed();
+  void emit_data_changed(int index, int count, const std::vector<int>& roles);
+  void push_back(jl_value_t* val);
 
   // Roles property
   QStringList roles() const;
-
-  // Julia interface
-  void push_back(jl_value_t* val);
-  jl_value_t* getindex(int i);
-  void setindex(jl_value_t* val, int i);
-  int length();
+  jl_value_t* get_julia_data() const;
 
 Q_SIGNALS:
   void countChanged();
   void rolesChanged();
 
 private:
-  // Update the original array in case we are working with a boxed copy
+  // Emit update change signal
   void do_update(int index, int count, const QVector<int> &roles);
-  void do_update();
 
   /// This overloads append and insert to take a list of variants instead of a dictionary
   void append_list(const QVariantList& argvariants);
   void insert_list(int index, const QVariantList& argvariants);
 
-  jlcxx::JuliaFunction rolesetter(int role) const;
-  jlcxx::JuliaFunction rolegetter(int role) const;
-  jlcxx::ArrayRef<jl_value_t*> m_array;
-  QHash<int, QByteArray> m_rolenames;
-  jl_function_t* m_constructor = nullptr;
-  jl_function_t* m_update_array = nullptr; // Function used to update an array with non-boxed contents
-  bool m_custom_roles = false;
-  FunctionList m_getters;
-  FunctionList m_setters;
+  jl_value_t* m_data;
 };
 
 }
