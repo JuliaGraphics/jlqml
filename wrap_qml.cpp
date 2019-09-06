@@ -20,7 +20,7 @@
 #include "listmodel.hpp"
 #include "opengl_viewport.hpp"
 #include "makie_viewport.hpp"
-#include "type_conversion.hpp"
+#include "jlqml.hpp"
 
 namespace jlcxx
 {
@@ -281,7 +281,7 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
     });
 
   // Emit signals helper
-  qml_module.method("emit", [](const char *signal_name, jlcxx::ArrayRef<jl_value_t *> args) {
+  qml_module.method("emit", [](const char *signal_name, const QVariantList& args) {
     using namespace qmlwrap;
     JuliaSignals *julia_signals = JuliaAPI::instance()->juliaSignals();
     if (julia_signals == nullptr)

@@ -17,7 +17,7 @@ public:
   virtual ~JuliaSignals();
   // Emit the signal with the given name
 public slots:
-  void emit_signal(const char* signal_name, jlcxx::ArrayRef<jl_value_t*> args);
+  void emit_signal(const char* signal_name, const QVariantList& args);
 };
 
 } // namespace qmlwrap

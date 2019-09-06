@@ -76,8 +76,7 @@ add_library(jlqml SHARED
   makie_viewport.cpp
   opengl_viewport.hpp
   opengl_viewport.cpp
-  type_conversion.hpp
-  type_conversion.cpp
+  jlqml.hpp
   wrap_qml.cpp
 ${MOC_BUILT_SOURCES} ${UI_BUILT_SOURCES} ${RESOURCES})
 

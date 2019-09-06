@@ -6,7 +6,7 @@
 #include <QVariantList>
 
 #include "julia_api.hpp"
-#include "type_conversion.hpp"
+#include "jlqml.hpp"
 
 namespace qmlwrap
 {

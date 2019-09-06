@@ -1,7 +1,7 @@
 #include <QDebug>
 
 #include "julia_function.hpp"
-#include "type_conversion.hpp"
+#include "jlqml.hpp"
 
 namespace qmlwrap
 {
