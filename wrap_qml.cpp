@@ -88,6 +88,7 @@ struct WrapQList
     wrapped.method("cppsetindex!", [] (WrappedT& list, const typename WrappedT::value_type& v, const int i) { list[i] = v; });
     wrapped.method("push_back", &WrappedT::push_back);
     wrapped.method("clear", &WrappedT::clear);
+    wrapped.method("removeAt", &WrappedT::removeAt);
   }
 };
 
