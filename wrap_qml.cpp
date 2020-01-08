@@ -22,6 +22,8 @@
 #include "makie_viewport.hpp"
 #include "jlqml.hpp"
 
+#include "jlcxx/stl.hpp"
+
 namespace jlcxx
 {
 
@@ -37,13 +39,46 @@ template<> struct SuperType<QStringList> { typedef QList<QString> type; };
 
 }
 
-using qvariant_types = jlcxx::ParameterList<bool, float, double, long long, int, unsigned int, unsigned long long, QString, QObject*, void*, jlcxx::SafeCFunction, jl_value_t*, QVariantMap, QVariantList>;
-// using qvariant_types = jlcxx::ParameterList<double, int32_t, long long>;
-
 namespace qmlwrap
 {
 
+using qvariant_types = jlcxx::ParameterList<bool, float, double, long long, int, unsigned int, unsigned long long, void*, jl_value_t*,
+  QString, QUrl, QObject*, jlcxx::SafeCFunction, QVariantMap, QVariantList, QStringList, QList<QUrl>, JuliaDisplay*>;
+
 inline std::map<int, jl_datatype_t*> g_variant_type_map;
+
+jl_datatype_t* julia_type_from_qt_id(int id)
+{
+    if(qmlwrap::g_variant_type_map.count(id) == 0)
+    {
+      qWarning() << "invalid variant type " << QMetaType::typeName(id);
+    }
+    assert(qmlwrap::g_variant_type_map.count(id) == 1);
+    return qmlwrap::g_variant_type_map[id];
+}
+
+jl_datatype_t* julia_variant_type(const QVariant& v)
+  {
+    const int usertype = v.userType();
+    if(usertype == qMetaTypeId<QJSValue>())
+    {
+      return julia_variant_type(v.value<QJSValue>().toVariant());
+    }
+    // Convert to some known, specific type if necessary
+    if(v.canConvert<QObject*>())
+    {
+      QObject* obj = v.value<QObject*>();
+      if(obj != nullptr)
+      {
+        if(qobject_cast<JuliaDisplay*>(obj) != nullptr)
+        {
+          return jlcxx::julia_base_type<JuliaDisplay*>();
+        }
+      }
+    }
+
+    return julia_type_from_qt_id(usertype);
+  }
 
 struct WrapQVariant
 {
@@ -153,20 +188,23 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
     return std::make_tuple(uint(0),-1);
   });
 
-  qml_module.add_type<QUrl>("QUrl");
+  qml_module.add_type<qmlwrap::JuliaDisplay>("JuliaDisplay", julia_type("AbstractDisplay", "Base"))
+    .method("load_png", &qmlwrap::JuliaDisplay::load_png)
+    .method("load_svg", &qmlwrap::JuliaDisplay::load_svg);
+
+  qml_module.add_type<QUrl>("QUrl")
+    .constructor<QString>()
+    .method("toString", [] (const QUrl& url) { return url.toString(); });
   auto qvar_type = qml_module.add_type<QVariant>("QVariant");
   qml_module.add_type<QVariantMap>("QVariantMap");
   qml_module.add_type<Parametric<TypeVar<1>>>("QList", julia_type("AbstractVector"))
-    .apply<QVariantList, QList<QString>>(qmlwrap::WrapQList());
+    .apply<QVariantList, QList<QString>, QList<QUrl>>(qmlwrap::WrapQList());
   qml_module.add_type<QStringList>("QStringList", julia_base_type<QList<QString>>());
   
-  jlcxx::for_each_parameter_type<qvariant_types>(qmlwrap::WrapQVariant(qvar_type));
-  qml_module.method("type", [] (const QVariant& v)
-  {
-    const int usertype = v.userType() == qMetaTypeId<QJSValue>() ? v.value<QJSValue>().toVariant().userType() : v.userType();
-    assert(qmlwrap::g_variant_type_map.count(usertype) == 1);
-    return qmlwrap::g_variant_type_map[usertype];
-  });
+  jlcxx::for_each_parameter_type<qmlwrap::qvariant_types>(qmlwrap::WrapQVariant(qvar_type));
+  qml_module.method("type", qmlwrap::julia_variant_type);
+
+  jlcxx::stl::apply_stl<QVariant>(qml_module);
 
   qml_module.method("make_qvariant_map", [] ()
   { 
@@ -174,9 +212,8 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
     m[QString("test")] = QVariant::fromValue(5);
     return QVariant::fromValue(m);
   });
-    
 
-  qml_module.add_type<QQmlContext>("QQmlContext", julia_type<QObject>())
+  qml_module.add_type<QQmlContext>("QQmlContext", julia_base_type<QObject>())
     .constructor<QQmlContext*>()
     .constructor<QQmlContext*, QObject*>()
     .method("context_property", &QQmlContext::contextProperty)
@@ -185,10 +222,10 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
     .method("set_context_property", static_cast<void(QQmlContext::*)(const QString&, QObject*)>(&QQmlContext::setContextProperty))
     .method("context_object", &QQmlContext::contextObject);
 
-  qml_module.add_type<QQmlEngine>("QQmlEngine", julia_type<QObject>())
+  qml_module.add_type<QQmlEngine>("QQmlEngine", julia_base_type<QObject>())
     .method("root_context", &QQmlEngine::rootContext);
 
-  qml_module.add_type<QQmlApplicationEngine>("QQmlApplicationEngine", julia_type<QQmlEngine>())
+  qml_module.add_type<QQmlApplicationEngine>("QQmlApplicationEngine", julia_base_type<QQmlEngine>())
     .constructor<QString>() // Construct with path to QML
     .method("load_into_engine", [] (QQmlApplicationEngine* e, const QString& qmlpath)
     {
@@ -221,17 +258,17 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
 #endif
   });
 
-  qml_module.add_type<QQuickView>("QQuickView", julia_type<QQuickWindow>())
+  qml_module.add_type<QQuickView>("QQuickView", julia_base_type<QQuickWindow>())
     .method("set_source", &QQuickView::setSource)
     .method("show", &QQuickView::show) // not exported: conflicts with Base.show
     .method("engine", &QQuickView::engine)
     .method("root_object", &QQuickView::rootObject);
 
-  qml_module.add_type<qmlwrap::JuliaPaintedItem>("JuliaPaintedItem", julia_type<QQuickItem>());
+  qml_module.add_type<qmlwrap::JuliaPaintedItem>("JuliaPaintedItem", julia_base_type<QQuickItem>());
 
   qml_module.add_type<QByteArray>("QByteArray").constructor<const char*>()
     .method("to_string", &QByteArray::toStdString);
-  qml_module.add_type<QQmlComponent>("QQmlComponent", julia_type<QObject>())
+  qml_module.add_type<QQmlComponent>("QQmlComponent", julia_base_type<QObject>())
     .constructor<QQmlEngine*>()
     .method("set_data", &QQmlComponent::setData);
   qml_module.method("create", [](QQmlComponent& comp, QQmlContext* context)
@@ -259,11 +296,11 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
   qml_module.method("exec", []() { qmlwrap::ApplicationManager::instance().exec(); });
   qml_module.method("exec_async", []() { qmlwrap::ApplicationManager::instance().exec_async(); });
 
-  qml_module.add_type<QTimer>("QTimer", julia_type<QObject>())
+  qml_module.add_type<QTimer>("QTimer", julia_base_type<QObject>())
     .method("start", [] (QTimer& t) { t.start(); } )
     .method("stop", &QTimer::stop);
 
-  qml_module.add_type<QQmlPropertyMap>("QQmlPropertyMap", julia_type<QObject>())
+  qml_module.add_type<QQmlPropertyMap>("QQmlPropertyMap", julia_base_type<QObject>())
     .constructor<QObject *>(false)
     .method("insert", &QQmlPropertyMap::insert)
     .method("value", &QQmlPropertyMap::value)
@@ -297,10 +334,6 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
     qmlwrap::JuliaAPI::instance()->register_function(name, f);
   });
 
-  qml_module.add_type<qmlwrap::JuliaDisplay>("JuliaDisplay", julia_type("AbstractDisplay", "Base"))
-    .method("load_png", &qmlwrap::JuliaDisplay::load_png)
-    .method("load_svg", &qmlwrap::JuliaDisplay::load_svg);
-
   qml_module.add_type<QPaintDevice>("QPaintDevice")
     .method("width", &QPaintDevice::width)
     .method("height", &QPaintDevice::height)
@@ -310,7 +343,7 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
     .method("device", &QPainter::device);
 
   qmlwrap::ListModel::m_qml_mod = qml_module.julia_module();
-  qml_module.add_type<qmlwrap::ListModel>("ListModel", julia_type<QObject>())
+  qml_module.add_type<qmlwrap::ListModel>("ListModel", julia_base_type<QObject>())
     .constructor<jl_value_t*>()
     .method("remove", &qmlwrap::ListModel::remove)
     .method("emit_roles_changed", &qmlwrap::ListModel::emit_roles_changed)
@@ -318,7 +351,9 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
     .method("push_back", &qmlwrap::ListModel::push_back)
     .method("get_julia_data", &qmlwrap::ListModel::get_julia_data);
 
+  qml_module.set_override_module(jl_base_module);
   qml_module.method("getindex", [](const QVariantMap& m, const QString& key) { return m[key]; });
+  qml_module.unset_override_module();
 
   qml_module.add_type<QOpenGLFramebufferObject>("QOpenGLFramebufferObject")
     .method("size", &QOpenGLFramebufferObject::size)

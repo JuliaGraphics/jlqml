@@ -125,6 +125,12 @@ void ListModel::move(int from, int to, int count)
     return;
   }
 
+  if(from < 0 || from >= this->count() || to < 0 || to >= this->count() || to+count > this->count())
+  {
+    qWarning() << "Invalid indexing for move in ListModel";
+    return;
+  }
+
   if(to < from)
   {
     const int c = from - to;
