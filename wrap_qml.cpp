@@ -218,8 +218,8 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
     .constructor<QQmlContext*, QObject*>()
     .method("context_property", &QQmlContext::contextProperty)
     .method("set_context_object", &QQmlContext::setContextObject)
-    .method("set_context_property", static_cast<void(QQmlContext::*)(const QString&, const QVariant&)>(&QQmlContext::setContextProperty))
-    .method("set_context_property", static_cast<void(QQmlContext::*)(const QString&, QObject*)>(&QQmlContext::setContextProperty))
+    .method("_set_context_property", static_cast<void(QQmlContext::*)(const QString&, const QVariant&)>(&QQmlContext::setContextProperty))
+    .method("_set_context_property", static_cast<void(QQmlContext::*)(const QString&, QObject*)>(&QQmlContext::setContextProperty))
     .method("context_object", &QQmlContext::contextObject);
 
   qml_module.add_type<QQmlEngine>("QQmlEngine", julia_base_type<QObject>())
