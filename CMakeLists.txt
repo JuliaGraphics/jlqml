@@ -60,6 +60,8 @@ add_library(jlqml SHARED
   application_manager.cpp
   julia_api.hpp
   julia_api.cpp
+  julia_canvas.hpp
+  julia_canvas.cpp
   julia_display.hpp
   julia_display.cpp
   julia_function.hpp
