@@ -195,8 +195,7 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
     return std::make_tuple(uint(0),-1);
   });
 
-  qml_module.add_type<qmlwrap::JuliaCanvas>("JuliaCanvas")
-    .method("load_image", &qmlwrap::JuliaCanvas::load_image);
+  qml_module.add_type<qmlwrap::JuliaCanvas>("JuliaCanvas");
 
   qml_module.add_type<qmlwrap::JuliaDisplay>("JuliaDisplay", julia_type("AbstractDisplay", "Base"))
     .method("load_png", &qmlwrap::JuliaDisplay::load_png)
