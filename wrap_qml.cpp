@@ -42,7 +42,31 @@ template<> struct SuperType<QStringList> { typedef QList<QString> type; };
 namespace qmlwrap
 {
 
-using qvariant_types = jlcxx::ParameterList<bool, float, double, long long, int, unsigned int, unsigned long long, void*, jl_value_t*,
+// Helper to store a Julia value of type Any in a GC-safe way
+struct QVariantAny
+{
+  QVariantAny(jl_value_t* v) : value(v)
+  {
+    assert(v != nullptr);
+    jlcxx::protect_from_gc(value);
+  }
+  ~QVariantAny()
+  {
+    jlcxx::unprotect_from_gc(value);
+  }
+  jl_value_t* value;
+};
+
+using qvariant_any_t = std::shared_ptr<QVariantAny>;
+
+}
+
+Q_DECLARE_METATYPE(qmlwrap::qvariant_any_t)
+
+namespace qmlwrap
+{
+
+using qvariant_types = jlcxx::ParameterList<bool, float, double, int32_t, int64_t, uint32_t, uint64_t, void*, jl_value_t*,
   QString, QUrl, QObject*, jlcxx::SafeCFunction, QVariantMap, QVariantList, QStringList, QList<QUrl>, JuliaDisplay*>;
 
 inline std::map<int, jl_datatype_t*> g_variant_type_map;
@@ -89,24 +113,46 @@ struct WrapQVariant
   template<typename T>
   void apply()
   {
-    g_variant_type_map[qMetaTypeId<T>()] = jlcxx::julia_base_type<T>();
-    m_wrapper.module().method("value", [] (jlcxx::SingletonType<T>, const QVariant& v)
+    if constexpr (std::is_same<T, jl_value_t*>::value)
     {
-      if(v.userType() == qMetaTypeId<QJSValue>())
+      g_variant_type_map[qMetaTypeId<qvariant_any_t>()] = jl_any_type;
+      m_wrapper.module().method("value", [] (jlcxx::SingletonType<jl_value_t*>, const QVariant& v)
       {
-        return v.value<QJSValue>().toVariant().value<T>();
-      }
-      return v.value<T>();
-    });
-      //.method("setValue", &QVariant::setValue<T>);
-    m_wrapper.module().method("setValue", [] (jlcxx::SingletonType<T>, QVariant& v, T val)
+        if(v.userType() == qMetaTypeId<QJSValue>())
+        {
+          return v.value<QJSValue>().toVariant().value<qvariant_any_t>()->value;
+        }
+        return v.value<qvariant_any_t>()->value;
+      });
+      m_wrapper.module().method("setValue", [] (jlcxx::SingletonType<jl_value_t*>, QVariant& v, jl_value_t* val)
+      {
+        v.setValue(std::make_shared<QVariantAny>(val));
+      });
+      m_wrapper.module().method("QVariant", [] (jlcxx::SingletonType<jl_value_t*>, jl_value_t* val)
+      {
+        return QVariant::fromValue(std::make_shared<QVariantAny>(val));
+      });
+    }
+    else
     {
-      v.setValue(val);
-    });
-    m_wrapper.module().method("QVariant", [] (jlcxx::SingletonType<T>, T val)
-    {
-      return QVariant::fromValue(val);
-    });
+      g_variant_type_map[qMetaTypeId<T>()] = jlcxx::julia_base_type<T>();
+      m_wrapper.module().method("value", [] (jlcxx::SingletonType<T>, const QVariant& v)
+      {
+        if(v.userType() == qMetaTypeId<QJSValue>())
+        {
+          return v.value<QJSValue>().toVariant().value<T>();
+        }
+        return v.value<T>();
+      });
+      m_wrapper.module().method("setValue", [] (jlcxx::SingletonType<T>, QVariant& v, T val)
+      {
+        v.setValue(val);
+      });
+      m_wrapper.module().method("QVariant", [] (jlcxx::SingletonType<T>, T val)
+      {
+        return QVariant::fromValue(val);
+      });
+    }
   }
 
   jlcxx::TypeWrapper<QVariant>& m_wrapper;
@@ -196,6 +242,7 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
     .constructor<QString>()
     .method("toString", [] (const QUrl& url) { return url.toString(); });
   auto qvar_type = qml_module.add_type<QVariant>("QVariant");
+  qvar_type.method("toString", &QVariant::toString);
   qml_module.add_type<QVariantMap>("QVariantMap");
   qml_module.add_type<Parametric<TypeVar<1>>>("QList", julia_type("AbstractVector"))
     .apply<QVariantList, QList<QString>, QList<QUrl>>(qmlwrap::WrapQList());
