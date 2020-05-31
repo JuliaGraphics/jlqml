@@ -82,27 +82,31 @@ jl_datatype_t* julia_type_from_qt_id(int id)
 }
 
 jl_datatype_t* julia_variant_type(const QVariant& v)
+{
+  if(!v.isValid())
   {
-    const int usertype = v.userType();
-    if(usertype == qMetaTypeId<QJSValue>())
+    return jl_void_type;
+  }
+  const int usertype = v.userType();
+  if(usertype == qMetaTypeId<QJSValue>())
+  {
+    return julia_variant_type(v.value<QJSValue>().toVariant());
+  }
+  // Convert to some known, specific type if necessary
+  if(v.canConvert<QObject*>())
+  {
+    QObject* obj = v.value<QObject*>();
+    if(obj != nullptr)
     {
-      return julia_variant_type(v.value<QJSValue>().toVariant());
-    }
-    // Convert to some known, specific type if necessary
-    if(v.canConvert<QObject*>())
-    {
-      QObject* obj = v.value<QObject*>();
-      if(obj != nullptr)
+      if(qobject_cast<JuliaDisplay*>(obj) != nullptr)
       {
-        if(qobject_cast<JuliaDisplay*>(obj) != nullptr)
-        {
-          return jlcxx::julia_base_type<JuliaDisplay*>();
-        }
+        return jlcxx::julia_base_type<JuliaDisplay*>();
       }
     }
-
-    return julia_type_from_qt_id(usertype);
   }
+
+  return julia_type_from_qt_id(usertype);
+}
 
 struct WrapQVariant
 {
@@ -349,19 +353,18 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
 
   qml_module.add_type<QQmlPropertyMap>("QQmlPropertyMap", julia_base_type<QObject>())
     .constructor<QObject *>(false)
+    .method("clear", &QQmlPropertyMap::clear)
+    .method("contains", &QQmlPropertyMap::contains)
     .method("insert", &QQmlPropertyMap::insert)
+    .method("size", &QQmlPropertyMap::size)
     .method("value", &QQmlPropertyMap::value)
-    .method("insert_observable", [] (QQmlPropertyMap& propmap, const QString& name, jl_value_t* observable, const QVariant& value)
+    .method("connect_value_changed", [] (QQmlPropertyMap& propmap, jl_value_t* julia_property_map, jl_function_t* callback)
     {
-      static const jlcxx::JuliaFunction getindex("getindex");
-      propmap.insert(name, value);
-      auto conn = QObject::connect(&propmap, &QQmlPropertyMap::valueChanged, [=](const QString &key, const QVariant &newvalue) {
-        static const jlcxx::JuliaFunction update_observable_property("update_observable_property!", "QML");
-        if(key != name)
-        {
-          return;
-        }
-        update_observable_property(observable, jlcxx::box<QVariant>(newvalue));
+      auto conn = QObject::connect(&propmap, &QQmlPropertyMap::valueChanged, [=](const QString& key, const QVariant& newvalue)
+      {
+        static const jlcxx::JuliaFunction on_value_changed(callback);
+        static jl_value_t* julia_propmap = julia_property_map;
+        on_value_changed(julia_propmap, key, newvalue);
       });
     });
 
