@@ -39,6 +39,8 @@ add_library(jlqml SHARED
   julia_function.cpp
   julia_painteditem.hpp
   julia_painteditem.cpp
+  julia_property_map.hpp
+  julia_property_map.cpp
   julia_signals.hpp
   julia_signals.cpp
   listmodel.hpp
