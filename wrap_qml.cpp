@@ -16,6 +16,7 @@
 #include "julia_api.hpp"
 #include "julia_display.hpp"
 #include "julia_painteditem.hpp"
+#include "julia_property_map.hpp"
 #include "julia_signals.hpp"
 #include "listmodel.hpp"
 #include "opengl_viewport.hpp"
@@ -27,15 +28,16 @@
 namespace jlcxx
 {
 
-template<> struct SuperType<QQmlApplicationEngine> { typedef QQmlEngine type; };
-template<> struct SuperType<QQmlContext> { typedef QObject type; };
-template<> struct SuperType<QQmlEngine> { typedef QObject type; };
-template<> struct SuperType<QQmlPropertyMap> { typedef QObject type; };
-template<> struct SuperType<QQuickView> { typedef QQuickWindow type; };
-template<> struct SuperType<QTimer> { typedef QObject type; };
-template<> struct SuperType<qmlwrap::JuliaPaintedItem> { typedef QQuickItem type; };
-template<> struct SuperType<qmlwrap::ListModel> { typedef QObject type; };
-template<> struct SuperType<QStringList> { typedef QList<QString> type; };
+template<> struct SuperType<QQmlApplicationEngine> { using type = QQmlEngine; };
+template<> struct SuperType<QQmlContext> { using type = QObject; };
+template<> struct SuperType<QQmlEngine> { using type = QObject; };
+template<> struct SuperType<QQmlPropertyMap> { using type = QObject; };
+template<> struct SuperType<qmlwrap::JuliaPropertyMap> { using type = QQmlPropertyMap; };
+template<> struct SuperType<QQuickView> { using type = QQuickWindow; };
+template<> struct SuperType<QTimer> { using type = QObject; };
+template<> struct SuperType<qmlwrap::JuliaPaintedItem> { using type = QQuickItem; };
+template<> struct SuperType<qmlwrap::ListModel> { using type = QObject; };
+template<> struct SuperType<QStringList> { using type = QList<QString>; };
 
 }
 
@@ -67,7 +69,7 @@ namespace qmlwrap
 {
 
 using qvariant_types = jlcxx::ParameterList<bool, float, double, int32_t, int64_t, uint32_t, uint64_t, void*, jl_value_t*,
-  QString, QUrl, QObject*, jlcxx::SafeCFunction, QVariantMap, QVariantList, QStringList, QList<QUrl>, JuliaDisplay*>;
+  QString, QUrl, jlcxx::SafeCFunction, QVariantMap, QVariantList, QStringList, QList<QUrl>, JuliaDisplay*, JuliaPropertyMap*, QObject*>;
 
 inline std::map<int, jl_datatype_t*> g_variant_type_map;
 
@@ -102,11 +104,75 @@ jl_datatype_t* julia_variant_type(const QVariant& v)
       {
         return jlcxx::julia_base_type<JuliaDisplay*>();
       }
+      if(dynamic_cast<JuliaPropertyMap*>(obj) != nullptr)
+      {
+        return (jl_datatype_t*)jlcxx::julia_type("JuliaPropertyMap");
+      }
     }
   }
 
   return julia_type_from_qt_id(usertype);
 }
+
+template<typename T>
+struct ApplyQVariant
+{
+  void operator()(jlcxx::TypeWrapper<QVariant>& wrapper)
+  {
+    g_variant_type_map[qMetaTypeId<T>()] = jlcxx::julia_base_type<T>();
+    wrapper.module().method("value", [] (jlcxx::SingletonType<T>, const QVariant& v)
+    {
+      if(v.userType() == qMetaTypeId<QJSValue>())
+      {
+        return v.value<QJSValue>().toVariant().value<T>();
+      }
+      return v.value<T>();
+    });
+    wrapper.module().method("setValue", [] (jlcxx::SingletonType<T>, QVariant& v, T val)
+    {
+      v.setValue(val);
+    });
+    wrapper.module().method("QVariant", [] (jlcxx::SingletonType<T>, T val)
+    {
+      return QVariant::fromValue(val);
+    });
+  }
+};
+
+template<>
+struct ApplyQVariant<jl_value_t*>
+{
+  void operator()(jlcxx::TypeWrapper<QVariant>& wrapper)
+  {
+    g_variant_type_map[qMetaTypeId<qvariant_any_t>()] = jl_any_type;
+    wrapper.module().method("value", [] (jlcxx::SingletonType<jl_value_t*>, const QVariant& v)
+    {
+      if(v.userType() == qMetaTypeId<QJSValue>())
+      {
+        return v.value<QJSValue>().toVariant().value<qvariant_any_t>()->value;
+      }
+      return v.value<qvariant_any_t>()->value;
+    });
+    wrapper.module().method("setValue", [] (jlcxx::SingletonType<jl_value_t*>, QVariant& v, jl_value_t* val)
+    {
+      v.setValue(std::make_shared<QVariantAny>(val));
+    });
+    wrapper.module().method("QVariant", [] (jlcxx::SingletonType<jl_value_t*>, jl_value_t* val)
+    {
+      return QVariant::fromValue(std::make_shared<QVariantAny>(val));
+    });
+  }
+};
+
+// These are created in QML when passing a JuliaPropertyMap back to Julia by calling a Julia function from QML
+template<>
+struct ApplyQVariant<JuliaPropertyMap*>
+{
+  void operator()(jlcxx::TypeWrapper<QVariant>& wrapper)
+  {
+    wrapper.module().method("getpropertymap", [] (QVariant& v) { return dynamic_cast<JuliaPropertyMap*>(v.value<QObject*>())->julia_value(); });
+  }
+};
 
 struct WrapQVariant
 {
@@ -117,46 +183,7 @@ struct WrapQVariant
   template<typename T>
   void apply()
   {
-    if constexpr (std::is_same<T, jl_value_t*>::value)
-    {
-      g_variant_type_map[qMetaTypeId<qvariant_any_t>()] = jl_any_type;
-      m_wrapper.module().method("value", [] (jlcxx::SingletonType<jl_value_t*>, const QVariant& v)
-      {
-        if(v.userType() == qMetaTypeId<QJSValue>())
-        {
-          return v.value<QJSValue>().toVariant().value<qvariant_any_t>()->value;
-        }
-        return v.value<qvariant_any_t>()->value;
-      });
-      m_wrapper.module().method("setValue", [] (jlcxx::SingletonType<jl_value_t*>, QVariant& v, jl_value_t* val)
-      {
-        v.setValue(std::make_shared<QVariantAny>(val));
-      });
-      m_wrapper.module().method("QVariant", [] (jlcxx::SingletonType<jl_value_t*>, jl_value_t* val)
-      {
-        return QVariant::fromValue(std::make_shared<QVariantAny>(val));
-      });
-    }
-    else
-    {
-      g_variant_type_map[qMetaTypeId<T>()] = jlcxx::julia_base_type<T>();
-      m_wrapper.module().method("value", [] (jlcxx::SingletonType<T>, const QVariant& v)
-      {
-        if(v.userType() == qMetaTypeId<QJSValue>())
-        {
-          return v.value<QJSValue>().toVariant().value<T>();
-        }
-        return v.value<T>();
-      });
-      m_wrapper.module().method("setValue", [] (jlcxx::SingletonType<T>, QVariant& v, T val)
-      {
-        v.setValue(val);
-      });
-      m_wrapper.module().method("QVariant", [] (jlcxx::SingletonType<T>, T val)
-      {
-        return QVariant::fromValue(val);
-      });
-    }
+    ApplyQVariant<T>()(m_wrapper);
   }
 
   jlcxx::TypeWrapper<QVariant>& m_wrapper;
@@ -245,16 +272,38 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
   qml_module.add_type<QUrl>("QUrl")
     .constructor<QString>()
     .method("toString", [] (const QUrl& url) { return url.toString(); });
+  
   auto qvar_type = qml_module.add_type<QVariant>("QVariant");
   qvar_type.method("toString", &QVariant::toString);
+
+  // Add some types that depend on QVariant being mapped
   qml_module.add_type<QVariantMap>("QVariantMap");
   qml_module.add_type<Parametric<TypeVar<1>>>("QList", julia_type("AbstractVector"))
     .apply<QVariantList, QList<QString>, QList<QUrl>>(qmlwrap::WrapQList());
   qml_module.add_type<QStringList>("QStringList", julia_base_type<QList<QString>>());
   
+  qml_module.add_type<QQmlPropertyMap>("QQmlPropertyMap", julia_base_type<QObject>())
+    .constructor<QObject *>(false)
+    .method("clear", &QQmlPropertyMap::clear)
+    .method("contains", &QQmlPropertyMap::contains)
+    .method("insert", &QQmlPropertyMap::insert)
+    .method("size", &QQmlPropertyMap::size)
+    .method("value", &QQmlPropertyMap::value)
+    .method("connect_value_changed", [] (QQmlPropertyMap& propmap, jl_value_t* julia_property_map, jl_function_t* callback)
+    {
+      auto conn = QObject::connect(&propmap, &QQmlPropertyMap::valueChanged, [=](const QString& key, const QVariant& newvalue)
+      {
+        const jlcxx::JuliaFunction on_value_changed(callback);
+        jl_value_t* julia_propmap = julia_property_map;
+        on_value_changed(julia_propmap, key, newvalue);
+      });
+    });
+  qml_module.add_type<qmlwrap::JuliaPropertyMap>("_JuliaPropertyMap", julia_base_type<QQmlPropertyMap>())
+    .method("julia_value", &qmlwrap::JuliaPropertyMap::julia_value)
+    .method("set_julia_value", &qmlwrap::JuliaPropertyMap::set_julia_value);
+
   jlcxx::for_each_parameter_type<qmlwrap::qvariant_types>(qmlwrap::WrapQVariant(qvar_type));
   qml_module.method("type", qmlwrap::julia_variant_type);
-
   jlcxx::stl::apply_stl<QVariant>(qml_module);
 
   qml_module.method("make_qvariant_map", [] ()
@@ -350,23 +399,6 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
   qml_module.add_type<QTimer>("QTimer", julia_base_type<QObject>())
     .method("start", [] (QTimer& t) { t.start(); } )
     .method("stop", &QTimer::stop);
-
-  qml_module.add_type<QQmlPropertyMap>("QQmlPropertyMap", julia_base_type<QObject>())
-    .constructor<QObject *>(false)
-    .method("clear", &QQmlPropertyMap::clear)
-    .method("contains", &QQmlPropertyMap::contains)
-    .method("insert", &QQmlPropertyMap::insert)
-    .method("size", &QQmlPropertyMap::size)
-    .method("value", &QQmlPropertyMap::value)
-    .method("connect_value_changed", [] (QQmlPropertyMap& propmap, jl_value_t* julia_property_map, jl_function_t* callback)
-    {
-      auto conn = QObject::connect(&propmap, &QQmlPropertyMap::valueChanged, [=](const QString& key, const QVariant& newvalue)
-      {
-        static const jlcxx::JuliaFunction on_value_changed(callback);
-        static jl_value_t* julia_propmap = julia_property_map;
-        on_value_changed(julia_propmap, key, newvalue);
-      });
-    });
 
   // Emit signals helper
   qml_module.method("emit", [](const char *signal_name, const QVariantList& args) {
