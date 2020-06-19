@@ -217,8 +217,12 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
   qmlRegisterType<qmlwrap::OpenGLViewport>("org.julialang", 1, 0, "OpenGLViewport");
   qmlRegisterType<qmlwrap::MakieViewport>("org.julialang", 1, 0, "MakieViewport");
 
+  qmlwrap::MakieViewport::m_qml_mod = qml_module.julia_module();
+
   qml_module.add_type<QObject>("QObject");
-  qml_module.add_type<QSize>("QSize");
+  qml_module.add_type<QSize>("QSize")
+    .method("width", &QSize::width)
+    .method("height", &QSize::height);
 
   qml_module.add_type<QString>("QString", julia_type("AbstractString"))
     .method("cppsize", &QString::size);

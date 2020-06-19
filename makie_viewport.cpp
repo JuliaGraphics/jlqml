@@ -32,10 +32,12 @@ private:
 
 jl_module_t* get_makie_support_module()
 {
-  jl_value_t* mod = jlcxx::JuliaFunction("load_makie_support", "QML")();
-  assert(mod != nullptr);
-  assert(jl_is_module(mod));
-  jlcxx::protect_from_gc(mod);
+  jl_value_t* mod = jl_get_global(MakieViewport::m_qml_mod, jl_symbol("MakieSupport"));
+  if(mod == nullptr || !jl_is_module(mod))
+  {
+    throw std::runtime_error("Makie is not loaded, did you forget \"Using Makie\" in your Julia file?");
+  }
+  
   return (jl_module_t*)mod;
 }
 
@@ -50,7 +52,6 @@ struct MakieSupport
 
   ~MakieSupport()
   {
-    jlcxx::unprotect_from_gc(m_makie_mod);
   }
 private:
   MakieSupport() :
@@ -104,9 +105,11 @@ void MakieViewport::setup_buffer(QOpenGLFramebufferObject* fbo)
   {
     jlcxx::unprotect_from_gc(m_screen);
   }
-  m_screen = MakieSupport::instance().setup_screen(fbo);
+  m_screen = MakieSupport::instance().setup_screen(std::forward<QOpenGLFramebufferObject*>(fbo));
   assert(m_screen != nullptr);
   jlcxx::protect_from_gc(m_screen);
 }
+
+jl_module_t* MakieViewport::m_qml_mod = nullptr;
 
 } // namespace qmlwrap
