@@ -39,8 +39,8 @@ public:
     m_width = size.width();
     m_height = size.height();
     QOpenGLFramebufferObjectFormat format;
-    format.setAttachment(QOpenGLFramebufferObject::NoAttachment);
-    format.setSamples(4);
+    format.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
+    format.setSamples(0);
     m_fbo = new QOpenGLFramebufferObject(size, format);
     return m_fbo;
   }
