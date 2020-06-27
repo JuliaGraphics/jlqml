@@ -441,15 +441,23 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
   qml_module.method("getindex", [](const QVariantMap& m, const QString& key) { return m[key]; });
   qml_module.unset_override_module();
 
+  qml_module.add_type<QOpenGLFramebufferObjectFormat>("QOpenGLFramebufferObjectFormat")
+    .method("internalTextureFormat", &QOpenGLFramebufferObjectFormat::internalTextureFormat)
+    .method("textureTarget", &QOpenGLFramebufferObjectFormat::textureTarget);
+
   qml_module.add_type<QOpenGLFramebufferObject>("QOpenGLFramebufferObject")
     .method("size", &QOpenGLFramebufferObject::size)
     .method("handle", &QOpenGLFramebufferObject::handle)
     .method("isValid", &QOpenGLFramebufferObject::isValid)
     .method("bind", &QOpenGLFramebufferObject::bind)
     .method("release", &QOpenGLFramebufferObject::release)
-    .method("printinfo", [] (QOpenGLFramebufferObject& fbo)
+    .method("format", &QOpenGLFramebufferObject::format)
+    .method("texture", &QOpenGLFramebufferObject::texture)
+    .method("addColorAttachment", static_cast<void(QOpenGLFramebufferObject::*)(int,int,GLenum)>(&QOpenGLFramebufferObject::addColorAttachment))
+    .method("textures", [] (const QOpenGLFramebufferObject& fbo)
     {
-      qWarning() << "textures: " << fbo.textures();
+      auto v = fbo.textures();
+      return std::vector<GLuint>(v.begin(), v.end());
     });
 
   qml_module.method("__test_add_double!", [] (double& result, QVariant var)
