@@ -38,10 +38,7 @@ Qt = "/usr"
 Then, in pkg mode (hit `]`):
 
 ```
-registry add https://github.com/barche/TestRegistry.git
 add https://github.com/barche/jlqml_jll.jl.git#master
 ```
-
-The registry `TestRegistry` needs to be added because it has the Qt JLL, once Qt and jlqml are fully registered as Yggdrasil packages this will no longer be needed.
 
 See the [QML.jl](https://github.com/barche/QML.jl) README for more info on using the QML.jl package.
