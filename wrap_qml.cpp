@@ -14,6 +14,7 @@
 
 #include "application_manager.hpp"
 #include "julia_api.hpp"
+#include "julia_canvas.hpp"
 #include "julia_display.hpp"
 #include "julia_painteditem.hpp"
 #include "julia_property_map.hpp"
@@ -69,7 +70,7 @@ namespace qmlwrap
 {
 
 using qvariant_types = jlcxx::ParameterList<bool, float, double, int32_t, int64_t, uint32_t, uint64_t, void*, jl_value_t*,
-  QString, QUrl, jlcxx::SafeCFunction, QVariantMap, QVariantList, QStringList, QList<QUrl>, JuliaDisplay*, JuliaPropertyMap*, QObject*>;
+  QString, QUrl, jlcxx::SafeCFunction, QVariantMap, QVariantList, QStringList, QList<QUrl>, JuliaDisplay*, JuliaCanvas*, JuliaPropertyMap*, QObject*>;
 
 inline std::map<int, jl_datatype_t*> g_variant_type_map;
 
@@ -103,6 +104,10 @@ jl_datatype_t* julia_variant_type(const QVariant& v)
       if(qobject_cast<JuliaDisplay*>(obj) != nullptr)
       {
         return jlcxx::julia_base_type<JuliaDisplay*>();
+      }
+      if(qobject_cast<JuliaCanvas*>(obj) != nullptr)
+      {
+        return jlcxx::julia_base_type<JuliaCanvas*>();
       }
       if(dynamic_cast<JuliaPropertyMap*>(obj) != nullptr)
       {
@@ -212,6 +217,7 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
 
   qmlRegisterSingletonType("org.julialang", 1, 0, "Julia", qmlwrap::julia_js_singletontype_provider);
   qmlRegisterType<qmlwrap::JuliaSignals>("org.julialang", 1, 0, "JuliaSignals");
+  qmlRegisterType<qmlwrap::JuliaCanvas>("org.julialang", 1, 0, "JuliaCanvas");
   qmlRegisterType<qmlwrap::JuliaDisplay>("org.julialang", 1, 0, "JuliaDisplay");
   qmlRegisterType<qmlwrap::JuliaPaintedItem>("org.julialang", 1, 1, "JuliaPaintedItem");
   qmlRegisterType<qmlwrap::OpenGLViewport>("org.julialang", 1, 0, "OpenGLViewport");
@@ -268,6 +274,8 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
     }
     return std::make_tuple(uint(0),-1);
   });
+
+  qml_module.add_type<qmlwrap::JuliaCanvas>("JuliaCanvas");
 
   qml_module.add_type<qmlwrap::JuliaDisplay>("JuliaDisplay", julia_type("AbstractDisplay", "Base"))
     .method("load_png", &qmlwrap::JuliaDisplay::load_png)
