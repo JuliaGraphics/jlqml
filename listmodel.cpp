@@ -165,7 +165,7 @@ void ListModel::emit_roles_changed()
 
 void ListModel::emit_data_changed(int index, int count, const std::vector<int>& roles)
 {
-  do_update(index, count, QVector<int>::fromStdVector(roles));
+  do_update(index, count, QVector<int>(roles.begin(), roles.end()));
 }
 
 void ListModel::do_update(int index, int count, const QVector<int> &roles)

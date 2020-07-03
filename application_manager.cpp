@@ -42,7 +42,6 @@ ApplicationManager::~ApplicationManager()
 // Initialize the QApplication instance
 void ApplicationManager::init_application()
 {
-  qputenv("QML_PREFIX_PATH", QProcessEnvironment::systemEnvironment().value("QML_PREFIX_PATH").toLocal8Bit());
   qputenv("QSG_RENDER_LOOP", QProcessEnvironment::systemEnvironment().value("QSG_RENDER_LOOP").toLocal8Bit());
   if(m_app != nullptr && !m_quit_called)
   {
