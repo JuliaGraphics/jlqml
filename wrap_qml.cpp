@@ -88,7 +88,8 @@ jl_datatype_t* julia_variant_type(const QVariant& v)
 {
   if(!v.isValid())
   {
-    return jl_void_type;
+    static jl_datatype_t* nothing_type = (jl_datatype_t*)jlcxx::julia_type("Nothing");
+    return nothing_type;
   }
   const int usertype = v.userType();
   if(usertype == qMetaTypeId<QJSValue>())
