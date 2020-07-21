@@ -8,10 +8,12 @@ namespace qmlwrap
 
 JuliaFunction::JuliaFunction(const QString& name, jl_function_t* f, QObject* parent) : QObject(parent), m_name(name), m_f(f)
 {
+  jlcxx::protect_from_gc(m_f);
 }
 
 JuliaFunction::~JuliaFunction()
 {
+  jlcxx::unprotect_from_gc(m_f);
 }
 
 QVariant JuliaFunction::call(const QVariantList& args)
