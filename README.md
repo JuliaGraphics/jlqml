@@ -21,7 +21,7 @@ using CxxWrap
 dirname(dirname(CxxWrap.libcxxwrap_julia))
 ```
 
-After building jlqml, you also need to set up the `~/.julia/artifacts/Overrides.toml`, to prefer your locally built binaries over the standard (as yet non-existing) official binaries, for example:
+After building jlqml, you also need to set up the `~/.julia/artifacts/Overrides.toml`, to prefer your locally built binaries over the standard binaries, for example:
 
 ```toml
 [3eaa8342-bff7-56a5-9981-c04077f7cee7]
@@ -38,7 +38,7 @@ Qt = "/usr"
 Then, in pkg mode (hit `]`):
 
 ```
-add https://github.com/barche/jlqml_jll.jl.git#master
+add jlqml_jll
 ```
 
-See the [QML.jl](https://github.com/barche/QML.jl) README for more info on using the QML.jl package.
+See the [QML.jl](https://github.com/barche/QML.jl) documentation for more info on using the QML.jl package.
