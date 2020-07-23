@@ -9,21 +9,21 @@ void julia_message_output(QtMsgType type, const QMessageLogContext &context, con
   QByteArray localMsg = msg.toLocal8Bit();
   switch (type) {
   case QtDebugMsg:
-    jl_safe_printf("Debug: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
+    jl_safe_printf("Qt Debug: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
     break;
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 5, 0))
   case QtInfoMsg:
-    jl_safe_printf("Info: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
+    jl_safe_printf("Qt Info: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
     break;
 #endif
   case QtWarningMsg:
-    jl_safe_printf("Warning: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
+    jl_safe_printf("Qt Warning: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
     break;
   case QtCriticalMsg:
-    jl_errorf("Critical: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
+    jl_safe_printf("Qt Critical: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
     break;
   case QtFatalMsg:
-    jl_errorf("Fatal: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
+    jl_safe_printf("Qt Fatal: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
     break;
   }
 }
