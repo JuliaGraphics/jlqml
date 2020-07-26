@@ -285,6 +285,7 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
   qml_module.add_type<QUrl>("QUrl")
     .constructor<QString>()
     .method("toString", [] (const QUrl& url) { return url.toString(); });
+  qml_module.method("QUrlFromLocalFile", QUrl::fromLocalFile);
   
   auto qvar_type = qml_module.add_type<QVariant>("QVariant");
   qvar_type.method("toString", &QVariant::toString);
