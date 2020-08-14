@@ -400,6 +400,10 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
     }
   });
 
+  qml_module.method("qputenv", qputenv);
+  qml_module.method("qgetenv", qgetenv);
+  qml_module.method("qunsetenv", qunsetenv);
+
   // App manager functions
   qml_module.add_type<qmlwrap::ApplicationManager>("ApplicationManager");
   qml_module.method("init_application", []() { qmlwrap::ApplicationManager::instance().init_application(); });
