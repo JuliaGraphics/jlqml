@@ -87,6 +87,11 @@ QQmlEngine* ApplicationManager::init_qmlengine()
   return m_engine;
 }
 
+QQmlEngine* ApplicationManager::get_qmlengine()
+{
+  return m_engine;
+}
+
 QQuickView* ApplicationManager::init_qquickview()
 {
   check_no_engine();
