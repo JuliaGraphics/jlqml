@@ -7,7 +7,7 @@
 
 #include "julia_api.hpp"
 #include "julia_signals.hpp"
-#include "jlqml.hpp"
+// #include "jlqml.hpp"
 
 namespace qmlwrap
 {

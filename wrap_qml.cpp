@@ -22,7 +22,7 @@
 #include "listmodel.hpp"
 #include "opengl_viewport.hpp"
 #include "makie_viewport.hpp"
-#include "jlqml.hpp"
+// #include "jlqml.hpp"
 
 #include "jlcxx/stl.hpp"
 

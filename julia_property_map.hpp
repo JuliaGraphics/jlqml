@@ -8,7 +8,7 @@
 namespace qmlwrap
 {
 
-/// Multimedia display for Julia
+/// Holds values coming from Julia, with attached change signals
 class JuliaPropertyMap : public QQmlPropertyMap
 {
 
