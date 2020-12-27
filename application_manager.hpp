@@ -32,6 +32,7 @@ public:
   // Init the app with a new QQmlApplicationEngine
   QQmlApplicationEngine* init_qmlapplicationengine();
   QQmlEngine* init_qmlengine();
+  QQmlEngine* get_qmlengine();
   QQuickView* init_qquickview();
 
   QQmlContext* root_context();
