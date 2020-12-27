@@ -7,7 +7,7 @@
 #include <QObject>
 #include <QQuickPaintedItem>
 
-#include "jlqml.hpp"
+// #include "jlqml.hpp"
 
 namespace qmlwrap
 {

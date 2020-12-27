@@ -1,19 +1,20 @@
 project(QML)
 
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.16.0)
 set(CMAKE_MACOSX_RPATH 1)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
+
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
 
-find_package(Qt5Quick)
-find_package(Qt5Core)
-find_package(Qt5Svg)
-find_package(Qt5Widgets)
+find_package(Qt6 COMPONENTS Core Gui OpenGL Qml Quick Svg REQUIRED)
 find_package(JlCxx)
 
-get_target_property(QtCore_location Qt5::Core LOCATION)
+get_target_property(QtCore_location Qt6::Core LOCATION)
 get_filename_component(QtCore_location ${QtCore_location} DIRECTORY)
 get_target_property(JlCxx_location JlCxx::cxxwrap_julia LOCATION)
 get_filename_component(JlCxx_location ${JlCxx_location} DIRECTORY)
@@ -55,7 +56,7 @@ add_library(jlqml SHARED
   wrap_qml.cpp
 ${MOC_BUILT_SOURCES} ${UI_BUILT_SOURCES} ${RESOURCES})
 
-target_link_libraries(jlqml Qt5::Core Qt5::Quick Qt5::Svg Qt5::Widgets JlCxx::cxxwrap_julia JlCxx::cxxwrap_julia_stl)
+target_link_libraries(jlqml PRIVATE Qt6::Core Qt6::Gui Qt6::OpenGL Qt6::Qml Qt6::Quick Qt6::Svg JlCxx::cxxwrap_julia JlCxx::cxxwrap_julia_stl)
 
 install(TARGETS
   jlqml

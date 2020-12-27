@@ -8,7 +8,7 @@
 #include <QJSValue>
 #include <QObject>
 
-#include "jlqml.hpp"
+// #include "jlqml.hpp"
 
 namespace qmlwrap
 {
