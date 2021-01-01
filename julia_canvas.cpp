@@ -21,7 +21,7 @@ void JuliaCanvas::paint(QPainter *painter)
   m_callback(jlcxx::make_julia_array(draw_buffer, iwidth*iheight), iwidth, iheight);
 
   // make QImage
-  QImage *image = new QImage((uchar*)draw_buffer, width(), height(), QImage::Format_RGB32);
+  QImage *image = new QImage((uchar*)draw_buffer, width(), height(), QImage::Format_ARGB32);
 
   // paint the image onto the QuickPaintedItem
   painter->drawImage(0, 0, *image);
