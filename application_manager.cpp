@@ -40,7 +40,7 @@ ApplicationManager::~ApplicationManager()
 {
 }
 
-// Initialize the QApplication instance
+// Initialize the QGuiApplication instance
 void ApplicationManager::init_application()
 {
   qputenv("QSG_RENDER_LOOP", QProcessEnvironment::systemEnvironment().value("QSG_RENDER_LOOP").toLocal8Bit());
@@ -58,7 +58,7 @@ void ApplicationManager::init_application()
   {
     argv_buffer.push_back(const_cast<char*>("julia"));
   }
-  m_app = new QApplication(argc, &argv_buffer[0]);
+  m_app = new QGuiApplication(argc, &argv_buffer[0]);
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 4, 0))
   QSurfaceFormat format = QSurfaceFormat::defaultFormat();
   format.setProfile(QSurfaceFormat::CoreProfile);
@@ -155,7 +155,7 @@ void ApplicationManager::set_engine(QQmlEngine* e)
 {
   m_engine = e;
   m_root_ctx = e->rootContext();
-  QObject::connect(m_engine, &QQmlEngine::quit, [this]()
+  QObject::connect(m_engine, &QQmlEngine::exit, [this](const int status)
   {
     m_quit_called = true;
     static jlcxx::JuliaFunction stoptimer(jl_get_function(m_qml_mod, "_stoptimer"));
@@ -166,8 +166,8 @@ void ApplicationManager::set_engine(QQmlEngine* e)
 
 void ApplicationManager::process_events()
 {
-  QApplication::sendPostedEvents();
-  QApplication::processEvents(QEventLoop::AllEvents, 15);
+  QGuiApplication::sendPostedEvents();
+  QGuiApplication::processEvents(QEventLoop::AllEvents, 15);
 }
 
 jl_module_t* ApplicationManager::m_qml_mod = nullptr;

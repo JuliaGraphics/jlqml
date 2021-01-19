@@ -1,7 +1,7 @@
 #ifndef QML_application_manager_H
 #define QML_application_manager_H
 
-#include <QApplication>
+#include <QGuiApplication>
 #include <QLibraryInfo>
 #include <QQmlApplicationEngine>
 #include <QQmlComponent>
@@ -26,7 +26,7 @@ public:
 
   ~ApplicationManager();
 
-  // Initialize the QApplication instance
+  // Initialize the QGuiApplication instance
   void init_application();
 
   // Init the app with a new QQmlApplicationEngine

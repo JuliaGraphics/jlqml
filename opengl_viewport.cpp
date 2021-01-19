@@ -2,7 +2,6 @@
 #include <QQuickWindow>
 #include <QSGNode>
 #include <QSGSimpleTextureNode>
-#include <QQuickOpenGLUtils>
 
 #include "opengl_viewport.hpp"
 
@@ -18,6 +17,7 @@ public:
 
   void render()
   {
+    m_vp->window()->beginExternalCommands();
     if(m_need_setup)
     {
       m_vp->setup_buffer(m_fbo);
@@ -25,7 +25,7 @@ public:
     }
     m_vp->render();
     m_vp->post_render();
-    QQuickOpenGLUtils::resetOpenGLState();
+    m_vp->window()->endExternalCommands();
   }
 
   void synchronize(QQuickFramebufferObject *item)
