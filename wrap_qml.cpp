@@ -1,4 +1,4 @@
-#include <QApplication>
+#include <QGuiApplication>
 #include <QLibraryInfo>
 #include <QPainter>
 #include <QPaintDevice>
@@ -22,7 +22,7 @@
 #include "listmodel.hpp"
 #include "opengl_viewport.hpp"
 #include "makie_viewport.hpp"
-// #include "jlqml.hpp"
+#include "jlqml.hpp"
 
 #include "jlcxx/stl.hpp"
 
@@ -38,7 +38,6 @@ template<> struct SuperType<QQuickView> { using type = QQuickWindow; };
 template<> struct SuperType<QTimer> { using type = QObject; };
 template<> struct SuperType<qmlwrap::JuliaPaintedItem> { using type = QQuickItem; };
 template<> struct SuperType<qmlwrap::ListModel> { using type = QObject; };
-template<> struct SuperType<QStringList> { using type = QList<QString>; };
 
 }
 
@@ -204,7 +203,7 @@ struct WrapQList
     wrapped.method("cppsize", &WrappedT::size);
     wrapped.method("cppgetindex", [] (const WrappedT& list, const int i) -> typename WrappedT::const_reference { return list[i]; });
     wrapped.method("cppsetindex!", [] (WrappedT& list, const typename WrappedT::value_type& v, const int i) { list[i] = v; });
-    wrapped.method("push_back", &WrappedT::push_back);
+    wrapped.method("push_back", static_cast<void(WrappedT::*)(typename WrappedT::parameter_type)>(&WrappedT::push_back));
     wrapped.method("clear", &WrappedT::clear);
     wrapped.method("removeAt", &WrappedT::removeAt);
   }
@@ -234,18 +233,8 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
 
   qml_module.add_type<QString>("QString", julia_type("AbstractString"))
     .method("cppsize", &QString::size);
-  qml_module.method("uint16char", [] (const QString& s, int i) { return s[i].unicode(); });
-  qml_module.method("fromUtf16", static_cast<QString(*)(const ushort*,int)>(QString::fromUtf16));
-  qml_module.method("print", [] (const QString& s)
-  {
-    QTextBoundaryFinder bf(QTextBoundaryFinder::Grapheme, s);
-    int curpos = 0;
-    while(bf.toNextBoundary() != -1)
-    {
-      qWarning() << QStringRef(&s, curpos, bf.position()-curpos);
-      curpos = bf.position();
-    }
-  });
+  qml_module.method("uint16char", [] (const QString& s, int i) { return static_cast<uint16_t>(s[i].unicode()); });
+  qml_module.method("fromStdWString", QString::fromStdWString);
   qml_module.method("isvalidindex", [] (const QString& s, int i)
   {
     if(i < 0 || i >= s.size())
@@ -261,7 +250,7 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
   {
     if(i < 0 || i >= s.size())
     {
-      return std::make_tuple(uint(0),-1);
+      return std::make_tuple(uint32_t(0),-1);
     }
     QTextBoundaryFinder bf(QTextBoundaryFinder::Grapheme, s);
     bf.setPosition(i);
@@ -270,11 +259,11 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
       const int nexti = bf.position();
       if((nexti - i) == 1)
       {
-        return std::make_tuple(uint(s[i].unicode()), nexti);
+        return std::make_tuple(uint32_t(s[i].unicode()), nexti);
       }
-      return std::make_tuple(QChar::surrogateToUcs4(s[i],s[i+1]),nexti);
+      return std::make_tuple(uint32_t(QChar::surrogateToUcs4(s[i],s[i+1])),nexti);
     }
-    return std::make_tuple(uint(0),-1);
+    return std::make_tuple(uint32_t(0),-1);
   });
 
   qml_module.add_type<qmlwrap::JuliaCanvas>("JuliaCanvas");
@@ -295,7 +284,6 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
   qml_module.add_type<QVariantMap>("QVariantMap");
   qml_module.add_type<Parametric<TypeVar<1>>>("QList", julia_type("AbstractVector"))
     .apply<QVariantList, QList<QString>, QList<QUrl>>(qmlwrap::WrapQList());
-  qml_module.add_type<QStringList>("QStringList", julia_base_type<QList<QString>>());
   
   qml_module.add_type<QQmlPropertyMap>("QQmlPropertyMap", julia_base_type<QObject>())
     .constructor<QObject *>(false)
@@ -353,7 +341,7 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
       QObject::disconnect(conn);
       if(!success)
       {
-        e->quit();
+        e->exit(1);
       }
       return success;
     });

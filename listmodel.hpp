@@ -57,7 +57,7 @@ Q_SIGNALS:
 
 private:
   // Emit update change signal
-  void do_update(int index, int count, const QVector<int> &roles);
+  void do_update(int index, int count, const QList<int> &roles);
 
   /// This overloads append and insert to take a list of variants instead of a dictionary
   void append_list(const QVariantList& argvariants);

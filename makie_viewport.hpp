@@ -1,8 +1,6 @@
 #ifndef QML_makie_viewport_H
 #define QML_makie_viewport_H
 
-#include "jlcxx/jlcxx.hpp"
-
 #include "opengl_viewport.hpp"
 
 namespace qmlwrap

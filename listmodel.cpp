@@ -49,7 +49,7 @@ bool ListModel::setData(const QModelIndex& index, const QVariant& value, int rol
   const bool success = jlcxx::unbox<bool>(setdata(m_data, index.row()+1, value, role+1));
   if(success)
   {
-    do_update(index.row(), 1, QVector<int>() << role);
+    do_update(index.row(), 1, QList<int>() << role);
   }
   return success;
 }
@@ -165,10 +165,10 @@ void ListModel::emit_roles_changed()
 
 void ListModel::emit_data_changed(int index, int count, const std::vector<int>& roles)
 {
-  do_update(index, count, QVector<int>(roles.begin(), roles.end()));
+  do_update(index, count, QList<int>(roles.begin(), roles.end()));
 }
 
-void ListModel::do_update(int index, int count, const QVector<int> &roles)
+void ListModel::do_update(int index, int count, const QList<int> &roles)
 {
   emit dataChanged(createIndex(index, 0), createIndex(index + count - 1, 0), roles);
 }

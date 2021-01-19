@@ -29,6 +29,8 @@ if(WIN32)
   add_definitions(-DWIN32_LEAN_AND_MEAN)
 endif()
 
+add_compile_definitions(QT_DISABLE_DEPRECATED_BEFORE=0x050F00)
+
 add_library(jlqml SHARED
   application_manager.hpp
   application_manager.cpp
