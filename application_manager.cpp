@@ -1,5 +1,6 @@
 #include "application_manager.hpp"
 #include "julia_api.hpp"
+#include "jlcxx/functions.hpp"
 
 namespace qmlwrap
 {
@@ -110,18 +111,6 @@ void ApplicationManager::exec()
   cleanup();
 }
 
-// Non-blocking exec, polling for Qt events in the uv event loop using a uv_timer_t
-void ApplicationManager::exec_async()
-{
-  if(jl_global_event_loop() == nullptr)
-  {
-    return;
-  }
-  m_timer = new uv_timer_t();
-  uv_timer_init(jl_global_event_loop(), m_timer);
-  uv_timer_start(m_timer, ApplicationManager::process_events, 15, 15);
-}
-
 ApplicationManager::ApplicationManager()
 {
   qInstallMessageHandler(julia_message_output);
@@ -164,29 +153,18 @@ void ApplicationManager::set_engine(QQmlEngine* e)
   QObject::connect(m_engine, &QQmlEngine::quit, [this]()
   {
     m_quit_called = true;
-    if(m_timer != nullptr)
-    {
-      uv_timer_stop(m_timer);
-      uv_close((uv_handle_t*)m_timer, ApplicationManager::handle_quit);
-    }
+    static jlcxx::JuliaFunction stoptimer(jl_get_function(m_qml_mod, "_stoptimer"));
+    stoptimer();
     m_app->quit();
   });
 }
 
-void ApplicationManager::process_events(uv_timer_t* timer)
+void ApplicationManager::process_events()
 {
   QApplication::sendPostedEvents();
   QApplication::processEvents(QEventLoop::AllEvents, 15);
 }
 
-void ApplicationManager::handle_quit(uv_handle_t* handle)
-{
-  if(instance().m_timer == nullptr)
-    return;
-
-  uv_unref(handle);
-  delete instance().m_timer;
-  instance().m_timer = nullptr;
-}
+jl_module_t* ApplicationManager::m_qml_mod = nullptr;
 
 }
