@@ -224,6 +224,7 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
   qmlRegisterType<qmlwrap::OpenGLViewport>("org.julialang", 1, 0, "OpenGLViewport");
   qmlRegisterType<qmlwrap::MakieViewport>("org.julialang", 1, 0, "MakieViewport");
 
+  qmlwrap::ApplicationManager::m_qml_mod = qml_module.julia_module();
   qmlwrap::MakieViewport::m_qml_mod = qml_module.julia_module();
 
   qml_module.add_type<QObject>("QObject");
@@ -412,7 +413,7 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
   qml_module.method("init_qquickview", []() { return qmlwrap::ApplicationManager::instance().init_qquickview(); });
   qml_module.method("qmlcontext", []() { return qmlwrap::ApplicationManager::instance().root_context(); });
   qml_module.method("exec", []() { qmlwrap::ApplicationManager::instance().exec(); });
-  qml_module.method("exec_async", []() { qmlwrap::ApplicationManager::instance().exec_async(); });
+  qml_module.method("process_events", qmlwrap::ApplicationManager::process_events);
 
   qml_module.add_type<QTimer>("QTimer", julia_base_type<QObject>())
     .method("start", [] (QTimer& t) { t.start(); } )

@@ -39,8 +39,10 @@ public:
   // Blocking call to exec, running the Qt event loop
   void exec();
 
-  // Non-blocking exec, polling for Qt events in the uv event loop using a uv_timer_t
-  void exec_async();
+  static void process_events();
+
+  static jl_module_t* m_qml_mod;
+
 private:
 
   ApplicationManager();
@@ -51,14 +53,9 @@ private:
 
   void set_engine(QQmlEngine* e);
 
-  static void process_events(uv_timer_t* timer);
-
-  static void handle_quit(uv_handle_t* handle);
-
   QApplication* m_app = nullptr;
   QQmlEngine* m_engine = nullptr;
   QQmlContext* m_root_ctx = nullptr;
-  uv_timer_t* m_timer = nullptr;
   bool m_quit_called = false;
 };
 
