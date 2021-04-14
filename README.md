@@ -30,9 +30,20 @@ libcxxwrap_julia = "/home/user/src/build/libcxxwrap-julia"
 [6b5019fb-a83d-5b4e-a9f7-678a36c28df7]
 jlqml = "/home/user/src/build/jlqml"
 
-[ede63266-ebff-546c-83e0-1c6fb6d0efc8]
-Qt = "/usr"
+[ea2cea3b-5b76-57ae-a6ef-0a8af62496e1]
+Qt5Base = "/usr"
 
+[c6373c32-5b88-5913-90f5-31d7686b42da]
+Qt5Declarative = "/usr"
+
+[3af4ccab-a251-578e-a514-ea85a0ba79ee]
+Qt5Svg = "/usr"
+
+[e4aecf45-a397-53cc-864f-87db395e0248]
+Qt5QuickControls = "/usr"
+
+[bf3ac11c-603e-589e-b4b7-e696ac65aa4a]
+Qt5QuickControls2 = "/usr"
 ```
 
 Then, in pkg mode (hit `]`):
