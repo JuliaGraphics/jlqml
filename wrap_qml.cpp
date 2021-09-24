@@ -328,7 +328,7 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
     return QVariant::fromValue(m);
   });
 
-  qml_module.add_type<QQmlContext>("QQmlContext", julia_base_type<QObject>())
+  auto qqmlcontext_wrapper = qml_module.add_type<QQmlContext>("QQmlContext", julia_base_type<QObject>())
     .constructor<QQmlContext*>()
     .constructor<QQmlContext*, QObject*>()
     .method("context_property", &QQmlContext::contextProperty)
@@ -338,7 +338,10 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
     .method("context_object", &QQmlContext::contextObject);
 
   qml_module.add_type<QQmlEngine>("QQmlEngine", julia_base_type<QObject>())
-    .method("root_context", &QQmlEngine::rootContext);
+    .method("root_context", &QQmlEngine::rootContext)
+    .method("quit", &QQmlEngine::quit);
+
+  qqmlcontext_wrapper.method("engine", &QQmlContext::engine);
 
   qml_module.add_type<QQmlApplicationEngine>("QQmlApplicationEngine", julia_base_type<QQmlEngine>())
     .constructor<QString>() // Construct with path to QML
