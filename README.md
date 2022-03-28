@@ -2,26 +2,29 @@
 
 This is the C++ library component of the [QML.jl](https://github.com/barche/QML.jl) package.
 
-To compile this, make sure that Qt, libcxxwrap-julia and Julia can be found by adding the relevant paths to `CMAKE_PREFIX_PATH`. You also need to build `libcxxwrap-julia` from source, using the instructions at: https://github.com/JuliaInterop/libcxxwrap-julia
+To compile this, make sure that Qt, libcxxwrap-julia and Julia can be found by
+adding the relevant paths to `CMAKE_PREFIX_PATH`.
 
 Example sequence of commands to download the code and build it:
+
+```julia
+using CxxWrap
+CxxWrap.CxxWrapCore.prefix_path()
+```
+
+Now we have a path for `CxxWrap`, we can pass it to cmake when building this library:
 
 ```bash
 git clone https://github.com/barche/jlqml.git
 mkdir jlqml-build
 cd jlqml-build
-cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=/path/to/cxxwrap;/path/to/qt ../jlqml
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH='/path/to/cxxwrap;/path/to/qt' ../jlqml
 make
 ```
 
-The path for CxxWrap can be obtained by running the following in Julia:
-
-```julia
-using CxxWrap
-dirname(dirname(CxxWrap.libcxxwrap_julia))
-```
-
-After building jlqml, you also need to set up the `~/.julia/artifacts/Overrides.toml`, to prefer your locally built binaries over the standard binaries, for example:
+After building jlqml, you also need to set up the
+`~/.julia/artifacts/Overrides.toml`, to prefer your locally built binaries over
+the standard binaries, for example:
 
 ```toml
 [3eaa8342-bff7-56a5-9981-c04077f7cee7]
