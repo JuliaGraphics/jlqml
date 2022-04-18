@@ -54,7 +54,7 @@ private:
 
   void set_engine(QQmlEngine* e);
 
-  QApplication* m_app = nullptr;
+  QGuiApplication* m_app = nullptr;
   QQmlEngine* m_engine = nullptr;
   QQmlContext* m_root_ctx = nullptr;
   bool m_quit_called = false;
