@@ -20,8 +20,11 @@
 #include "julia_property_map.hpp"
 #include "julia_signals.hpp"
 #include "listmodel.hpp"
+#include "modeldata.hpp"
 #include "opengl_viewport.hpp"
 #include "makie_viewport.hpp"
+#include "tablemodel.hpp"
+
 #include "jlqml.hpp"
 
 #include "jlcxx/stl.hpp"
@@ -37,7 +40,11 @@ template<> struct SuperType<qmlwrap::JuliaPropertyMap> { using type = QQmlProper
 template<> struct SuperType<QQuickView> { using type = QQuickWindow; };
 template<> struct SuperType<QTimer> { using type = QObject; };
 template<> struct SuperType<qmlwrap::JuliaPaintedItem> { using type = QQuickItem; };
-template<> struct SuperType<qmlwrap::ListModel> { using type = QObject; };
+template<> struct SuperType<QAbstractItemModel> { using type = QObject; };
+template<> struct SuperType<QAbstractListModel> { using type = QAbstractItemModel; };
+template<> struct SuperType<QAbstractTableModel> { using type = QAbstractItemModel; };
+template<> struct SuperType<qmlwrap::ListModel> { using type = QAbstractListModel; };
+template<> struct SuperType<qmlwrap::TableModel> { using type = QAbstractTableModel; };
 
 }
 
@@ -435,14 +442,22 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
   qml_module.add_type<QPainter>("QPainter")
     .method("device", &QPainter::device);
 
-  qmlwrap::ListModel::m_qml_mod = qml_module.julia_module();
-  qml_module.add_type<qmlwrap::ListModel>("ListModel", julia_base_type<QObject>())
+  qmlwrap::ModelData::m_qml_mod = qml_module.julia_module();
+  qml_module.add_type<qmlwrap::ModelData>("ModelData", julia_base_type<QObject>())
+    .method("remove", &qmlwrap::ModelData::remove)
+    .method("emit_roles_changed", &qmlwrap::ModelData::emit_roles_changed)
+    .method("emit_data_changed", &qmlwrap::ModelData::emit_data_changed)
+    .method("push_back", &qmlwrap::ModelData::push_back)
+    .method("get_julia_data", &qmlwrap::ModelData::get_julia_data);
+  qml_module.add_type<QAbstractItemModel>("QAbstractItemModel", julia_base_type<QObject>());
+  qml_module.add_type<QAbstractListModel>("QAbstractListModel", julia_base_type<QAbstractItemModel>());
+  qml_module.add_type<QAbstractTableModel>("QAbstractTableModel", julia_base_type<QAbstractItemModel>());
+  qml_module.add_type<qmlwrap::ListModel>("ListModel", julia_base_type<QAbstractListModel>())
     .constructor<jl_value_t*>()
-    .method("remove", &qmlwrap::ListModel::remove)
-    .method("emit_roles_changed", &qmlwrap::ListModel::emit_roles_changed)
-    .method("emit_data_changed", &qmlwrap::ListModel::emit_data_changed)
-    .method("push_back", &qmlwrap::ListModel::push_back)
-    .method("get_julia_data", &qmlwrap::ListModel::get_julia_data);
+    .method("get_model_data", &qmlwrap::ListModel::get_model_data);
+  qml_module.add_type<qmlwrap::TableModel>("TableModel", julia_base_type<QAbstractTableModel>())
+    .constructor<jl_value_t*>()
+    .method("get_model_data", &qmlwrap::TableModel::get_model_data);
 
   qml_module.set_override_module(jl_base_module);
   qml_module.method("getindex", [](const QVariantMap& m, const QString& key) { return m[key]; });

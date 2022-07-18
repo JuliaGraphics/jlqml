@@ -35,32 +35,39 @@ endif()
 
 add_compile_definitions(QT_DISABLE_DEPRECATED_BEFORE=0x050F00)
 
-add_library(jlqml SHARED
-  application_manager.hpp
-  application_manager.cpp
-  julia_api.hpp
-  julia_api.cpp
-  julia_canvas.hpp
-  julia_canvas.cpp
-  julia_display.hpp
-  julia_display.cpp
-  julia_function.hpp
-  julia_function.cpp
-  julia_painteditem.hpp
-  julia_painteditem.cpp
-  julia_property_map.hpp
-  julia_property_map.cpp
-  julia_signals.hpp
-  julia_signals.cpp
-  listmodel.hpp
-  listmodel.cpp
-  makie_viewport.hpp
-  makie_viewport.cpp
-  opengl_viewport.hpp
-  opengl_viewport.cpp
-  jlqml.hpp
-  wrap_qml.cpp
-${MOC_BUILT_SOURCES} ${UI_BUILT_SOURCES} ${RESOURCES})
+qt6_add_qml_module(jlqml
+  URI org.julialang.Julia
+  VERSION 1.0
+  NO_GENERATE_PLUGIN_SOURCE
+  SOURCES
+    application_manager.hpp
+    application_manager.cpp
+    julia_api.hpp
+    julia_api.cpp
+    julia_canvas.hpp
+    julia_canvas.cpp
+    julia_display.hpp
+    julia_display.cpp
+    julia_function.hpp
+    julia_function.cpp
+    julia_painteditem.hpp
+    julia_painteditem.cpp
+    julia_property_map.hpp
+    julia_property_map.cpp
+    julia_signals.hpp
+    julia_signals.cpp
+    listmodel.hpp
+    listmodel.cpp
+    makie_viewport.hpp
+    makie_viewport.cpp
+    modeldata.hpp
+    modeldata.cpp
+    opengl_viewport.hpp
+    opengl_viewport.cpp
+    tablemodel.hpp
+    tablemodel.cpp
+    jlqml.hpp
+    wrap_qml.cpp)
 
 set_property(TARGET jlqml PROPERTY VERSION ${JlQML_VERSION})
 target_link_libraries(jlqml PRIVATE Qt6::Core Qt6::Gui Qt6::OpenGL Qt6::Qml Qt6::Quick Qt6::Svg JlCxx::cxxwrap_julia JlCxx::cxxwrap_julia_stl)

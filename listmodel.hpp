@@ -8,7 +8,7 @@
 #include <QJSValue>
 #include <QObject>
 
-// #include "jlqml.hpp"
+#include "modeldata.hpp"
 
 namespace qmlwrap
 {
@@ -20,18 +20,17 @@ class ListModel : public QAbstractListModel
   Q_PROPERTY(int count READ count NOTIFY countChanged)
   Q_PROPERTY(QStringList roles READ roles NOTIFY rolesChanged)
 public:
-  static jl_module_t* m_qml_mod;
 
   ListModel(jl_value_t* data, QObject* parent = 0);
   virtual ~ListModel();
 
   // QAbstractItemModel interface
-  virtual int	rowCount(const QModelIndex& parent = QModelIndex()) const;
-  virtual QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const;
+  virtual int	rowCount(const QModelIndex& parent = QModelIndex()) const override;
+  virtual QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
   // TODO: Add headerData
-  virtual QHash<int, QByteArray> roleNames() const;
-  virtual bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole);
-  Qt::ItemFlags flags(const QModelIndex &index) const;
+  virtual QHash<int, QByteArray> roleNames() const override;
+  virtual bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole) override;
+  Qt::ItemFlags flags(const QModelIndex &index) const override;
 
   // Mimic QML Listmodel interface
   Q_INVOKABLE void append(const QJSValue& record);
@@ -43,27 +42,22 @@ public:
   int count() const;
 
   // Called from Julia
-  void emit_roles_changed();
-  void emit_data_changed(int index, int count, const std::vector<int>& roles);
-  void push_back(jl_value_t* val);
+  ModelData* get_model_data() const;
 
   // Roles property
   QStringList roles() const;
-  jl_value_t* get_julia_data() const;
-
 Q_SIGNALS:
   void countChanged();
   void rolesChanged();
 
 private:
-  // Emit update change signal
-  void do_update(int index, int count, const QList<int> &roles);
 
   /// This overloads append and insert to take a list of variants instead of a dictionary
   void append_list(const QVariantList& argvariants);
   void insert_list(int index, const QVariantList& argvariants);
+  void onDataChanged(int index, int count, const std::vector<int>& roles);
 
-  jl_value_t* m_data;
+  ModelData* m_data;
 };
 
 }
