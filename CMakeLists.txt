@@ -50,22 +50,18 @@ qt6_add_qml_module(jlqml
     julia_display.cpp
     julia_function.hpp
     julia_function.cpp
+    julia_itemmodel.hpp
+    julia_itemmodel.cpp
     julia_painteditem.hpp
     julia_painteditem.cpp
     julia_property_map.hpp
     julia_property_map.cpp
     julia_signals.hpp
     julia_signals.cpp
-    listmodel.hpp
-    listmodel.cpp
     makie_viewport.hpp
     makie_viewport.cpp
-    modeldata.hpp
-    modeldata.cpp
     opengl_viewport.hpp
     opengl_viewport.cpp
-    tablemodel.hpp
-    tablemodel.cpp
     jlqml.hpp
     wrap_qml.cpp)
 
