@@ -63,7 +63,7 @@ void ListModel::append(const QJSValue& record)
 {
   if(record.isArray())
   {
-    m_data->append_list(record.toVariant().toList());
+    append_list(record.toVariant().toList());
     return;
   }
 
@@ -78,7 +78,7 @@ void ListModel::append(const QJSValue& record)
       argvariants.push_back(record.property(QString(rolename)).toVariant());
     }
   }
-  m_data->append_list(argvariants);
+  append_list(argvariants);
 }
 
 Q_INVOKABLE void ListModel::insert(int index, const QJSValue& record)
