@@ -16,6 +16,7 @@ namespace qmlwrap
 class JuliaPaintedItem : public QQuickPaintedItem
 {
   Q_OBJECT
+  QML_ELEMENT
   Q_PROPERTY(jlcxx::SafeCFunction paintFunction READ paintFunction WRITE setPaintFunction)
 public:
   typedef void (*callback_t)(QPainter*,JuliaPaintedItem*);

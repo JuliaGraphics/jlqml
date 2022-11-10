@@ -282,13 +282,7 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
 {
   using namespace jlcxx;
 
-  qmlRegisterSingletonType("org.julialang", 1, 0, "Julia", qmlwrap::julia_js_singletontype_provider);
-  qmlRegisterType<qmlwrap::JuliaSignals>("org.julialang", 1, 0, "JuliaSignals");
-  qmlRegisterType<qmlwrap::JuliaCanvas>("org.julialang", 1, 0, "JuliaCanvas");
-  qmlRegisterType<qmlwrap::JuliaDisplay>("org.julialang", 1, 0, "JuliaDisplay");
-  qmlRegisterType<qmlwrap::JuliaPaintedItem>("org.julialang", 1, 1, "JuliaPaintedItem");
-  qmlRegisterType<qmlwrap::OpenGLViewport>("org.julialang", 1, 0, "OpenGLViewport");
-  qmlRegisterType<qmlwrap::MakieViewport>("org.julialang", 1, 0, "MakieViewport");
+  qmlwrap::JuliaSingleton::s_singletonInstance = qmlwrap::JuliaAPI::instance();
 
   // Set pointers to Julia QML module in the classes that use it
   qmlwrap::ApplicationManager::m_qml_mod = qml_module.julia_module();

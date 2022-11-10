@@ -56,7 +56,7 @@ namespace detail
   };
 }
 
-JuliaSignals::JuliaSignals(QObject* parent) : QObject(parent)
+JuliaSignals::JuliaSignals(QQuickItem* parent) : QQuickItem(parent)
 {
   JuliaAPI::instance()->setJuliaSignals(this);
 }

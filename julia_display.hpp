@@ -15,6 +15,7 @@ namespace qmlwrap
 class JuliaDisplay : public QQuickPaintedItem
 {
   Q_OBJECT
+  QML_ELEMENT
 
 public:
   JuliaDisplay(QQuickItem *parent = 0);

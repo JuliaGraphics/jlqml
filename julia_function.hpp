@@ -11,8 +11,6 @@
 namespace qmlwrap
 {
 
-class JuliaSignals;
-
 /// Global API, allowing to call Julia functions from QML
 class JuliaFunction : public QObject
 {

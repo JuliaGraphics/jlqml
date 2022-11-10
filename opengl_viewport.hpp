@@ -37,6 +37,7 @@ private:
 class OpenGLViewport : public QQuickFramebufferObject
 {
   Q_OBJECT
+  QML_ELEMENT
   Q_PROPERTY(jlcxx::SafeCFunction renderFunction READ renderFunction WRITE setRenderFunction NOTIFY renderFunctionChanged)
 public:
   OpenGLViewport(QQuickItem *parent = 0, RenderFunction* render_func = new DefaultRenderFunction());
