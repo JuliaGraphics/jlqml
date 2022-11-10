@@ -3,17 +3,18 @@
 
 #include "jlcxx/jlcxx.hpp"
 
-#include <QObject>
+#include <QQuickItem>
 
 namespace qmlwrap
 {
 
 /// Groups signals (defined using QML) that can be emitted from Julia
-class JuliaSignals : public QObject
+class JuliaSignals : public QQuickItem
 {
   Q_OBJECT
+  QML_ELEMENT
 public:
-  JuliaSignals(QObject* parent = 0);
+  JuliaSignals(QQuickItem *parent = nullptr);
   virtual ~JuliaSignals();
   // Emit the signal with the given name
 public slots:

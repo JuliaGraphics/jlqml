@@ -56,7 +56,6 @@ void JuliaAPI::on_about_to_quit()
 {
   m_engine = nullptr;
   m_julia_signals = nullptr;
-  m_julia_js_root = QJSValue();
 }
 
 void JuliaAPI::register_function_internal(JuliaFunction* jf)
@@ -74,21 +73,31 @@ void JuliaAPI::register_function_internal(JuliaFunction* jf)
   }
 
   f.setProperty("julia_function", m_engine->newQObject(jf));
-  m_julia_js_root.setProperty(jf->name(), f);
+  (*this)[jf->name()] = f.toVariant(QJSValue::RetainJSObjects);
 }
 
 JuliaAPI::JuliaAPI()
 {
 }
 
-QJSValue julia_js_singletontype_provider(QQmlEngine *engine, QJSEngine *scriptEngine)
+JuliaAPI* JuliaSingleton::create(QQmlEngine* qmlEngine, QJSEngine* scriptEngine)
 {
-  QJSValue result = scriptEngine->newObject();
-  JuliaAPI* api = JuliaAPI::instance();
-  api->set_julia_js_root(result);
-  api->set_js_engine(engine);
-  QQmlEngine::setObjectOwnership(api, QQmlEngine::CppOwnership);
-  return result;
+  Q_ASSERT(s_singletonInstance);
+  Q_ASSERT(scriptEngine->thread() == s_singletonInstance->thread());
+  if(s_engine)
+  {
+    Q_ASSERT(scriptEngine == s_engine);
+  }
+  else
+  {
+    s_engine = scriptEngine;
+  }
+
+  s_singletonInstance->set_js_engine(qmlEngine);
+  QJSEngine::setObjectOwnership(s_singletonInstance, QJSEngine::CppOwnership);
+  QQmlEngine::setObjectOwnership(s_singletonInstance, QQmlEngine::CppOwnership);
+
+  return s_singletonInstance;
 }
 
 } // namespace qmlwrap

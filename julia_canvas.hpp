@@ -14,6 +14,7 @@ namespace qmlwrap
 class JuliaCanvas : public QQuickPaintedItem
 {
   Q_OBJECT
+  QML_ELEMENT
   Q_PROPERTY(jlcxx::SafeCFunction paintFunction READ paintFunction WRITE setPaintFunction)
 
 public:

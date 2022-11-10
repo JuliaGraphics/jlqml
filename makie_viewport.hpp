@@ -10,6 +10,7 @@ namespace qmlwrap
 class MakieViewport : public OpenGLViewport
 {
   Q_OBJECT
+  QML_ELEMENT
 public:
   MakieViewport(QQuickItem* parent = 0);
   virtual ~MakieViewport();

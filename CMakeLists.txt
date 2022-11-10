@@ -36,7 +36,7 @@ endif()
 add_compile_definitions(QT_DISABLE_DEPRECATED_BEFORE=0x050F00)
 
 qt6_add_qml_module(jlqml
-  URI org.julialang.Julia
+  URI org.julialang
   VERSION 1.0
   NO_GENERATE_PLUGIN_SOURCE
   SOURCES
