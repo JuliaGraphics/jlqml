@@ -312,6 +312,16 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
   qml_module.set_const("InitialSortOrderRole", Qt::InitialSortOrderRole);
   qml_module.set_const("UserRole", Qt::UserRole);
 
+  qml_module.add_bits<QSGRendererInterface::GraphicsApi>("GraphicsAPI", jlcxx::julia_type("CppEnum"));
+  qml_module.set_const("Unknown", QSGRendererInterface::Unknown);
+  qml_module.set_const("Software", QSGRendererInterface::Software);
+  qml_module.set_const("OpenVG", QSGRendererInterface::OpenVG);
+  qml_module.set_const("OpenGL", QSGRendererInterface::OpenGL);
+  qml_module.set_const("Direct3D11", QSGRendererInterface::Direct3D11);
+  qml_module.set_const("Vulkan", QSGRendererInterface::Vulkan);
+  qml_module.set_const("Metal", QSGRendererInterface::Metal);
+  qml_module.set_const("Null", QSGRendererInterface::Null);
+
   qml_module.add_type<QObject>("QObject");
   qml_module.add_type<QSize>("QSize")
     .method("width", &QSize::width)
@@ -578,6 +588,9 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
       auto v = fbo.textures();
       return std::vector<GLuint>(v.begin(), v.end());
     });
+
+  qml_module.method("graphicsApi", QQuickWindow::graphicsApi);
+  qml_module.method("setGraphicsApi", QQuickWindow::setGraphicsApi);
 
   qml_module.method("__test_add_double!", [] (double& result, QVariant var)
   {

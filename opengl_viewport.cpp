@@ -55,6 +55,10 @@ private:
 
 OpenGLViewport::OpenGLViewport(QQuickItem *parent, RenderFunction* render_func) : QQuickFramebufferObject(parent), m_render_function(render_func)
 {
+  if(QQuickWindow::graphicsApi() != QSGRendererInterface::OpenGL)
+  {
+    qFatal("OpenGL rendering required for OpenGLViewport or MakieViewport. Add the line\nQML.setGraphicsApi(QML.OpenGL)\nbefore loading the QML program.");
+  }
   if(qgetenv("QSG_RENDER_LOOP") != "basic")
   {
     qFatal("QSG_RENDER_LOOP must be set to basic to use OpenGLViewport or MakieViewport. Add the line\nENV[\"QSG_RENDER_LOOP\"] = \"basic\"\nat the top of your Julia program");
