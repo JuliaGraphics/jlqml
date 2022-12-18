@@ -94,13 +94,16 @@ MakieViewport::~MakieViewport()
 
 void MakieViewport::setup_buffer(QOpenGLFramebufferObject* fbo)
 {
-  if(m_screen != nullptr)
+  if(m_screen == nullptr)
   {
-    jlcxx::unprotect_from_gc(m_screen);
+    m_screen = MakieSupport::instance().setup_screen(std::forward<QOpenGLFramebufferObject*>(fbo));
+    jlcxx::protect_from_gc(m_screen);
   }
-  m_screen = MakieSupport::instance().setup_screen(std::forward<QOpenGLFramebufferObject*>(fbo));
-  assert(m_screen != nullptr);
-  jlcxx::protect_from_gc(m_screen);
+  else
+  {
+    assert(m_screen != nullptr);
+    MakieSupport::instance().setup_screen(m_screen, std::forward<QOpenGLFramebufferObject*>(fbo));
+  }
 }
 
 jl_module_t* MakieViewport::m_qml_mod = nullptr;
