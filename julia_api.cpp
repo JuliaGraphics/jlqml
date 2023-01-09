@@ -84,14 +84,7 @@ JuliaAPI* JuliaSingleton::create(QQmlEngine* qmlEngine, QJSEngine* scriptEngine)
 {
   Q_ASSERT(s_singletonInstance);
   Q_ASSERT(scriptEngine->thread() == s_singletonInstance->thread());
-  if(s_engine)
-  {
-    Q_ASSERT(scriptEngine == s_engine);
-  }
-  else
-  {
-    s_engine = scriptEngine;
-  }
+  s_engine = scriptEngine;
 
   s_singletonInstance->set_js_engine(qmlEngine);
   QJSEngine::setObjectOwnership(s_singletonInstance, QJSEngine::CppOwnership);
