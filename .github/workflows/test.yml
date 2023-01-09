@@ -1,0 +1,57 @@
+name: test
+on:
+  - push
+  - pull_request
+    
+defaults:
+  run:
+    shell: bash
+    
+jobs:
+  test:
+    name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        version:
+          - '1.7'
+          - '1.8'
+          - 'nightly'
+        os:
+          - ubuntu-latest
+          - macOS-latest
+          - windows-latest
+        arch:
+          - x64
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          repository: JuliaInterop/libcxxwrap-julia
+          path: libcxxwrap
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v3
+        with:
+          version: '6.4.2'
+      - uses: julia-actions/setup-julia@latest
+        with:
+          version: ${{ matrix.version }}
+          arch: ${{ matrix.arch }}
+      - name: Build libcxxwrap-julia
+        run: |
+          if [[ "$OSTYPE" != "darwin"* ]]; then
+            rm -f /opt/hostedtoolcache/julia/1.6*/x64/lib/julia/libstdc++.so.6
+          fi
+          mkdir build-libcxxwrap && cd build-libcxxwrap
+          cmake -DCMAKE_INSTALL_PREFIX=$HOME/install -DJLCXX_BUILD_EXAMPLES=OFF -DCMAKE_BUILD_TYPE=Debug ../libcxxwrap
+          VERBOSE=ON cmake --build . --config Debug --target install
+      - name: Build and test
+        run: |
+          mkdir build && cd build
+          cmake -DCMAKE_PREFIX_PATH=$HOME/install -DJLQML_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug  ..
+          VERBOSE=ON cmake --build . --config Debug
+          ctest -C Debug -V --output-on-failure
