@@ -27,7 +27,7 @@ basepath = dirname(@__DIR__)
 name = "jlqml"
 version = getversion(joinpath(basepath, "CMakeLists.txt"))
 
-julia_versions = GITHUB_REF_NAME == "main" ? [v"1.6.3", v"1.8.0", v"1.10.0"] : [v"1.8.0"]
+julia_versions = do_deploy(GITHUB_REF_NAME) ? [v"1.6.3", v"1.8.0", v"1.10.0"] : [v"1.8.0"]
 
 # Collection of sources required to complete build
 sources = [
@@ -75,7 +75,7 @@ function libjulia_platforms(julia_version)
 end
 
 platforms = vcat(libjulia_platforms.(julia_versions)...)
-if GITHUB_REF_NAME != "main"
+if !do_deploy(GITHUB_REF_NAME)
     filter!(Sys.islinux, platforms)
 end
 
