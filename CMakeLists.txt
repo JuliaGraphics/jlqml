@@ -73,6 +73,9 @@ qt6_add_qml_module(jlqml
     wrap_qml.cpp)
 
 set_property(TARGET jlqml PROPERTY VERSION ${JlQML_VERSION})
+if(WIN32)
+  set_property(TARGET jlqml PROPERTY PREFIX lib)
+endif()
 target_link_libraries(jlqml PRIVATE Qt6::Core Qt6::Gui Qt6::OpenGL Qt6::Qml Qt6::Quick Qt6::Svg JlCxx::cxxwrap_julia JlCxx::cxxwrap_julia_stl)
 
 install(TARGETS
