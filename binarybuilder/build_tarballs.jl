@@ -10,7 +10,7 @@ delete!(Pkg.Types.get_last_stdlibs(v"1.6.3"), uuid)
 
 GITHUB_REF_NAME = haskey(ENV, "GITHUB_REF_NAME") ? ENV["GITHUB_REF_NAME"] : ""
 
-do_deploy(refname) = (refname == "main" || refname == "qt6")
+do_deploy(refname) = (refname == "main")
 
 function getversion(cmakefile)
     a = b = c = 0
