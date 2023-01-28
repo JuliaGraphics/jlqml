@@ -87,11 +87,11 @@ products = [
 # Dependencies that must be installed before this package can be built
 dependencies = [
     Dependency("libcxxwrap_julia_jll"),
-    Dependency("Qt6Base_jll", v"6.3.0"; compat="6.3.0"),
-    Dependency("Qt6ShaderTools_jll", v"6.3.0"; compat="6.3.0"),
-    Dependency("Qt6Declarative_jll"),
+    Dependency("Qt6Base_jll"; compat="6.4.2"),
+    Dependency("Qt6ShaderTools_jll", compat="6.4.2"),
+    Dependency("Qt6Declarative_jll", compat="6.4.2"),
     HostBuildDependency("Qt6Declarative_jll"),
-    Dependency("Qt6Svg_jll"),
+    Dependency("Qt6Svg_jll", compat="6.4.2"),
     BuildDependency("Libglvnd_jll"),
     BuildDependency("libjulia_jll"),
 ]
@@ -148,7 +148,6 @@ if do_deploy(GITHUB_REF_NAME)
     end
 
     Pkg.develop("jlqml_jll")
-    Pkg.add([PackageSpec(name="Qt6Base_jll", version=v"6.3.0"), PackageSpec(name="Qt6ShaderTools_jll", version=v"6.3.0")])
     import jlqml_jll
     using LocalRegistry
     register(jlqml_jll, registry = testreg)
