@@ -5,7 +5,7 @@
 #include <QVariant>
 #include <QVariantList>
 
-#include "julia_api.hpp"
+#include "application_manager.hpp"
 #include "julia_signals.hpp"
 #include "jlqml.hpp"
 
@@ -58,7 +58,7 @@ namespace detail
 
 JuliaSignals::JuliaSignals(QQuickItem* parent) : QQuickItem(parent)
 {
-  JuliaAPI::instance()->setJuliaSignals(this);
+  ApplicationManager::instance().julia_api()->setJuliaSignals(this);
 }
 
 JuliaSignals::~JuliaSignals()

@@ -282,8 +282,6 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
 {
   using namespace jlcxx;
 
-  qmlwrap::JuliaSingleton::s_singletonInstance = qmlwrap::JuliaAPI::instance();
-
   // Set pointers to Julia QML module in the classes that use it
   qmlwrap::ApplicationManager::m_qml_mod = qml_module.julia_module();
   qmlwrap::JuliaItemModel::m_qml_mod = qml_module.julia_module();
@@ -326,6 +324,10 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
   qml_module.add_type<QSize>("QSize")
     .method("width", &QSize::width)
     .method("height", &QSize::height);
+
+  qml_module.add_type<QCoreApplication>("QCoreApplication", julia_base_type<QObject>());
+  qml_module.add_type<QGuiApplication>("QGuiApplication", julia_base_type<QCoreApplication>())
+    .constructor<int&, char**>();
 
   qml_module.add_type<QString>("QString", julia_type("AbstractString"))
     .method("cppsize", &QString::size);
@@ -378,6 +380,8 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
 
   qml_module.add_type<QByteArray>("QByteArray").constructor<const char*>()
     .method("to_string", &QByteArray::toStdString);
+
+  qml_module.add_type<QByteArrayView>("QByteArrayView");
 
   qml_module.add_type<Parametric<TypeVar<1>>>("QList", julia_type("AbstractVector"))
     .apply<QVariantList, QList<QString>, QList<QUrl>, QList<QByteArray>, QList<int>>(qmlwrap::WrapQList());
@@ -482,17 +486,18 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
   qml_module.add_type<qmlwrap::JuliaPaintedItem>("JuliaPaintedItem", julia_base_type<QQuickItem>());
 
   qml_module.add_type<QQmlComponent>("QQmlComponent", julia_base_type<QObject>())
-    .constructor<QQmlEngine*>()
     .method("set_data", &QQmlComponent::setData);
-  qml_module.method("create", [](QQmlComponent& comp, QQmlContext* context)
+  // We manually add this constructor, since no finalizer will be added here. The component is destroyed together with the engine.
+  qml_module.method("QQmlComponent", [] (QQmlEngine* e) { return new QQmlComponent(e,e); });
+  qml_module.method("create", [](QQmlComponent* comp, QQmlContext* context)
   {
-    if(!comp.isReady())
+    if(!comp->isReady())
     {
-      qWarning() << "QQmlComponent is not ready, aborting create. Errors were: " << comp.errors();
+      qWarning() << "QQmlComponent is not ready, aborting create. Errors were: " << comp->errors();
       return;
     }
 
-    QObject* obj = comp.create(context);
+    QObject* obj = comp->create(context);
     if(context != nullptr)
     {
       obj->setParent(context); // setting this makes sure the new object gets deleted
@@ -505,11 +510,11 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
 
   // App manager functions
   qml_module.add_type<qmlwrap::ApplicationManager>("ApplicationManager");
-  qml_module.method("init_application", []() { qmlwrap::ApplicationManager::instance().init_application(); });
   qml_module.method("init_qmlapplicationengine", []() { return qmlwrap::ApplicationManager::instance().init_qmlapplicationengine(); });
   qml_module.method("init_qmlengine", []() { return qmlwrap::ApplicationManager::instance().init_qmlengine(); });
   qml_module.method("get_qmlengine", []() { return qmlwrap::ApplicationManager::instance().get_qmlengine(); });
   qml_module.method("init_qquickview", []() { return qmlwrap::ApplicationManager::instance().init_qquickview(); });
+  qml_module.method("cleanup", []() { qmlwrap::ApplicationManager::instance().cleanup(); });
   qml_module.method("qmlcontext", []() { return qmlwrap::ApplicationManager::instance().root_context(); });
   qml_module.method("exec", []() { qmlwrap::ApplicationManager::instance().exec(); });
   qml_module.method("process_events", qmlwrap::ApplicationManager::process_events);
@@ -521,7 +526,7 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
   // Emit signals helper
   qml_module.method("emit", [](const char *signal_name, const QVariantList& args) {
     using namespace qmlwrap;
-    JuliaSignals *julia_signals = JuliaAPI::instance()->juliaSignals();
+    JuliaSignals *julia_signals = ApplicationManager::instance().julia_api()->juliaSignals();
     if (julia_signals == nullptr)
     {
       throw std::runtime_error("No signals available");
@@ -531,7 +536,7 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
 
   // Function to register a function
   qml_module.method("qmlfunction", [](const QString &name, jl_function_t *f) {
-    qmlwrap::JuliaAPI::instance()->register_function(name, f);
+    qmlwrap::ApplicationManager::instance().julia_api()->register_function(name, f);
   });
 
   qml_module.add_type<QPaintDevice>("QPaintDevice")

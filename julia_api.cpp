@@ -42,20 +42,8 @@ void JuliaAPI::register_function(const QString& name, jl_function_t* f)
   }
 }
 
-JuliaAPI* JuliaAPI::instance()
-{
-  static JuliaAPI m_instance;
-  return &m_instance;
-}
-
 JuliaAPI::~JuliaAPI()
 {
-}
-
-void JuliaAPI::on_about_to_quit()
-{
-  m_engine = nullptr;
-  m_julia_signals = nullptr;
 }
 
 void JuliaAPI::register_function_internal(JuliaFunction* jf)
@@ -76,15 +64,25 @@ void JuliaAPI::register_function_internal(JuliaFunction* jf)
   (*this)[jf->name()] = f.toVariant(QJSValue::RetainJSObjects);
 }
 
-JuliaAPI::JuliaAPI()
-{
-}
-
 JuliaAPI* JuliaSingleton::create(QQmlEngine* qmlEngine, QJSEngine* scriptEngine)
 {
   Q_ASSERT(s_singletonInstance);
   Q_ASSERT(scriptEngine->thread() == s_singletonInstance->thread());
+  
+  if (s_engine != nullptr)
+  {
+    if(s_engine != scriptEngine)
+    {
+      throw std::runtime_error("Only one scriptEngine may access the singleton");
+    }
+  }
+
   s_engine = scriptEngine;
+  QObject::connect(s_engine, &QObject::destroyed, [&]()
+  {
+    s_engine = nullptr;
+  });
+  
 
   s_singletonInstance->set_js_engine(qmlEngine);
   QJSEngine::setObjectOwnership(s_singletonInstance, QJSEngine::CppOwnership);
