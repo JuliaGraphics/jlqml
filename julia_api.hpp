@@ -31,18 +31,12 @@ public:
 
   void register_function(const QString& name, jl_function_t* f);
 
-  static JuliaAPI* instance();
-
   ~JuliaAPI();
-
-public slots:
-  void on_about_to_quit();
 
 private:
   JuliaSignals* m_julia_signals = nullptr;
   void register_function_internal(JuliaFunction* f);
   QJSEngine* m_engine = nullptr;
-  JuliaAPI();
   std::vector<JuliaFunction*> m_registered_functions;
 };
 

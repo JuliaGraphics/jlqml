@@ -13,6 +13,8 @@
 
 #include "jlcxx/jlcxx.hpp"
 
+#include "julia_api.hpp"
+
 namespace qmlwrap
 {
 
@@ -23,17 +25,17 @@ public:
 
   // Singleton implementation
   static ApplicationManager& instance();
+  JuliaAPI* julia_api();
 
   ~ApplicationManager();
-
-  // Initialize the QGuiApplication instance
-  void init_application();
 
   // Init the app with a new QQmlApplicationEngine
   QQmlApplicationEngine* init_qmlapplicationengine();
   QQmlEngine* init_qmlengine();
   QQmlEngine* get_qmlengine();
   QQuickView* init_qquickview();
+
+  void cleanup();
 
   QQmlContext* root_context();
 
@@ -48,16 +50,12 @@ private:
 
   ApplicationManager();
 
-  void cleanup();
-
   void check_no_engine();
 
   void set_engine(QQmlEngine* e);
 
-  QGuiApplication* m_app = nullptr;
   QQmlEngine* m_engine = nullptr;
   QQmlContext* m_root_ctx = nullptr;
-  bool m_quit_called = false;
 };
 
 }
