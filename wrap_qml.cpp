@@ -321,6 +321,15 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
   qml_module.set_const("Null", QSGRendererInterface::Null);
 
   qml_module.add_type<QObject>("QObject");
+  qml_module.method("connect_destroyed_signal", [] (QObject& obj, jl_function_t* jl_f)
+  {
+    QObject::connect(&obj, &QObject::destroyed, [jl_f](QObject* o)
+    {
+      static JuliaFunction f(jl_f);
+      f(o);
+    });
+  });
+
   qml_module.add_type<QSize>("QSize")
     .method("width", &QSize::width)
     .method("height", &QSize::height);
