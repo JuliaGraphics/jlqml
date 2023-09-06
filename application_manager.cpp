@@ -1,5 +1,7 @@
-#include "application_manager.hpp"
 #include "jlcxx/functions.hpp"
+
+#include "foreign_thread_manager.hpp"
+#include "application_manager.hpp"
 
 namespace qmlwrap
 {
@@ -11,11 +13,9 @@ void julia_message_output(QtMsgType type, const QMessageLogContext &context, con
   case QtDebugMsg:
     jl_safe_printf("Qt Debug: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
     break;
-#if (QT_VERSION >= QT_VERSION_CHECK(5, 5, 0))
   case QtInfoMsg:
     jl_safe_printf("Qt Info: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
     break;
-#endif
   case QtWarningMsg:
     jl_safe_printf("Qt Warning: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
     break;
@@ -96,6 +96,7 @@ void ApplicationManager::exec()
     stoptimer();
     app->exit(status);
   });
+  ForeignThreadManager::instance().clear(QThread::currentThread());
   const int status = app->exec();
   if (status != 0)
   {
