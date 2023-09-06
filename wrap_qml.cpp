@@ -479,11 +479,7 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
 
   qml_module.method("effectiveDevicePixelRatio", [] (QQuickWindow& w)
   {
-#if (QT_VERSION >= QT_VERSION_CHECK(5, 4, 0))
-      return w.effectiveDevicePixelRatio();
-#else
-      return 1.0;
-#endif
+    return w.effectiveDevicePixelRatio();
   });
 
   qml_module.add_type<QQuickView>("QQuickView", julia_base_type<QQuickWindow>())
@@ -513,7 +509,11 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
     }
   });
 
+#if (QT_VERSION >= QT_VERSION_CHECK(6, 5, 0))
+  qml_module.method("qputenv", [] (const char* varName, QByteArray value) { qputenv(varName, value); });
+#else
   qml_module.method("qputenv", qputenv);
+#endif
   qml_module.method("qgetenv", qgetenv);
   qml_module.method("qunsetenv", qunsetenv);
 

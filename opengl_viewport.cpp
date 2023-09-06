@@ -64,11 +64,7 @@ OpenGLViewport::OpenGLViewport(QQuickItem *parent, RenderFunction* render_func) 
     qFatal("QSG_RENDER_LOOP must be set to basic to use OpenGLViewport or MakieViewport. Add the line\nENV[\"QSG_RENDER_LOOP\"] = \"basic\"\nat the top of your Julia program");
   }
   QObject::connect(this, &OpenGLViewport::renderFunctionChanged, this, &OpenGLViewport::update);
-#if (QT_VERSION >= QT_VERSION_CHECK(5, 6, 0))
   setMirrorVertically(true);
-#else
-  qWarning() << "setMirrorVertically not available before Qt 5.6, OpenGLViewport image will be upside-down";
-#endif
 }
 
 void OpenGLViewport::render()
