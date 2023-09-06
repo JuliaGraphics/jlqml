@@ -2,7 +2,10 @@
 #include <QPainter>
 #include <QQuickWindow>
 
+#include "foreign_thread_manager.hpp"
+
 #include "julia_canvas.hpp"
+
 namespace qmlwrap
 {
 
@@ -12,6 +15,7 @@ JuliaCanvas::JuliaCanvas(QQuickItem *parent) : QQuickPaintedItem(parent)
 
 void JuliaCanvas::paint(QPainter *painter)
 {
+  ForeignThreadManager::instance().add_thread(QThread::currentThread());
   // allocate buffer for julia callback to draw on
   int iwidth = width();
   int iheight = height();

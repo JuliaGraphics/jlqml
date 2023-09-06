@@ -49,6 +49,8 @@ qt6_add_qml_module(jlqml
   SOURCES
     application_manager.hpp
     application_manager.cpp
+    foreign_thread_manager.hpp
+    foreign_thread_manager.cpp
     julia_api.hpp
     julia_api.cpp
     julia_canvas.hpp
