@@ -24,18 +24,6 @@ function libcxxwrap_jll_version()
   return VersionNumber(baseversion)
 end
 
-@static if Sys.isapple()
-  jllversion = libcxxwrap_jll_version()
-  cd(joinpath(cxxwrap_root, "lib")) do
-    expected_dylib = "libcxxwrap_julia.$jllversion.dylib"
-    if !isfile(expected_dylib)
-      compiled_dylib = readlink("libcxxwrap_julia.dylib")
-      symlink(compiled_dylib, expected_dylib)
-      println("linked $expected_dylib to $compiled_dylib")
-    end
-  end
-end
-
 envdir = mktempdir()
 import Pkg
 Pkg.activate(envdir)

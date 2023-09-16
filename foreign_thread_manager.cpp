@@ -14,7 +14,14 @@ void ForeignThreadManager::add_thread(QThread *t)
   if(!m_threads.contains(t))
   {
     m_threads.insert(t);
+  #if (JULIA_VERSION_MAJOR * 100 + JULIA_VERSION_MINOR) >= 109
     jl_adopt_thread();
+  #else
+    if(m_threads.size() > 1)
+    {
+      std::cout << "Warning: using multiple threads in Julia versions older than 1.9 will probably crash" << std::endl;
+    }
+  #endif
   }
   m_mutex.unlock();
 }
