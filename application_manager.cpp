@@ -140,6 +140,7 @@ void ApplicationManager::check_no_engine()
   {
     throw std::runtime_error("Existing engine, aborting creation");
   }
+  julia_api();
 }
 
 void ApplicationManager::set_engine(QQmlEngine* e)
