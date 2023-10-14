@@ -283,10 +283,11 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
   using namespace jlcxx;
 
   // Set pointers to Julia QML module in the classes that use it
+  qmlwrap::JuliaFunction::m_qml_mod = qml_module.julia_module();
   qmlwrap::ApplicationManager::m_qml_mod = qml_module.julia_module();
   qmlwrap::JuliaItemModel::m_qml_mod = qml_module.julia_module();
   qmlwrap::MakieViewport::m_qml_mod = qml_module.julia_module();
-
+  
   // Enums
   qml_module.add_bits<Qt::Orientation>("Orientation", jlcxx::julia_type("CppEnum"));
   qml_module.set_const("Horizontal", Qt::Horizontal);
@@ -337,6 +338,7 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
   qml_module.add_type<QCoreApplication>("QCoreApplication", julia_base_type<QObject>());
   qml_module.add_type<QGuiApplication>("QGuiApplication", julia_base_type<QCoreApplication>())
     .constructor<int&, char**>();
+  qml_module.method("exit", [] () { std::cout << "calling C++ exit" << std::endl; QGuiApplication::instance()->exit(); });
 
   qml_module.add_type<QString>("QString", julia_type("AbstractString"))
     .method("cppsize", &QString::size);

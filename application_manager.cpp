@@ -92,8 +92,6 @@ void ApplicationManager::exec()
   }
   QObject::connect(m_engine, &QQmlEngine::exit, [this,app](const int status)
   {
-    static jlcxx::JuliaFunction stoptimer(jl_get_function(m_qml_mod, "_stoptimer"));
-    stoptimer();
     app->exit(status);
   });
   ForeignThreadManager::instance().clear(QThread::currentThread());
