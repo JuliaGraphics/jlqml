@@ -16,6 +16,8 @@ class JuliaFunction : public QObject
 {
   Q_OBJECT
 public:
+  static jl_module_t* m_qml_mod;
+
   JuliaFunction(const QString& name, jl_function_t* f, QObject* parent);
 
   // Call a Julia function that takes any number of arguments as a list
