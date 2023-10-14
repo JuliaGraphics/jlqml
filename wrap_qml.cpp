@@ -338,7 +338,7 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
   qml_module.add_type<QCoreApplication>("QCoreApplication", julia_base_type<QObject>());
   qml_module.add_type<QGuiApplication>("QGuiApplication", julia_base_type<QCoreApplication>())
     .constructor<int&, char**>();
-  qml_module.method("exit", [] () { std::cout << "calling C++ exit" << std::endl; QGuiApplication::instance()->exit(); });
+  qml_module.method("quit", [] () { QGuiApplication::instance()->quit(); });
 
   qml_module.add_type<QString>("QString", julia_type("AbstractString"))
     .method("cppsize", &QString::size);
