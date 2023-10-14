@@ -42,3 +42,10 @@ jobs:
           git config --global user.email "cxxwrapdeploy@bartjanssens.org"
           julia --project=./jlqml/binarybuilder -e "using Pkg; Pkg.instantiate()"
           julia --project=./jlqml/binarybuilder ./jlqml/binarybuilder/build_tarballs.jl
+          mv products jlqml
+          cd jlqml
+      - name: Upload JLL artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: jlqml-binaries
+          path: products

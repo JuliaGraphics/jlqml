@@ -10,8 +10,6 @@ delete!(Pkg.Types.get_last_stdlibs(v"1.6.3"), uuid)
 
 GITHUB_REF_NAME = haskey(ENV, "GITHUB_REF_NAME") ? ENV["GITHUB_REF_NAME"] : ""
 
-do_deploy(refname) = (refname == "main")
-
 function getversion(cmakefile)
     a = b = c = 0
     for l in readlines(cmakefile)
@@ -27,7 +25,7 @@ basepath = dirname(@__DIR__)
 name = "jlqml"
 version = getversion(joinpath(basepath, "CMakeLists.txt"))
 
-julia_versions = do_deploy(GITHUB_REF_NAME) ? [v"1.6.3", v"1.8.0", v"1.10.0"] : [v"1.8.0"]
+julia_versions = [v"1.9.0"]
 
 # Collection of sources required to complete build
 sources = [
@@ -75,9 +73,6 @@ function libjulia_platforms(julia_version)
 end
 
 platforms = vcat(libjulia_platforms.(julia_versions)...)
-if !do_deploy(GITHUB_REF_NAME)
-    filter!(Sys.islinux, platforms)
-end
 
 # The products that we will ensure are always built
 products = [
@@ -87,68 +82,16 @@ products = [
 # Dependencies that must be installed before this package can be built
 dependencies = [
     Dependency("libcxxwrap_julia_jll"),
-    Dependency("Qt6Base_jll"; compat="6.4.2"),
-    Dependency("Qt6ShaderTools_jll", compat="6.4.2"),
-    Dependency("Qt6Declarative_jll", compat="6.4.2"),
+    Dependency("Qt6Declarative_jll"; compat="~6.5.2"),
     HostBuildDependency("Qt6Declarative_jll"),
-    Dependency("Qt6Svg_jll", compat="6.4.2"),
+    Dependency("Qt6Svg_jll"; compat="~6.5.2"),
     BuildDependency("Libglvnd_jll"),
     BuildDependency("libjulia_jll"),
 ]
 
-GITHUB_REF_NAME = haskey(ENV, "GITHUB_REF_NAME") ? ENV["GITHUB_REF_NAME"] : ""
 deployingargs = deepcopy(ARGS)
-if !isempty(GITHUB_REF_NAME) && !do_deploy(GITHUB_REF_NAME)
-    push!(deployingargs, "--deploy=local")
-end
+push!(deployingargs, "--deploy=local")
 
 # Build the tarballs, and possibly a `build.jl` as well.
 build_tarballs(deployingargs, name, version, sources, script, platforms, products, dependencies;
-    preferred_gcc_version = v"9", julia_compat = "1.6")
-
-if do_deploy(GITHUB_REF_NAME)
-    const testreg = "https://github.com/barche/CxxWrapTestRegistry.git"
-
-    const repo = "barche/jlqml_jll.jl"
-
-    Pkg.Registry.add(RegistrySpec(url = testreg))
-    Pkg.develop(PackageSpec(url = "https://github.com/$(repo).git"))
-
-    jlqml_jll_project_toml = TOML.parsefile(joinpath(Pkg.devdir(), "jlqml_jll", "Project.toml"))
-    build_version = parse(VersionNumber, jlqml_jll_project_toml["version"])
-    if version == VersionNumber(build_version.major, build_version.minor, build_version.patch)
-        build_version = VersionNumber(build_version.major, build_version.minor, build_version.patch, (), build_version.build .+ 1)
-    else
-        build_version = version
-    end
-
-    mktemp() do jsonfile, _
-        push!(deployingargs, "--meta-json=$jsonfile")
-        build_tarballs(deployingargs, name, version, sources, script, platforms, products, dependencies;
-            preferred_gcc_version = v"9", julia_compat = "1.6")
-
-        json = String(read(jsonfile))
-        buff = IOBuffer(strip(json))
-        objs = []
-        while !eof(buff)
-            push!(objs, BinaryBuilder.JSON.parse(buff))
-        end
-        json_obj = objs[1]
-
-        BinaryBuilder.cleanup_merged_object!(json_obj)
-        json_obj["dependencies"] = BinaryBuilder.AbstractDependency[dep for dep in json_obj["dependencies"] if !isa(dep, BuildDependency)]
-
-        tag = "$(name)-v$(build_version)"
-        upload_prefix = "https://github.com/$(repo)/releases/download/$(tag)"
-
-        download_dir = "products"
-        BinaryBuilder.rebuild_jll_package(json_obj; download_dir, upload_prefix, build_version)
-        BinaryBuilder.push_jll_package(name, build_version; deploy_repo = repo)
-        BinaryBuilder.upload_to_github_releases(repo, tag, download_dir; verbose = true)
-    end
-
-    Pkg.develop("jlqml_jll")
-    import jlqml_jll
-    using LocalRegistry
-    register(jlqml_jll, registry = testreg)
-end
+    preferred_gcc_version = v"10", julia_compat = "1.6")
