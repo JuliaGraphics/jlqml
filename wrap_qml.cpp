@@ -410,7 +410,7 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
     .apply<QHash<int, QByteArray>>(qmlwrap::WrapQtAssociativeContainer<qmlwrap::QHashIteratorWrapper>());
   
   qml_module.add_type<QQmlPropertyMap>("QQmlPropertyMap", julia_base_type<QObject>())
-    .constructor<QObject *>(false)
+    .constructor<QObject *>(jlcxx::finalize_policy::no)
     .method("clear", &QQmlPropertyMap::clear)
     .method("contains", &QQmlPropertyMap::contains)
     .method("insert", static_cast<void(QQmlPropertyMap::*)(const QString&, const QVariant&)>(&QQmlPropertyMap::insert))
