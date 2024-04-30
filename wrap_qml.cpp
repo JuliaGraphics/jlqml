@@ -1,3 +1,4 @@
+#include <QFileSystemWatcher>
 #include <QGuiApplication>
 #include <QLibraryInfo>
 #include <QPainter>
@@ -40,6 +41,9 @@ template<> struct SuperType<QTimer> { using type = QObject; };
 template<> struct SuperType<qmlwrap::JuliaPaintedItem> { using type = QQuickItem; };
 template<> struct SuperType<QAbstractItemModel> { using type = QObject; };
 template<> struct SuperType<QAbstractTableModel> { using type = QAbstractItemModel; };
+template<> struct SuperType<QQuickItem> { using type = QObject; };
+template<> struct SuperType<QWindow> { using type = QObject; };
+template<> struct SuperType<QQuickWindow> { using type = QWindow; };
 template<> struct SuperType<qmlwrap::JuliaItemModel> { using type = QAbstractTableModel; };
 
 }
@@ -321,7 +325,8 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
   qml_module.set_const("Metal", QSGRendererInterface::Metal);
   qml_module.set_const("Null", QSGRendererInterface::Null);
 
-  qml_module.add_type<QObject>("QObject");
+  qml_module.add_type<QObject>("QObject")
+    .method("deleteLater", &QObject::deleteLater);
   qml_module.method("connect_destroyed_signal", [] (QObject& obj, jl_function_t* jl_f)
   {
     QObject::connect(&obj, &QObject::destroyed, [jl_f](QObject* o)
@@ -395,7 +400,7 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
   qml_module.add_type<QByteArrayView>("QByteArrayView");
 
   qml_module.add_type<Parametric<TypeVar<1>>>("QList", julia_type("AbstractVector"))
-    .apply<QVariantList, QList<QString>, QList<QUrl>, QList<QByteArray>, QList<int>>(qmlwrap::WrapQList());
+    .apply<QVariantList, QList<QString>, QList<QUrl>, QList<QByteArray>, QList<int>, QList<QObject*>>(qmlwrap::WrapQList());
 
   // QMap (= QVariantMap for the given type)
   qml_module.add_type<Parametric<TypeVar<1>,TypeVar<2>>>("QMapIterator")
@@ -450,6 +455,8 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
     .method("context_object", &QQmlContext::contextObject);
 
   qml_module.add_type<QQmlEngine>("QQmlEngine", julia_base_type<QObject>())
+    .method("clearComponentCache", &QQmlEngine::clearComponentCache)
+    .method("clearSingletons", &QQmlEngine::clearSingletons)
     .method("root_context", &QQmlEngine::rootContext)
     .method("quit", &QQmlEngine::quit);
 
@@ -457,6 +464,7 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
 
   qml_module.add_type<QQmlApplicationEngine>("QQmlApplicationEngine", julia_base_type<QQmlEngine>())
     .constructor<QString>() // Construct with path to QML
+    .method("rootObjects", &QQmlApplicationEngine::rootObjects)
     .method("load_into_engine", [] (QQmlApplicationEngine* e, const QString& qmlpath)
     {
       bool success = false;
@@ -472,9 +480,11 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
 
   qml_module.method("qt_prefix_path", []() { return QLibraryInfo::location(QLibraryInfo::PrefixPath); });
 
-  auto qquickitem_type = qml_module.add_type<QQuickItem>("QQuickItem");
+  auto qquickitem_type = qml_module.add_type<QQuickItem>("QQuickItem", julia_base_type<QObject>());
 
-  qml_module.add_type<QQuickWindow>("QQuickWindow")
+  qml_module.add_type<QWindow>("QWindow", julia_base_type<QObject>())
+    .method("destroy", &QWindow::destroy);
+  qml_module.add_type<QQuickWindow>("QQuickWindow", julia_base_type<QWindow>())
     .method("content_item", &QQuickWindow::contentItem);
 
   qquickitem_type.method("window", &QQuickItem::window);
@@ -630,5 +640,17 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
     static QVariant var;
     var.setValue(val);
     return var;
+  });
+
+  qml_module.add_type<QFileSystemWatcher>("QFileSystemWatcher")
+    .constructor<QObject*>(jlcxx::finalize_policy::no)
+    .method("addPath", &QFileSystemWatcher::addPath);
+  qml_module.method("connect_file_changed_signal", [] (QFileSystemWatcher& watcher, jl_function_t* jl_f)
+  {
+    QObject::connect(&watcher, &QFileSystemWatcher::fileChanged, [jl_f](const QString& path)
+    {
+      static JuliaFunction f(jl_f);
+      f(path);
+    });
   });
 }
