@@ -2,7 +2,7 @@ project(JlQML)
 
 cmake_minimum_required(VERSION 3.16.0)
 
-set(JlQML_VERSION 0.6.0)
+set(JlQML_VERSION 0.6.1)
 message(STATUS "Project version: v${JlQML_VERSION}")
 
 set(CMAKE_MACOSX_RPATH 1)

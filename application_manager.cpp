@@ -100,6 +100,8 @@ void ApplicationManager::exec()
   {
     qWarning() << "Application exited with status " << status;
   }
+  QGuiApplication::sendPostedEvents();
+  QGuiApplication::processEvents(QEventLoop::AllEvents);
   cleanup();
 }
 
@@ -120,9 +122,6 @@ ApplicationManager::ApplicationManager()
 
 void ApplicationManager::cleanup()
 {
-  // Process any events that are left, avoiding e.g. an immediate exec on a potential next call to exit
-  QGuiApplication::sendPostedEvents();
-  QGuiApplication::processEvents(QEventLoop::AllEvents);
   if(m_engine != nullptr)
   {
     delete m_engine;
