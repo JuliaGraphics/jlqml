@@ -5,6 +5,7 @@
 
 #include <QOpenGLContext>
 #include <QQuickWindow>
+#include <julia.h>
 
 namespace qmlwrap
 {
@@ -32,13 +33,17 @@ private:
 
 jl_module_t* get_makie_support_module()
 {
-  jl_value_t* mod = jl_get_global(MakieViewport::m_qml_mod, jl_symbol("MakieSupport"));
-  if(mod == nullptr || !jl_is_module(mod))
+  // MakieViewport::m_qml_mod is set when initializing the Julia module `QtMakie`,
+  // corresponding to `JLCXX_MODULE define_julia_module_makie` in `wrap_qml.cpp`.
+  jl_module_t* mod = MakieViewport::m_qml_mod;
+
+  // If `mod` is not initialized, you have not loaded the Julia module.
+  if(mod == nullptr)
   {
-    throw std::runtime_error("Makie is not loaded, did you forget \"Using Makie\" in your Julia file?");
+    throw std::runtime_error("Makie Support not initialized. Have you loaded QtMakie?");
   }
-  
-  return (jl_module_t*)mod;
+
+  return mod;
 }
 
 /// Takes care of loading the MakieSupport Julia module

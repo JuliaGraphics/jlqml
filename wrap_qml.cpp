@@ -247,7 +247,7 @@ struct WrapQtIterator
     using WrappedT = typename TypeWrapperT::type;
     using KeyT = typename WrappedT::key_type;
     using ValueT = typename WrappedT::value_type;
-    
+
     wrapped.method("iteratornext", [] (WrappedT it) -> WrappedT { ++(it.value); return it; });
     wrapped.method("iteratorkey", [] (WrappedT it) -> KeyT { validate_iterator(it); return it.value.key();} );
     wrapped.method("iteratorvalue", [] (WrappedT it) -> ValueT& { validate_iterator(it); return it.value.value(); } );
@@ -282,6 +282,12 @@ struct WrapQtAssociativeContainer
 
 }
 
+JLCXX_MODULE define_julia_module_makie(jlcxx::Module& qml_module)
+{
+    using namespace jlcxx;
+    qmlwrap::MakieViewport::m_qml_mod = qml_module.julia_module();
+}
+
 JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
 {
   using namespace jlcxx;
@@ -290,8 +296,7 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
   qmlwrap::JuliaFunction::m_qml_mod = qml_module.julia_module();
   qmlwrap::ApplicationManager::m_qml_mod = qml_module.julia_module();
   qmlwrap::JuliaItemModel::m_qml_mod = qml_module.julia_module();
-  qmlwrap::MakieViewport::m_qml_mod = qml_module.julia_module();
-  
+
   // Enums
   qml_module.add_bits<Qt::Orientation>("Orientation", jlcxx::julia_type("CppEnum"));
   qml_module.set_const("Horizontal", Qt::Horizontal);
@@ -390,7 +395,7 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
     .constructor<QString>()
     .method("toString", [] (const QUrl& url) { return url.toString(); });
   qml_module.method("QUrlFromLocalFile", QUrl::fromLocalFile);
-  
+
   auto qvar_type = qml_module.add_type<QVariant>("QVariant");
   qvar_type.method("toString", &QVariant::toString);
 
@@ -413,7 +418,7 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
     .apply<qmlwrap::QHashIteratorWrapper<int, QByteArray>>(qmlwrap::WrapQtIterator());
   qml_module.add_type<Parametric<TypeVar<1>,TypeVar<2>>>("QHash", julia_type("AbstractDict"))
     .apply<QHash<int, QByteArray>>(qmlwrap::WrapQtAssociativeContainer<qmlwrap::QHashIteratorWrapper>());
-  
+
   qml_module.add_type<QQmlPropertyMap>("QQmlPropertyMap", julia_base_type<QObject>())
     .constructor<QObject *>(jlcxx::finalize_policy::no)
     .method("clear", &QQmlPropertyMap::clear)
@@ -439,7 +444,7 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
   jlcxx::stl::apply_stl<QVariant>(qml_module);
 
   qml_module.method("make_qvariant_map", [] ()
-  { 
+  {
     QVariantMap m;
     m[QString("test")] = QVariant::fromValue(5);
     return QVariant::fromValue(m);
