@@ -1,0 +1,4 @@
+build/
+.cache/
+# Might want to commit this, but for now im just using it locally for a workaround on Linux.
+.clangd
