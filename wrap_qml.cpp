@@ -84,7 +84,7 @@ jl_datatype_t* julia_type_from_qt_id(int id)
 {
     if(qmlwrap::g_variant_type_map.count(id) == 0)
     {
-      qWarning() << "invalid variant type " << QMetaType::typeName(id);
+      qWarning() << "invalid variant type " << QMetaType(id).name();
     }
     assert(qmlwrap::g_variant_type_map.count(id) == 1);
     return qmlwrap::g_variant_type_map[id];
@@ -270,13 +270,13 @@ struct WrapQtAssociativeContainer
     wrapped.method("cppsetindex!", [] (WrappedT& hash, const ValueT& v, const KeyT& k) { hash[k] = v; });
     wrapped.method("insert", [] (WrappedT& hash, const KeyT& k, const ValueT& v) { hash.insert(k,v); });
     wrapped.method("clear", &WrappedT::clear);
-    wrapped.method("remove", &WrappedT::remove);
+    wrapped.method("remove", [] (WrappedT& hash, const KeyT& k) -> bool { return hash.remove(k); });
     wrapped.method("empty", &WrappedT::empty);
     wrapped.method("iteratorbegin", [] (WrappedT& hash) { return IteratorWrapperT<KeyT,ValueT>{hash.begin()}; });
     wrapped.method("iteratorend", [] (WrappedT& hash) { return IteratorWrapperT<KeyT,ValueT>{hash.end()}; });
     wrapped.method("keys", [] (const WrappedT& hash) { return hash.keys(); });
     wrapped.method("values", &WrappedT::values);
-    wrapped.method("contains", &WrappedT::contains);
+    wrapped.method("contains", [] (WrappedT& hash, const KeyT& k) -> bool { return hash.contains(k); });
   }
 };
 
@@ -441,7 +441,6 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
 
   jlcxx::for_each_parameter_type<qmlwrap::qvariant_types>(qmlwrap::WrapQVariant(qvar_type));
   qml_module.method("type", qmlwrap::julia_variant_type);
-  jlcxx::stl::apply_stl<QVariant>(qml_module);
 
   qml_module.method("make_qvariant_map", [] ()
   {
@@ -483,7 +482,7 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
       return success;
     });
 
-  qml_module.method("qt_prefix_path", []() { return QLibraryInfo::location(QLibraryInfo::PrefixPath); });
+  qml_module.method("qt_prefix_path", []() { return QLibraryInfo::path(QLibraryInfo::PrefixPath); });
 
   auto qquickitem_type = qml_module.add_type<QQuickItem>("QQuickItem", julia_base_type<QObject>());
 

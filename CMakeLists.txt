@@ -1,8 +1,8 @@
-project(JlQML)
-
 cmake_minimum_required(VERSION 3.16.0)
 
-set(JlQML_VERSION 0.6.1)
+project(JlQML)
+
+set(JlQML_VERSION 0.7.0)
 message(STATUS "Project version: v${JlQML_VERSION}")
 
 set(CMAKE_MACOSX_RPATH 1)
@@ -25,6 +25,8 @@ endif()
 find_package(Qt6 COMPONENTS Core Gui OpenGL Qml Quick Svg REQUIRED)
 find_package(JlCxx)
 
+qt_policy(SET QTP0001 NEW)
+
 get_target_property(QtCore_location Qt6::Core LOCATION)
 get_filename_component(QtCore_location ${QtCore_location} DIRECTORY)
 get_target_property(JlCxx_location JlCxx::cxxwrap_julia LOCATION)
@@ -43,7 +45,7 @@ endif()
 add_compile_definitions(QT_DISABLE_DEPRECATED_BEFORE=0x050F00)
 
 qt6_add_qml_module(jlqml
-  URI org.julialang
+  URI jlqml
   VERSION 1.0
   NO_GENERATE_PLUGIN_SOURCE
   SOURCES
