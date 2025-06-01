@@ -14,7 +14,7 @@ class MakieViewport : public OpenGLViewport
 public:
   MakieViewport(QQuickItem* parent = 0);
   virtual ~MakieViewport();
-  static jl_module_t* m_qml_mod;
+  static jl_module_t* m_qmlmakie_mod;
 
 private:
   // Screen created and used on the Julia side

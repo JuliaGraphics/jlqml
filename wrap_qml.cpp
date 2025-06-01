@@ -282,12 +282,6 @@ struct WrapQtAssociativeContainer
 
 }
 
-JLCXX_MODULE define_julia_module_makie(jlcxx::Module& qml_module)
-{
-    using namespace jlcxx;
-    qmlwrap::MakieViewport::m_qml_mod = qml_module.julia_module();
-}
-
 JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
 {
   using namespace jlcxx;
@@ -296,6 +290,11 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
   qmlwrap::JuliaFunction::m_qml_mod = qml_module.julia_module();
   qmlwrap::ApplicationManager::m_qml_mod = qml_module.julia_module();
   qmlwrap::JuliaItemModel::m_qml_mod = qml_module.julia_module();
+
+  qml_module.method("define_julia_module_makie", [](jl_value_t* mod)
+  {
+    qmlwrap::MakieViewport::m_qmlmakie_mod = reinterpret_cast<jl_module_t*>(mod);
+  });
 
   // Enums
   qml_module.add_bits<Qt::Orientation>("Orientation", jlcxx::julia_type("CppEnum"));

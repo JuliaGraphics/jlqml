@@ -33,14 +33,14 @@ private:
 
 jl_module_t* get_makie_support_module()
 {
-  // MakieViewport::m_qml_mod is set when initializing the Julia module `QtMakie`,
-  // corresponding to `JLCXX_MODULE define_julia_module_makie` in `wrap_qml.cpp`.
-  jl_module_t* mod = MakieViewport::m_qml_mod;
+  // MakieViewport::m_qmlmakie_mod is set when initializing the Julia module `QMLMakie`,
+  // by calling `define_julia_module_makie` in `wrap_qml.cpp`.
+  jl_module_t* mod = MakieViewport::m_qmlmakie_mod;
 
   // If `mod` is not initialized, you have not loaded the Julia module.
   if(mod == nullptr)
   {
-    throw std::runtime_error("Makie Support not initialized. Have you loaded QtMakie?");
+    throw std::runtime_error("Makie Support not initialized. Have you loaded QMLMakie?");
   }
 
   return mod;
@@ -75,6 +75,7 @@ public:
 
 MakieViewport::MakieViewport(QQuickItem *parent) : OpenGLViewport(parent, new MakieRenderFunction(m_screen))
 {
+  get_makie_support_module(); // Throw the possible error early
   QObject::connect(this, &QQuickItem::windowChanged, [this] (QQuickWindow* w)
   {
     if (w == nullptr)
@@ -111,6 +112,6 @@ void MakieViewport::setup_buffer(QOpenGLFramebufferObject* fbo)
   }
 }
 
-jl_module_t* MakieViewport::m_qml_mod = nullptr;
+jl_module_t* MakieViewport::m_qmlmakie_mod = nullptr;
 
 } // namespace qmlwrap
