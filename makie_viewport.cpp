@@ -13,8 +13,12 @@ namespace qmlwrap
 class MakieRenderFunction : public RenderFunction
 {
 public:
-  MakieRenderFunction(jl_value_t* const & screen_ptr) : m_screen_ptr(screen_ptr)
+  MakieRenderFunction(jl_value_t* const & screen_ptr, jl_value_t*& scene) : m_screen_ptr(screen_ptr), m_scene(scene)
   {
+    if(MakieViewport::m_default_render_function.fptr != nullptr)
+    {
+      m_scene_render_function = jlcxx::make_function_pointer<void(jl_value_t*, jl_value_t*)>(MakieViewport::m_default_render_function);
+    }
   }
 
   void setRenderFunction(jlcxx::SafeCFunction f) override
@@ -23,12 +27,22 @@ public:
   }
   void render() override
   {
-    m_render_function(m_screen_ptr);
+    if(m_scene != nullptr)
+    {
+      m_scene_render_function(m_screen_ptr, m_scene);
+    }
+    else if(m_render_function != nullptr)
+    {
+      m_render_function(m_screen_ptr);
+    }
   }
 private:
   typedef void (*render_callback_t)(jl_value_t*);
-  render_callback_t m_render_function;
+  render_callback_t m_render_function = nullptr;
+  typedef void (*scene_render_callback_t)(jl_value_t*, jl_value_t*); // Default render function takes an extra scene argument
+  scene_render_callback_t m_scene_render_function;
   jl_value_t* const & m_screen_ptr;
+  jl_value_t*& m_scene;
 };
 
 jl_module_t* get_makie_support_module()
@@ -73,7 +87,7 @@ public:
   jlcxx::JuliaFunction on_context_destroy;
 };
 
-MakieViewport::MakieViewport(QQuickItem *parent) : OpenGLViewport(parent, new MakieRenderFunction(m_screen))
+MakieViewport::MakieViewport(QQuickItem *parent) : OpenGLViewport(parent, new MakieRenderFunction(m_screen, m_scene))
 {
   get_makie_support_module(); // Throw the possible error early
   QObject::connect(this, &QQuickItem::windowChanged, [this] (QQuickWindow* w)
@@ -96,13 +110,33 @@ MakieViewport::~MakieViewport()
   {
     jlcxx::unprotect_from_gc(m_screen);
   }
+  if(m_scene != nullptr)
+  {
+    jlcxx::unprotect_from_gc(m_scene);
+  }
+}
+
+qvariant_any_t MakieViewport::scene()
+{
+  return std::make_shared<QVariantAny>(m_scene);
+}
+
+void MakieViewport::setScene(qvariant_any_t scene)
+{
+  jl_value_t* scene_val = scene->value;
+  jlcxx::protect_from_gc(scene_val);
+  if(m_scene != nullptr)
+  {
+    jlcxx::unprotect_from_gc(m_scene);
+  }
+  m_scene = scene_val;
 }
 
 void MakieViewport::setup_buffer(QOpenGLFramebufferObject* fbo)
 {
   if(m_screen == nullptr)
   {
-    m_screen = MakieSupport::instance().setup_screen(std::forward<QOpenGLFramebufferObject*>(fbo));
+    m_screen = MakieSupport::instance().setup_screen(std::forward<QOpenGLFramebufferObject*>(fbo), window());
     jlcxx::protect_from_gc(m_screen);
   }
   else
@@ -113,5 +147,6 @@ void MakieViewport::setup_buffer(QOpenGLFramebufferObject* fbo)
 }
 
 jl_module_t* MakieViewport::m_qmlmakie_mod = nullptr;
+jlcxx::SafeCFunction MakieViewport::m_default_render_function = {nullptr, nullptr, nullptr};
 
 } // namespace qmlwrap

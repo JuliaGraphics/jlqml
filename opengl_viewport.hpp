@@ -8,7 +8,7 @@
 #include <QOpenGLFramebufferObject>
 #include <QQuickFramebufferObject>
 
-// #include "jlqml.hpp"
+#include "jlqml.hpp"
 
 namespace qmlwrap
 {

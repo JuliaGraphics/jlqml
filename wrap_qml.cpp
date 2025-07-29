@@ -51,29 +51,15 @@ template<> struct SuperType<qmlwrap::JuliaItemModel> { using type = QAbstractTab
 namespace qmlwrap
 {
 
-// Helper to store a Julia value of type Any in a GC-safe way
-struct QVariantAny
+QVariantAny::QVariantAny(jl_value_t* v) : value(v)
 {
-  QVariantAny(jl_value_t* v) : value(v)
-  {
-    assert(v != nullptr);
-    jlcxx::protect_from_gc(value);
-  }
-  ~QVariantAny()
-  {
-    jlcxx::unprotect_from_gc(value);
-  }
-  jl_value_t* value;
-};
-
-using qvariant_any_t = std::shared_ptr<QVariantAny>;
-
+  assert(v != nullptr);
+  jlcxx::protect_from_gc(value);
 }
-
-Q_DECLARE_METATYPE(qmlwrap::qvariant_any_t)
-
-namespace qmlwrap
+QVariantAny::~QVariantAny()
 {
+  jlcxx::unprotect_from_gc(value);
+}
 
 using qvariant_types = jlcxx::ParameterList<bool, float, double, int32_t, int64_t, uint32_t, uint64_t, void*, jl_value_t*,
   QString, QUrl, jlcxx::SafeCFunction, QVariantMap, QVariantList, QStringList, QList<QUrl>, JuliaDisplay*, JuliaCanvas*, JuliaPropertyMap*, QObject*>;
@@ -294,6 +280,11 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
   qml_module.method("define_julia_module_makie", [](jl_value_t* mod)
   {
     qmlwrap::MakieViewport::m_qmlmakie_mod = reinterpret_cast<jl_module_t*>(mod);
+  });
+
+  qml_module.method("set_default_makie_renderfunction", [](jlcxx::SafeCFunction renderFunction)
+  {
+    qmlwrap::MakieViewport::m_default_render_function = renderFunction;
   });
 
   // Enums
