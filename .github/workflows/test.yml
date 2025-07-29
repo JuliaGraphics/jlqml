@@ -15,15 +15,21 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - '1.8'
-          - '1.9'
+          - '1.10'
+          - '1'
           - 'nightly'
         os:
           - ubuntu-latest
-          - macOS-latest
+          - macos-latest
           - windows-latest
-        arch:
-          - x64
+        arch: [x64, arm64]
+        exclude:
+          - os: ubuntu-latest
+            arch: arm64
+          - os: windows-latest
+            arch: arm64
+          - os: macos-latest
+            arch: x64
     steps:
       - uses: actions/checkout@v3
         with:
@@ -34,18 +40,13 @@ jobs:
           repository: JuliaInterop/libcxxwrap-julia
           path: libcxxwrap
       - name: Install Qt
-        uses: jurplel/install-qt-action@v3
-        with:
-          version: '6.4.2'
+        uses: jurplel/install-qt-action@v4
       - uses: julia-actions/setup-julia@latest
         with:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
       - name: Build libcxxwrap-julia
         run: |
-          if [[ "$OSTYPE" != "darwin"* ]]; then
-            rm -f /opt/hostedtoolcache/julia/1.6*/x64/lib/julia/libstdc++.so.6
-          fi
           mkdir build-libcxxwrap && cd build-libcxxwrap
           cmake -DCMAKE_INSTALL_PREFIX=$HOME/install -DJLCXX_BUILD_EXAMPLES=OFF -DCMAKE_BUILD_TYPE=Debug ../libcxxwrap
           VERBOSE=ON cmake --build . --config Debug --target install
