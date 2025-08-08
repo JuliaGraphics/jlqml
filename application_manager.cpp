@@ -105,6 +105,11 @@ void ApplicationManager::exec()
   cleanup();
 }
 
+void ApplicationManager::add_import_path(std::string path)
+{
+  m_import_paths.push_back(path);
+}
+
 ApplicationManager::ApplicationManager()
 {
   qputenv("QSG_RENDER_LOOP", QProcessEnvironment::systemEnvironment().value("QSG_RENDER_LOOP").toLocal8Bit());
@@ -144,6 +149,11 @@ void ApplicationManager::set_engine(QQmlEngine* e)
 {
   m_engine = e;
   m_root_ctx = e->rootContext();
+
+  for(const std::string& path : m_import_paths)
+  {
+    e->addImportPath(QString::fromStdString(path));
+  }
 }
 
 void ApplicationManager::process_events()
