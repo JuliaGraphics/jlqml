@@ -42,6 +42,8 @@ public:
   // Blocking call to exec, running the Qt event loop
   void exec();
 
+  void add_import_path(std::string path);
+
   static void process_events();
 
   static jl_module_t* m_qml_mod;
@@ -56,6 +58,7 @@ private:
 
   QQmlEngine* m_engine = nullptr;
   QQmlContext* m_root_ctx = nullptr;
+  std::vector<std::string> m_import_paths;
 };
 
 }
