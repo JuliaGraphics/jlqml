@@ -90,18 +90,6 @@ public:
 MakieViewport::MakieViewport(QQuickItem *parent) : OpenGLViewport(parent, new MakieRenderFunction(m_screen, m_scene))
 {
   get_makie_support_module(); // Throw the possible error early
-  QObject::connect(this, &QQuickItem::windowChanged, [this] (QQuickWindow* w)
-  {
-    if (w == nullptr)
-    {
-      return;
-    }
-
-    connect(w, &QQuickWindow::sceneGraphInvalidated, [this] ()
-    {
-      MakieSupport::instance().on_context_destroy();
-    });
-  });
 }
 
 MakieViewport::~MakieViewport()
@@ -118,6 +106,10 @@ MakieViewport::~MakieViewport()
 
 qvariant_any_t MakieViewport::scene()
 {
+  if(m_scene == nullptr)
+  {
+    return std::make_shared<QVariantAny>(jl_nothing);
+  }
   return std::make_shared<QVariantAny>(m_scene);
 }
 
@@ -138,6 +130,11 @@ void MakieViewport::setup_buffer(QOpenGLFramebufferObject* fbo)
   {
     m_screen = MakieSupport::instance().setup_screen(std::forward<QOpenGLFramebufferObject*>(fbo), window());
     jlcxx::protect_from_gc(m_screen);
+    
+    connect(window(), &QQuickWindow::sceneGraphInvalidated, [this] ()
+    {
+      MakieSupport::instance().on_context_destroy(m_screen);
+    });
   }
   else
   {
