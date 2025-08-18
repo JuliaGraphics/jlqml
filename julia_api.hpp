@@ -29,7 +29,7 @@ public:
 
   void set_js_engine(QJSEngine* e);
 
-  void register_function(const QString& name, jl_function_t* f);
+  void register_function(const QString& name, jl_value_t* f);
 
   ~JuliaAPI();
 

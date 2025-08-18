@@ -18,7 +18,7 @@ class JuliaFunction : public QObject
 public:
   static jl_module_t* m_qml_mod;
 
-  JuliaFunction(const QString& name, jl_function_t* f, QObject* parent);
+  JuliaFunction(const QString& name, jl_value_t* f, QObject* parent);
 
   // Call a Julia function that takes any number of arguments as a list
   Q_INVOKABLE QVariant call(const QVariantList& arg);
@@ -29,7 +29,7 @@ public:
 
 private:
   QString m_name;
-  jl_function_t* m_f;
+  jl_value_t* m_f;
 };
 
 } // namespace qmlwrap
