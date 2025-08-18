@@ -529,7 +529,7 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
 
   qml_module.add_type<QObject>("QObject")
     .method("deleteLater", &QObject::deleteLater);
-  qml_module.method("connect_destroyed_signal", [] (QObject& obj, jl_function_t* jl_f)
+  qml_module.method("connect_destroyed_signal", [] (QObject& obj, jl_value_t* jl_f)
   {
     QObject::connect(&obj, &QObject::destroyed, [jl_f](QObject* o)
     {
@@ -623,7 +623,7 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
     .method("insert", static_cast<void(QQmlPropertyMap::*)(const QString&, const QVariant&)>(&QQmlPropertyMap::insert))
     .method("size", &QQmlPropertyMap::size)
     .method("value", &QQmlPropertyMap::value)
-    .method("connect_value_changed", [] (QQmlPropertyMap& propmap, jl_value_t* julia_property_map, jl_function_t* callback)
+    .method("connect_value_changed", [] (QQmlPropertyMap& propmap, jl_value_t* julia_property_map, jl_value_t* callback)
     {
       auto conn = QObject::connect(&propmap, &QQmlPropertyMap::valueChanged, [=](const QString& key, const QVariant& newvalue)
       {
@@ -758,7 +758,7 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
   });
 
   // Function to register a function
-  qml_module.method("qmlfunction", [](const QString &name, jl_function_t *f) {
+  qml_module.method("qmlfunction", [](const QString &name, jl_value_t *f) {
     qmlwrap::ApplicationManager::instance().julia_api()->register_function(name, f);
   });
 
@@ -847,7 +847,7 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
   qml_module.add_type<QFileSystemWatcher>("QFileSystemWatcher")
     .constructor<QObject*>(jlcxx::finalize_policy::no)
     .method("addPath", &QFileSystemWatcher::addPath);
-  qml_module.method("connect_file_changed_signal", [] (QFileSystemWatcher& watcher, jl_function_t* jl_f)
+  qml_module.method("connect_file_changed_signal", [] (QFileSystemWatcher& watcher, jl_value_t* jl_f)
   {
     QObject::connect(&watcher, &QFileSystemWatcher::fileChanged, [jl_f](const QString& path)
     {

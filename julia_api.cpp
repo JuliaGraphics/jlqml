@@ -29,7 +29,7 @@ void JuliaAPI::set_js_engine(QJSEngine* e)
   }
 }
 
-void JuliaAPI::register_function(const QString& name, jl_function_t* f)
+void JuliaAPI::register_function(const QString& name, jl_value_t* f)
 {
   JuliaFunction* jf = new JuliaFunction(name, f, this);
   if(m_engine == nullptr)

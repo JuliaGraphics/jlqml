@@ -8,7 +8,7 @@ namespace qmlwrap
 
 jl_module_t* JuliaFunction::m_qml_mod = nullptr;
 
-JuliaFunction::JuliaFunction(const QString& name, jl_function_t* f, QObject* parent) : QObject(parent), m_name(name), m_f(f)
+JuliaFunction::JuliaFunction(const QString& name, jl_value_t* f, QObject* parent) : QObject(parent), m_name(name), m_f(f)
 {
   jlcxx::protect_from_gc(m_f);
 }
