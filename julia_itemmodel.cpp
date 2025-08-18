@@ -60,7 +60,7 @@ QVariant JuliaItemModel::data(const QModelIndex& index, int role) const
 QVariant JuliaItemModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
   static const jlcxx::JuliaFunction headerdata_f(jl_get_function(m_qml_mod, "headerdata"));
-  return safe_unbox<QVariant&>(headerdata_f(m_data, section+1, orientation, role));
+  return safe_unbox<QVariant&>(headerdata_f(m_data, section+1, static_cast<Qt::Orientation>(orientation), static_cast<int>(role)));
 }
 
 bool JuliaItemModel::setData(const QModelIndex& index, const QVariant& value, int role)
@@ -72,7 +72,7 @@ bool JuliaItemModel::setData(const QModelIndex& index, const QVariant& value, in
 bool JuliaItemModel::setHeaderData(int section, Qt::Orientation orientation, const QVariant& value, int role)
 {
   static const jlcxx::JuliaFunction setheaderdata_f(jl_get_function(m_qml_mod, "setheaderdata!"));
-  return safe_unbox<bool>(setheaderdata_f(this, section+1, orientation, value, role));
+  return safe_unbox<bool>(setheaderdata_f(this, section+1, static_cast<Qt::Orientation>(orientation), value, static_cast<int>(role)));
 }
 
 Qt::ItemFlags JuliaItemModel::flags(const QModelIndex& index) const
@@ -110,13 +110,13 @@ void JuliaItemModel::insertRow(int rowIndex, const QVariant& row)
 void JuliaItemModel::moveRow(int fromRowIndex, int toRowIndex, int rows)
 {
   static const jlcxx::JuliaFunction move_row_f(jl_get_function(m_qml_mod, "move_rows!"));
-  move_row_f(this, fromRowIndex+1, toRowIndex+1, rows);
+  move_row_f(this, fromRowIndex+1, toRowIndex+1, static_cast<int>(rows));
 }
 
 void JuliaItemModel::removeRow(int rowIndex, int rows)
 {
   static const jlcxx::JuliaFunction remove_row_f(jl_get_function(m_qml_mod, "remove_rows!"));
-  remove_row_f(this, rowIndex+1, rows);
+  remove_row_f(this, rowIndex+1, static_cast<int>(rows));
 }
 
 void JuliaItemModel::setRow(int rowIndex, const QVariant& row)
@@ -140,13 +140,13 @@ void JuliaItemModel::insertColumn(int columnIndex, const QVariant& column)
 void JuliaItemModel::moveColumn(int fromColumnIndex, int toColumnIndex, int columns)
 {
   static const jlcxx::JuliaFunction move_column_f(jl_get_function(m_qml_mod, "move_columns!"));
-  move_column_f(this, fromColumnIndex+1, toColumnIndex+1, columns);
+  move_column_f(this, fromColumnIndex+1, toColumnIndex+1, static_cast<int>(columns));
 }
 
 void JuliaItemModel::removeColumn(int columnIndex, int columns)
 {
   static const jlcxx::JuliaFunction remove_column_f(jl_get_function(m_qml_mod, "remove_columns!"));
-  remove_column_f(this, columnIndex+1, columns);
+  remove_column_f(this, columnIndex+1, static_cast<int>(columns));
 }
 
 void JuliaItemModel::setColumn(int columnIndex, const QVariant& column)
