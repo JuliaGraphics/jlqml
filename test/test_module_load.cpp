@@ -26,7 +26,11 @@ int main()
     throw std::runtime_error("Error opening jlqml lib " + libpath);
   }
   void* regfunc = nullptr;
+  #if (JULIA_VERSION_MAJOR * 100 + JULIA_VERSION_MINOR) >= 114
+  if(!jl_dlsym(lib, "define_julia_module", &regfunc, false, false))
+  #else
   if(!jl_dlsym(lib, "define_julia_module", &regfunc, false))
+  #endif
   {
     throw std::runtime_error("Error finding entrypoint define_julia_module");
   };

@@ -36,6 +36,29 @@ void ForeignThreadManager::clear(QThread* main_thread)
   m_mutex.unlock();
 }
 
+// This was defined after Julia 1.10
+#ifndef JL_GC_STATE_UNSAFE
+  #define JL_GC_STATE_UNSAFE 0
+#endif
+
+void _gc_safe_enter(int& state)
+{
+  jl_ptls_t ptls = jl_current_task->ptls;
+  state = jl_gc_safe_enter(ptls);
+  #if (JULIA_VERSION_MAJOR * 100 + JULIA_VERSION_MINOR) > 110
+  ptls->engine_nqueued++;
+  #endif
+}
+
+void _gc_safe_leave(int state)
+{
+  jl_ptls_t ptls = jl_current_task->ptls;
+  jl_gc_safe_leave(ptls, state);
+  #if (JULIA_VERSION_MAJOR * 100 + JULIA_VERSION_MINOR) > 110
+  ptls->engine_nqueued--;
+  #endif
+}
+
 void ForeignThreadManager::add_window(QQuickItem* item)
 {
   QObject::connect(item, &QQuickItem::windowChanged, [item, m_main_gc_state = JL_GC_STATE_UNSAFE, m_render_gc_state = JL_GC_STATE_UNSAFE] (QQuickWindow* w) mutable
@@ -53,32 +76,24 @@ void ForeignThreadManager::add_window(QQuickItem* item)
     {
       // afterAnimating is the last signal sent before locking the main loop, so indicate
       // that the main loop is in a safe state for the Julia GC to run
-      jl_ptls_t ptls = jl_current_task->ptls;
-      m_main_gc_state = jl_gc_safe_enter(ptls);
-      ptls->engine_nqueued++;
+      _gc_safe_enter(m_main_gc_state);
     });
     item->connect(w, &QQuickWindow::beforeRendering, w, [&m_main_gc_state] ()
     {
       // beforeRendering is the first signal sent after unlocking the main thread, so restore
       // the Julia GC state here. Queued connection so this is executed on the main thread
-      jl_ptls_t ptls = jl_current_task->ptls;
-      jl_gc_safe_leave(ptls, m_main_gc_state);
-      ptls->engine_nqueued--;
+      _gc_safe_leave(m_main_gc_state);
     }, Qt::QueuedConnection);
     item->connect(w, &QQuickWindow::afterFrameEnd, w, [&m_render_gc_state] ()
     {
       // After the rendering is done, the render thread may block for event handling, so we mark it as in a GC safe state
       // to prevent deadlock
-      jl_ptls_t ptls = jl_current_task->ptls;
-      m_render_gc_state = jl_gc_safe_enter(ptls);
-      ptls->engine_nqueued++;
+      _gc_safe_enter(m_render_gc_state);
     }, Qt::DirectConnection);
     item->connect(w, &QQuickWindow::beforeFrameBegin, w, [&m_render_gc_state] ()
     {
       // Reset GC state when the render thread might execute Julia code again
-      jl_ptls_t ptls = jl_current_task->ptls;
-      jl_gc_safe_leave(ptls, m_render_gc_state);
-      ptls->engine_nqueued--;
+      _gc_safe_leave(m_render_gc_state);
     }, Qt::DirectConnection);
   });
 }
