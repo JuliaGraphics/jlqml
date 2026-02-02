@@ -18,7 +18,7 @@ class JuliaCanvas : public QQuickPaintedItem
   Q_PROPERTY(jlcxx::SafeCFunction paintFunction READ paintFunction WRITE setPaintFunction)
 
 public:
-  typedef void (*callback_t)(jlcxx::ArrayRef<unsigned int>, int, int);
+  typedef void (*callback_t)(unsigned int*, int, int);
   JuliaCanvas(QQuickItem *parent = 0);
   void paint(QPainter *painter);
   void setPaintFunction(jlcxx::SafeCFunction f);

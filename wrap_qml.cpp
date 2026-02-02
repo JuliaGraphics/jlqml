@@ -738,7 +738,7 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
   qml_module.method("init_qquickview", []() { return qmlwrap::ApplicationManager::instance().init_qquickview(); });
   qml_module.method("cleanup", []() { qmlwrap::ApplicationManager::instance().cleanup(); });
   qml_module.method("qmlcontext", []() { return qmlwrap::ApplicationManager::instance().root_context(); });
-  qml_module.method("exec", []() { qmlwrap::ApplicationManager::instance().exec(); });
+  qml_module.method("app_exec", []() { qmlwrap::ApplicationManager::instance().exec(); });
   qml_module.method("process_events", qmlwrap::ApplicationManager::process_events);
   qml_module.method("add_import_path", [](std::string path) { qmlwrap::ApplicationManager::instance().add_import_path(path); });
 
