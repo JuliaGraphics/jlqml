@@ -94,7 +94,6 @@ void ApplicationManager::exec()
   {
     app->exit(status);
   });
-  ForeignThreadManager::instance().clear(QThread::currentThread());
   const int status = app->exec();
   if (status != 0)
   {
@@ -112,7 +111,10 @@ void ApplicationManager::add_import_path(std::string path)
 
 ApplicationManager::ApplicationManager()
 {
-  qputenv("QSG_RENDER_LOOP", QProcessEnvironment::systemEnvironment().value("QSG_RENDER_LOOP").toLocal8Bit());
+  if(QProcessEnvironment::systemEnvironment().contains("QSG_RENDER_LOOP"))
+  {
+    qputenv("QSG_RENDER_LOOP", QProcessEnvironment::systemEnvironment().value("QSG_RENDER_LOOP").toLocal8Bit());
+  }
   
   qInstallMessageHandler(julia_message_output);
   
@@ -154,6 +156,7 @@ void ApplicationManager::set_engine(QQmlEngine* e)
   {
     e->addImportPath(QString::fromStdString(path));
   }
+  ForeignThreadManager::instance().clear(QThread::currentThread());
 }
 
 void ApplicationManager::process_events()

@@ -1,5 +1,6 @@
 #include <QSet>
 #include <QMutex>
+#include <QQuickItem>
 #include <QThread>
 
 class ForeignThreadManager
@@ -9,6 +10,7 @@ public:
 
   void add_thread(QThread* t);
   void clear(QThread* main_thread);
+  void add_window(QQuickItem* item);
 
 private:
   ForeignThreadManager();

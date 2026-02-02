@@ -1,8 +1,10 @@
 #include <QOpenGLFramebufferObject>
 #include <QQuickWindow>
+#include <QQuickOpenGLUtils>
 #include <QSGNode>
 #include <QSGSimpleTextureNode>
 
+#include "foreign_thread_manager.hpp"
 #include "opengl_viewport.hpp"
 
 namespace qmlwrap
@@ -26,6 +28,7 @@ public:
     m_vp->render();
     m_vp->post_render();
     m_vp->window()->endExternalCommands();
+    QQuickOpenGLUtils::resetOpenGLState();
   }
 
   void synchronize(QQuickFramebufferObject *item)
@@ -59,12 +62,9 @@ OpenGLViewport::OpenGLViewport(QQuickItem *parent, RenderFunction* render_func) 
   {
     qFatal("OpenGL rendering required for OpenGLViewport or MakieViewport. Add the line\nQML.setGraphicsApi(QML.OpenGL)\nbefore loading the QML program.");
   }
-  if(qgetenv("QSG_RENDER_LOOP") != "basic")
-  {
-    qFatal("QSG_RENDER_LOOP must be set to basic to use OpenGLViewport or MakieViewport. Add the line\nENV[\"QSG_RENDER_LOOP\"] = \"basic\"\nat the top of your Julia program");
-  }
   QObject::connect(this, &OpenGLViewport::renderFunctionChanged, this, &OpenGLViewport::update);
   setMirrorVertically(true);
+  ForeignThreadManager::instance().add_window(this);
 }
 
 void OpenGLViewport::render()
