@@ -45,7 +45,7 @@ void _gc_safe_enter(int& state)
 {
   jl_ptls_t ptls = jl_current_task->ptls;
   state = jl_gc_safe_enter(ptls);
-  #if (JULIA_VERSION_MAJOR * 100 + JULIA_VERSION_MINOR) > 110
+  #if (JULIA_VERSION_MAJOR * 100 + JULIA_VERSION_MINOR) > 111
   ptls->engine_nqueued++;
   #endif
 }
@@ -54,7 +54,7 @@ void _gc_safe_leave(int state)
 {
   jl_ptls_t ptls = jl_current_task->ptls;
   jl_gc_safe_leave(ptls, state);
-  #if (JULIA_VERSION_MAJOR * 100 + JULIA_VERSION_MINOR) > 110
+  #if (JULIA_VERSION_MAJOR * 100 + JULIA_VERSION_MINOR) > 111
   ptls->engine_nqueued--;
   #endif
 }
