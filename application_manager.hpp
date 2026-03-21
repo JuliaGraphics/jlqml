@@ -12,6 +12,7 @@
 #include <QtQml>
 
 #include "jlcxx/jlcxx.hpp"
+#include "jlcxx/functions.hpp"
 
 #include "julia_api.hpp"
 
@@ -59,6 +60,7 @@ private:
   QQmlEngine* m_engine = nullptr;
   QQmlContext* m_root_ctx = nullptr;
   std::vector<std::string> m_import_paths;
+  jlcxx::JuliaFunction m_event_hook;
 };
 
 }

@@ -17,6 +17,7 @@
 #include "julia_api.hpp"
 #include "julia_canvas.hpp"
 #include "julia_display.hpp"
+#include "julia_imageprovider.hpp"
 #include "julia_itemmodel.hpp"
 #include "julia_painteditem.hpp"
 #include "julia_property_map.hpp"
@@ -45,6 +46,11 @@ template<> struct SuperType<QQuickItem> { using type = QObject; };
 template<> struct SuperType<QWindow> { using type = QObject; };
 template<> struct SuperType<QQuickWindow> { using type = QWindow; };
 template<> struct SuperType<qmlwrap::JuliaItemModel> { using type = QAbstractTableModel; };
+template<> struct SuperType<QImage> { using type = QPaintDevice; };
+template<> struct SuperType<QPixmap> { using type = QPaintDevice; };
+template<> struct SuperType<QQmlImageProviderBase> { using type = QObject; };
+template<> struct SuperType<QQuickImageProvider> { using type = QQmlImageProviderBase; };
+template<> struct SuperType<qmlwrap::JuliaImageProvider> { using type = QQuickImageProvider; };
 
 }
 
@@ -266,6 +272,17 @@ struct WrapQtAssociativeContainer
   }
 };
 
+struct WrapImageResult
+{
+  template<typename TypeWrapperT>
+  void operator()(TypeWrapperT&& wrapped)
+  {
+    using WrappedT = typename TypeWrapperT::type;
+    using image_type = typename WrappedT::image_type;
+    wrapped.template constructor<image_type,int,int>();
+  }
+};
+
 }
 
 JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
@@ -358,6 +375,21 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
       QSGRendererInterface::Vulkan,
       QSGRendererInterface::Metal,
       QSGRendererInterface::Null
+    })
+  );
+
+  qml_module.add_enum<QQmlImageProviderBase::ImageType>("ImageType",
+    std::vector<const char*>({
+      "Image",
+      "Pixmap",
+      "Texture",
+      "ImageResponse"
+    }),
+    std::vector<int>({
+      QQmlImageProviderBase::Image,
+      QQmlImageProviderBase::Pixmap,
+      QQmlImageProviderBase::Texture,
+      QQmlImageProviderBase::ImageResponse
     })
   );
 
@@ -656,7 +688,10 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
     .method("_set_context_property", static_cast<void(QQmlContext::*)(const QString&, QObject*)>(&QQmlContext::setContextProperty))
     .method("context_object", &QQmlContext::contextObject);
 
+  qml_module.add_type<QQmlImageProviderBase>("QQmlImageProviderBase", julia_base_type<QObject>());
+
   qml_module.add_type<QQmlEngine>("QQmlEngine", julia_base_type<QObject>())
+    .method("addImageProvider", &QQmlEngine::addImageProvider)
     .method("clearComponentCache", &QQmlEngine::clearComponentCache)
     .method("clearSingletons", &QQmlEngine::clearSingletons)
     .method("root_context", &QQmlEngine::rootContext)
@@ -856,4 +891,125 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
       f(path);
     });
   });
+
+  qml_module.add_enum<QImage::Format>("Format",
+    std::vector<const char*>({
+      "Format_Invalid",
+      "Format_Mono",
+      "Format_MonoLSB",
+      "Format_Indexed8",
+      "Format_RGB32",
+      "Format_ARGB32",
+      "Format_ARGB32_Premultiplied",
+      "Format_RGB16",
+      "Format_ARGB8565_Premultiplied",
+      "Format_RGB666",
+      "Format_ARGB6666_Premultiplied",
+      "Format_RGB555",
+      "Format_ARGB8555_Premultiplied",
+      "Format_RGB888",
+      "Format_RGB444",
+      "Format_ARGB4444_Premultiplied",
+      "Format_RGBX8888",
+      "Format_RGBA8888",
+      "Format_RGBA8888_Premultiplied",
+      "Format_BGR30",
+      "Format_A2BGR30_Premultiplied",
+      "Format_RGB30",
+      "Format_A2RGB30_Premultiplied",
+      "Format_Alpha8",
+      "Format_Grayscale8",
+      "Format_RGBX64",
+      "Format_RGBA64",
+      "Format_RGBA64_Premultiplied",
+      "Format_Grayscale16",
+      "Format_BGR888",
+      "Format_RGBX16FPx4",
+      "Format_RGBA16FPx4",
+      "Format_RGBA16FPx4_Premultiplied",
+      "Format_RGBX32FPx4",
+      "Format_RGBA32FPx4",
+      "Format_RGBA32FPx4_Premultiplied",
+      "Format_CMYK8888"
+    }),
+    std::vector<int>({
+      QImage::Format_Invalid,
+      QImage::Format_Mono,
+      QImage::Format_MonoLSB,
+      QImage::Format_Indexed8,
+      QImage::Format_RGB32,
+      QImage::Format_ARGB32,
+      QImage::Format_ARGB32_Premultiplied,
+      QImage::Format_RGB16,
+      QImage::Format_ARGB8565_Premultiplied,
+      QImage::Format_RGB666,
+      QImage::Format_ARGB6666_Premultiplied,
+      QImage::Format_RGB555,
+      QImage::Format_ARGB8555_Premultiplied,
+      QImage::Format_RGB888,
+      QImage::Format_RGB444,
+      QImage::Format_ARGB4444_Premultiplied,
+      QImage::Format_RGBX8888,
+      QImage::Format_RGBA8888,
+      QImage::Format_RGBA8888_Premultiplied,
+      QImage::Format_BGR30,
+      QImage::Format_A2BGR30_Premultiplied,
+      QImage::Format_RGB30,
+      QImage::Format_A2RGB30_Premultiplied,
+      QImage::Format_Alpha8,
+      QImage::Format_Grayscale8,
+      QImage::Format_RGBX64,
+      QImage::Format_RGBA64,
+      QImage::Format_RGBA64_Premultiplied,
+      QImage::Format_Grayscale16,
+      QImage::Format_BGR888,
+      QImage::Format_RGBX16FPx4,
+      QImage::Format_RGBA16FPx4,
+      QImage::Format_RGBA16FPx4_Premultiplied,
+      QImage::Format_RGBX32FPx4,
+      QImage::Format_RGBA32FPx4,
+      QImage::Format_RGBA32FPx4_Premultiplied,
+      QImage::Format_CMYK8888
+    })
+  );
+
+  qml_module.add_type<QColor>("QColor")
+    .constructor<int,int,int>()
+    .constructor<int,int,int,int>()
+    .constructor<const QString&>()
+    .constructor<const char*>();
+
+  qml_module.add_type<QImage>("QImage", julia_base_type<QPaintDevice>())
+    .constructor<const char *const[]>()
+    .constructor<const QSize &, QImage::Format>()
+    .constructor<const QString&, const char*>()
+    .constructor<int, int, QImage::Format>()
+    .constructor<const uchar*, int, int, QImage::Format, QImageCleanupFunction, void*>()
+    .constructor<uchar*, int, int, QImage::Format, QImageCleanupFunction, void*>()
+    .constructor<const uchar*, int, int, qsizetype, QImage::Format, QImageCleanupFunction, void*>()
+    .constructor<uchar*, int, int, qsizetype, QImage::Format, QImageCleanupFunction, void*>()
+    .constructor<const uchar*, int, int, QImage::Format>()
+    .constructor<uchar*, int, int, QImage::Format>()
+    .constructor<const uchar*, int, int, qsizetype, QImage::Format>()
+    .constructor<uchar*, int, int, qsizetype, QImage::Format>()
+    .method("copy", static_cast<QImage (QImage::*) (int,int,int,int) const>(&QImage::copy))
+    .method("copy", [] (const QImage& i) { return i.copy(); } )
+    .method("height", &QImage::height)
+    .method("width", &QImage::width);
+
+  qml_module.add_type<QPixmap>("QPixmap", julia_base_type<QPaintDevice>())
+    .constructor<const char *const[] >()
+    .constructor<int,int>()
+    .constructor<const QString&, const char*>()
+    .constructor<const QString&>()
+    .method("fill", &QPixmap::fill);
+  qml_module.method("fromImage", [] (const QImage& image) { return QPixmap::fromImage(image); } );
+
+  qml_module.add_type<QQuickImageProvider>("QQuickImageProvider", julia_base_type<QQmlImageProviderBase>());
+  qml_module.add_type<qmlwrap::JuliaImageProvider>("JuliaImageProvider", julia_base_type<QQuickImageProvider>())
+    .constructor<QQmlImageProviderBase::ImageType>(jlcxx::finalize_policy::no) // No finalizer because the engine takes ownership
+    .method("set_callback", &qmlwrap::JuliaImageProvider::set_callback);
+
+  qml_module.add_type<Parametric<TypeVar<1>>>("ImageResult")
+    .apply<qmlwrap::ImageResult<QImage>, qmlwrap::ImageResult<QPixmap>>(qmlwrap::WrapImageResult());
 }
