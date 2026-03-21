@@ -94,6 +94,14 @@ void ApplicationManager::exec()
   {
     app->exit(status);
   });
+  
+  QTimer* main_timer = new QTimer(m_engine);
+  main_timer->setInterval(0);
+  QObject::connect(main_timer, &QTimer::timeout, [this]{
+    m_event_hook();
+  });
+  main_timer->start();
+
   const int status = app->exec();
   if (status != 0)
   {
@@ -109,7 +117,7 @@ void ApplicationManager::add_import_path(std::string path)
   m_import_paths.push_back(path);
 }
 
-ApplicationManager::ApplicationManager()
+ApplicationManager::ApplicationManager() : m_event_hook(jl_get_function(m_qml_mod, "process_eventloop_updates"))
 {
   if(QProcessEnvironment::systemEnvironment().contains("QSG_RENDER_LOOP"))
   {

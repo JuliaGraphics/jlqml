@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.16.0)
 
 project(JlQML)
 
-set(JlQML_VERSION 0.9.0)
+set(JlQML_VERSION 0.10.0)
 message(STATUS "Project version: v${JlQML_VERSION}")
 
 set(CMAKE_MACOSX_RPATH 1)
@@ -61,6 +61,8 @@ qt6_add_qml_module(jlqml
     julia_display.cpp
     julia_function.hpp
     julia_function.cpp
+    julia_imageprovider.hpp
+    julia_imageprovider.cpp
     julia_itemmodel.hpp
     julia_itemmodel.cpp
     julia_painteditem.hpp
