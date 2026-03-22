@@ -3,20 +3,38 @@
 #include <QQuickItem>
 #include <QThread>
 
-class ForeignThreadManager : public QObject
+
+namespace qmlwrap
 {
-  Q_OBJECT
+
+class ForeignThreadManager
+{
 public:
   static ForeignThreadManager& instance();
-  static void gc_safe_enter(int& state);
-  static void gc_safe_leave(int state);
+  ~ForeignThreadManager();
 
-  void add_thread(QThread* t);
-  void clear(QThread* main_thread);
-  void add_window(QQuickItem* item);
+  void gc_safe_enter();
+  void gc_safe_leave();
+
+  void begin_julia();
+  void end_julia();
+
+  // Remove the current instance, to be called after exec finishes.
+  void cleanup();
 
 private:
-  using QObject::QObject;
-  QSet<QThread*> m_threads;
-  QMutex m_mutex;
+  ForeignThreadManager();
+
+  int m_state = 0;
+  int m_depth = 0;
+  static thread_local ForeignThreadManager* m_instance;
+  static QMutex m_juliamutex;
 };
+
+struct GCGuard
+{
+  GCGuard();
+  ~GCGuard();
+};
+
+}

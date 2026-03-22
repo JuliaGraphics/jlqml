@@ -4,6 +4,7 @@
 
 #include "julia_api.hpp"
 #include "julia_painteditem.hpp"
+#include "foreign_thread_manager.hpp"
 
 namespace qmlwrap
 {
@@ -14,6 +15,7 @@ JuliaPaintedItem::JuliaPaintedItem(QQuickItem *parent) : QQuickPaintedItem(paren
 
 void JuliaPaintedItem::paint(QPainter* painter)
 {
+  GCGuard gc_guard;
   m_callback(painter, this);
 }
 

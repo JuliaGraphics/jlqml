@@ -11,7 +11,6 @@ namespace qmlwrap
 
 JuliaCanvas::JuliaCanvas(QQuickItem *parent) : QQuickPaintedItem(parent)
 {
-  ForeignThreadManager::instance().add_window(this);
 }
 
 void JuliaCanvas::paint(QPainter *painter)
@@ -22,7 +21,10 @@ void JuliaCanvas::paint(QPainter *painter)
   unsigned int *draw_buffer = new unsigned int[iwidth * iheight];
 
   // call julia painter
-  m_callback(draw_buffer, iwidth, iheight);
+  {
+    GCGuard gc_guard;
+    m_callback(draw_buffer, iwidth, iheight);
+  }
 
   // make QImage
   QImage *image = new QImage((uchar*)draw_buffer, width(), height(), QImage::Format_ARGB32);

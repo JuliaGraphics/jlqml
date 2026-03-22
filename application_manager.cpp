@@ -97,7 +97,9 @@ void ApplicationManager::exec()
   
   QTimer* main_timer = new QTimer(m_engine);
   main_timer->setInterval(0);
-  QObject::connect(main_timer, &QTimer::timeout, [this]{
+  QObject::connect(main_timer, &QTimer::timeout, [this]
+  {
+    GCGuard gc_guard;
     m_event_hook();
   });
   main_timer->start();
@@ -144,6 +146,7 @@ void ApplicationManager::cleanup()
   }
   delete JuliaSingleton::s_singletonInstance;
   JuliaSingleton::s_singletonInstance = nullptr;
+  ForeignThreadManager::instance().cleanup();
 }
 
 void ApplicationManager::check_no_engine()
@@ -164,7 +167,6 @@ void ApplicationManager::set_engine(QQmlEngine* e)
   {
     e->addImportPath(QString::fromStdString(path));
   }
-  ForeignThreadManager::instance().clear(QThread::currentThread());
 }
 
 void ApplicationManager::process_events()

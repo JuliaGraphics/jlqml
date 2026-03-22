@@ -64,7 +64,6 @@ OpenGLViewport::OpenGLViewport(QQuickItem *parent, RenderFunction* render_func) 
   }
   QObject::connect(this, &OpenGLViewport::renderFunctionChanged, this, &OpenGLViewport::update);
   setMirrorVertically(true);
-  ForeignThreadManager::instance().add_window(this);
 }
 
 void OpenGLViewport::render()
@@ -90,6 +89,7 @@ void DefaultRenderFunction::setRenderFunction(jlcxx::SafeCFunction f)
 
 void DefaultRenderFunction::render()
 {
+  GCGuard gc_guard;
   m_render_function();
 }
 

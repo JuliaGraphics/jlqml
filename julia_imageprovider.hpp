@@ -41,7 +41,6 @@ public:
 
 private:
   callback_t m_callback = nullptr;
-  int m_gc_state = JL_GC_STATE_UNSAFE;
 };
 
 } // namespace qmlwrap

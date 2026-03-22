@@ -14,6 +14,7 @@
 #include <QtQml>
 
 #include "application_manager.hpp"
+#include "foreign_thread_manager.hpp"
 #include "julia_api.hpp"
 #include "julia_canvas.hpp"
 #include "julia_display.hpp"
@@ -566,6 +567,7 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
     QObject::connect(&obj, &QObject::destroyed, [jl_f](QObject* o)
     {
       static JuliaFunction f(jl_f);
+      qmlwrap::GCGuard gc_guard;
       f(o);
     });
   });
@@ -662,6 +664,7 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
       {
         const jlcxx::JuliaFunction on_value_changed(callback);
         jl_value_t* julia_propmap = julia_property_map;
+        qmlwrap::GCGuard gc_guard;
         on_value_changed(julia_propmap, key, newvalue);
       });
     });
@@ -888,6 +891,7 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
     QObject::connect(&watcher, &QFileSystemWatcher::fileChanged, [jl_f](const QString& path)
     {
       static JuliaFunction f(jl_f);
+      qmlwrap::GCGuard gc_guard;
       f(path);
     });
   });

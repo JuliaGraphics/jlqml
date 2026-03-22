@@ -13,34 +13,15 @@ JuliaImageProvider::JuliaImageProvider(QQmlImageProviderBase::ImageType type) : 
 }
 
 template<typename ImageT>
-inline ImageT process_request(JuliaImageProvider::callback_t f, const QString &id, QSize *size, const QSize &requestedSize, int& m_gc_state)
+inline ImageT process_request(JuliaImageProvider::callback_t f, const QString &id, QSize *size, const QSize &requestedSize)
 {
   if(f == nullptr)
   {
     throw std::runtime_error("No callback function set for JuliaImageProvider");
   }
   
-  int main_gc_state = JL_GC_STATE_UNSAFE;
-  if(!QThread::isMainThread())
-  {
-    // Set the main thread as GC safe and the image loading thread as unsafe before calling the julia function
-    ForeignThreadManager::instance().add_thread(QThread::currentThread());
-    ForeignThreadManager::gc_safe_enter(m_gc_state);
-    QMetaObject::invokeMethod(&ForeignThreadManager::instance(), [&]{ ForeignThreadManager::gc_safe_enter(main_gc_state); },
-                          Qt::BlockingQueuedConnection);
-    ForeignThreadManager::gc_safe_leave(m_gc_state);
-  }
-
+  GCGuard gc_guard;
   ImageResult<ImageT> response = jlcxx::unbox<ImageResult<ImageT>>(f(id, requestedSize.width(), requestedSize.height()));
-
-  if(!QThread::isMainThread())
-  {
-    // Return to the initial GC state
-    ForeignThreadManager::gc_safe_enter(m_gc_state);
-    QMetaObject::invokeMethod(&ForeignThreadManager::instance(), [&]{ ForeignThreadManager::gc_safe_leave(main_gc_state); },
-                          Qt::BlockingQueuedConnection);
-  }
-
   *size = response.m_size;
   return std::move(response.m_image);
 }
@@ -51,7 +32,7 @@ QImage JuliaImageProvider::requestImage(const QString &id, QSize *size, const QS
   {
     throw std::runtime_error("JuliaImageProvider is not of type Image");
   }
-  return process_request<QImage>(m_callback, id, size, requestedSize, m_gc_state);
+  return process_request<QImage>(m_callback, id, size, requestedSize);
 }
 
 QPixmap JuliaImageProvider::requestPixmap(const QString &id, QSize *size, const QSize &requestedSize)
@@ -60,7 +41,7 @@ QPixmap JuliaImageProvider::requestPixmap(const QString &id, QSize *size, const 
   {
     throw std::runtime_error("JuliaImageProvider is not of type Pixmap");
   }
-  return process_request<QPixmap>(m_callback, id, size, requestedSize, m_gc_state);
+  return process_request<QPixmap>(m_callback, id, size, requestedSize);
 }
 
 QQuickTextureFactory *JuliaImageProvider::requestTexture(const QString &id, QSize *size, const QSize &requestedSize)
@@ -69,7 +50,7 @@ QQuickTextureFactory *JuliaImageProvider::requestTexture(const QString &id, QSiz
   {
     throw std::runtime_error("JuliaImageProvider is not of type Texture");
   }
-  return process_request<QQuickTextureFactory*>(m_callback, id, size, requestedSize, m_gc_state);
+  return process_request<QQuickTextureFactory*>(m_callback, id, size, requestedSize);
 }
 
 void JuliaImageProvider::set_callback(jlcxx::SafeCFunction fdata)
