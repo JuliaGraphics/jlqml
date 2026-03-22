@@ -2,6 +2,7 @@
 
 #include "makie_viewport.hpp"
 #include "julia_api.hpp"
+#include "foreign_thread_manager.hpp"
 
 #include <QOpenGLContext>
 #include <QQuickWindow>
@@ -27,6 +28,7 @@ public:
   }
   void render() override
   {
+    GCGuard gc_guard;
     if(m_scene != nullptr)
     {
       m_scene_render_function(m_screen_ptr, m_scene);
@@ -126,6 +128,7 @@ void MakieViewport::setScene(qvariant_any_t scene)
 
 void MakieViewport::setup_buffer(QOpenGLFramebufferObject* fbo)
 {
+  GCGuard gc_guard;
   if(m_screen == nullptr)
   {
     m_screen = MakieSupport::instance().setup_screen(std::forward<QOpenGLFramebufferObject*>(fbo), window());

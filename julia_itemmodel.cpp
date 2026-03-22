@@ -1,4 +1,5 @@
 #include "julia_itemmodel.hpp"
+#include "foreign_thread_manager.hpp"
 
 #include <QVariant>
 
@@ -40,18 +41,21 @@ auto safe_unbox<QVariant&>(jl_value_t* arg)
 
 int JuliaItemModel::rowCount(const QModelIndex& parent) const
 {
+  GCGuard gc_guard;
   static const jlcxx::JuliaFunction rowcount(jl_get_function(m_qml_mod, "rowcount"));
   return safe_unbox<int>(rowcount(m_data));
 }
 
 int JuliaItemModel::columnCount(const QModelIndex& parent) const
 {
+  GCGuard gc_guard;
   static const jlcxx::JuliaFunction colcount(jl_get_function(m_qml_mod, "colcount"));
   return safe_unbox<int>(colcount(m_data));
 }
 
 QVariant JuliaItemModel::data(const QModelIndex& index, int role) const
 {
+  GCGuard gc_guard;
   static const jlcxx::JuliaFunction data_f(jl_get_function(m_qml_mod, "data"));
   // The static cast avoids sending a reference to the Julia function, which would require adding an extra method
   return safe_unbox<QVariant&>(data_f(m_data, static_cast<int>(role), index.row()+1, index.column()+1));
@@ -59,18 +63,21 @@ QVariant JuliaItemModel::data(const QModelIndex& index, int role) const
 
 QVariant JuliaItemModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
+  GCGuard gc_guard;
   static const jlcxx::JuliaFunction headerdata_f(jl_get_function(m_qml_mod, "headerdata"));
   return safe_unbox<QVariant&>(headerdata_f(m_data, section+1, static_cast<Qt::Orientation>(orientation), static_cast<int>(role)));
 }
 
 bool JuliaItemModel::setData(const QModelIndex& index, const QVariant& value, int role)
 {
+  GCGuard gc_guard;
   static const jlcxx::JuliaFunction setdata(jl_get_function(m_qml_mod, "setdata!"));
   return safe_unbox<bool>(setdata(this, value, static_cast<int>(role), index.row()+1, index.column()+1));
 }
 
 bool JuliaItemModel::setHeaderData(int section, Qt::Orientation orientation, const QVariant& value, int role)
 {
+  GCGuard gc_guard;
   static const jlcxx::JuliaFunction setheaderdata_f(jl_get_function(m_qml_mod, "setheaderdata!"));
   return safe_unbox<bool>(setheaderdata_f(this, section+1, static_cast<Qt::Orientation>(orientation), value, static_cast<int>(role)));
 }
@@ -85,72 +92,84 @@ Qt::ItemFlags JuliaItemModel::flags(const QModelIndex& index) const
 
 QHash<int, QByteArray> JuliaItemModel::roleNames() const
 {
+  GCGuard gc_guard;
   static const jlcxx::JuliaFunction rolenames(jl_get_function(m_qml_mod, "rolenames"));
   return safe_unbox<QHash<int, QByteArray>>(rolenames(m_data));
 }
 
 void JuliaItemModel::clear()
 {
+  GCGuard gc_guard;
   static const jlcxx::JuliaFunction clear_f(jl_get_function(m_qml_mod, "clear!"));
   clear_f(this);
 }
 
 void JuliaItemModel::appendRow(const QVariant& row)
 {
+  GCGuard gc_guard;
   static const jlcxx::JuliaFunction append_row_f(jl_get_function(m_qml_mod, "append_row!"));
   append_row_f(this, row);
 }
 
 void JuliaItemModel::insertRow(int rowIndex, const QVariant& row)
 {
+  GCGuard gc_guard;
   static const jlcxx::JuliaFunction insert_row_f(jl_get_function(m_qml_mod, "insert_row!"));
   insert_row_f(this, rowIndex+1, row);
 }
 
 void JuliaItemModel::moveRow(int fromRowIndex, int toRowIndex, int rows)
 {
+  GCGuard gc_guard;
   static const jlcxx::JuliaFunction move_row_f(jl_get_function(m_qml_mod, "move_rows!"));
   move_row_f(this, fromRowIndex+1, toRowIndex+1, static_cast<int>(rows));
 }
 
 void JuliaItemModel::removeRow(int rowIndex, int rows)
 {
+  GCGuard gc_guard;
   static const jlcxx::JuliaFunction remove_row_f(jl_get_function(m_qml_mod, "remove_rows!"));
   remove_row_f(this, rowIndex+1, static_cast<int>(rows));
 }
 
 void JuliaItemModel::setRow(int rowIndex, const QVariant& row)
 {
+  GCGuard gc_guard;
   static const jlcxx::JuliaFunction set_row_f(jl_get_function(m_qml_mod, "set_row!"));
   set_row_f(this, rowIndex + 1, row);
 }
 
 void JuliaItemModel::appendColumn(const QVariant& column)
 {
+  GCGuard gc_guard;
   static const jlcxx::JuliaFunction append_column_f(jl_get_function(m_qml_mod, "append_column!"));
   append_column_f(this, column);
 }
 
 void JuliaItemModel::insertColumn(int columnIndex, const QVariant& column)
 {
+  GCGuard gc_guard;
   static const jlcxx::JuliaFunction insert_column_f(jl_get_function(m_qml_mod, "insert_column!"));
   insert_column_f(this, columnIndex+1, column);
 }
 
 void JuliaItemModel::moveColumn(int fromColumnIndex, int toColumnIndex, int columns)
 {
+  GCGuard gc_guard;
   static const jlcxx::JuliaFunction move_column_f(jl_get_function(m_qml_mod, "move_columns!"));
   move_column_f(this, fromColumnIndex+1, toColumnIndex+1, static_cast<int>(columns));
 }
 
 void JuliaItemModel::removeColumn(int columnIndex, int columns)
 {
+  GCGuard gc_guard;
   static const jlcxx::JuliaFunction remove_column_f(jl_get_function(m_qml_mod, "remove_columns!"));
   remove_column_f(this, columnIndex+1, static_cast<int>(columns));
 }
 
 void JuliaItemModel::setColumn(int columnIndex, const QVariant& column)
 {
+  GCGuard gc_guard;
   static const jlcxx::JuliaFunction set_column_f(jl_get_function(m_qml_mod, "set_column!"));
   set_column_f(this, columnIndex + 1, column);
 }
