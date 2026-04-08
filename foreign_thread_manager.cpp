@@ -72,6 +72,12 @@ void ForeignThreadManager::end_julia()
   }
 }
 
+void ForeignThreadManager::yield()
+{
+  end_julia();
+  begin_julia();
+}
+
 void ForeignThreadManager::cleanup()
 {
   if(!QThread::isMainThread())

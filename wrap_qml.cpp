@@ -573,6 +573,7 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
   });
 
   qml_module.add_type<QSize>("QSize")
+    .constructor<int,int>()
     .method("width", &QSize::width)
     .method("height", &QSize::height);
 
@@ -780,10 +781,20 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
   qml_module.method("app_exec", []() { qmlwrap::ApplicationManager::instance().exec(); });
   qml_module.method("process_events", qmlwrap::ApplicationManager::process_events);
   qml_module.method("add_import_path", [](std::string path) { qmlwrap::ApplicationManager::instance().add_import_path(path); });
+  qml_module.method("queue_process_eventloop_updates", []() { qmlwrap::ApplicationManager::instance().queue_process_eventloop_updates(); });
+
+  qml_module.method("yield", []() { qmlwrap::ForeignThreadManager::instance().yield(); });
 
   qml_module.add_type<QTimer>("QTimer", julia_base_type<QObject>())
+    .constructor<QObject*>()
+    .method("setInterval", static_cast<void(QTimer::*)(int)>(&QTimer::setInterval))
     .method("start", [] (QTimer& t) { t.start(); } )
-    .method("stop", &QTimer::stop);
+    .method("stop", &QTimer::stop)
+    .method("callOnTimeout", [] (QTimer& t, jl_value_t* julia_function)
+    {
+      JuliaFunction f(julia_function);
+      t.callOnTimeout([f] () { f(); });
+    });
 
   // Emit signals helper
   qml_module.method("emit", [](const char *signal_name, const QVariantList& args) {
@@ -999,7 +1010,8 @@ JLCXX_MODULE define_julia_module(jlcxx::Module& qml_module)
     .method("copy", static_cast<QImage (QImage::*) (int,int,int,int) const>(&QImage::copy))
     .method("copy", [] (const QImage& i) { return i.copy(); } )
     .method("height", &QImage::height)
-    .method("width", &QImage::width);
+    .method("width", &QImage::width)
+    .method("fill", static_cast<void (QImage::*) (const QColor&)>(&QImage::fill));
 
   qml_module.add_type<QPixmap>("QPixmap", julia_base_type<QPaintDevice>())
     .constructor<const char *const[] >()
