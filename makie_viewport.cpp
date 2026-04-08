@@ -136,6 +136,7 @@ void MakieViewport::setup_buffer(QOpenGLFramebufferObject* fbo)
     
     connect(window(), &QQuickWindow::sceneGraphInvalidated, [this] ()
     {
+      GCGuard gc_guard;
       MakieSupport::instance().on_context_destroy(m_screen);
     });
   }
