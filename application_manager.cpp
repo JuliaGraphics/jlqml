@@ -95,15 +95,9 @@ void ApplicationManager::exec()
     app->exit(status);
   });
   
-  QTimer* main_timer = new QTimer(m_engine);
-  main_timer->setInterval(0);
-  QObject::connect(main_timer, &QTimer::timeout, [this]
-  {
-    GCGuard gc_guard;
-    m_event_hook();
-  });
-  main_timer->start();
+  m_event_loop_updater = new EventLoopUpdater(m_engine, jl_get_function(m_qml_mod, "process_eventloop_updates"));
 
+  ForeignThreadManager::instance(); // Make sure the main thread is put in GC safe mode
   const int status = app->exec();
   if (status != 0)
   {
@@ -119,7 +113,13 @@ void ApplicationManager::add_import_path(std::string path)
   m_import_paths.push_back(path);
 }
 
-ApplicationManager::ApplicationManager() : m_event_hook(jl_get_function(m_qml_mod, "process_eventloop_updates"))
+void ApplicationManager::queue_process_eventloop_updates()
+{
+  assert(m_event_loop_updater != nullptr);
+  QMetaObject::invokeMethod(m_event_loop_updater, [this]{ m_event_loop_updater->process_eventloop_updates(); }, Qt::QueuedConnection);
+}
+
+ApplicationManager::ApplicationManager()
 {
   if(QProcessEnvironment::systemEnvironment().contains("QSG_RENDER_LOOP"))
   {
@@ -147,6 +147,7 @@ void ApplicationManager::cleanup()
   delete JuliaSingleton::s_singletonInstance;
   JuliaSingleton::s_singletonInstance = nullptr;
   ForeignThreadManager::instance().cleanup();
+  m_event_loop_updater = nullptr;
 }
 
 void ApplicationManager::check_no_engine()
@@ -176,5 +177,15 @@ void ApplicationManager::process_events()
 }
 
 jl_module_t* ApplicationManager::m_qml_mod = nullptr;
+
+EventLoopUpdater::EventLoopUpdater(QObject *parent, jl_value_t *f) : QObject(parent), m_process_eventloop_updates(f)
+{
+}
+
+void EventLoopUpdater::process_eventloop_updates()
+{
+  GCGuard gc_guard;
+  m_process_eventloop_updates();
+}
 
 }

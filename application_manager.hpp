@@ -19,6 +19,18 @@
 namespace qmlwrap
 {
 
+/// Helper to invoke a Julia function inside the main event loop
+class EventLoopUpdater : public QObject
+{
+  Q_OBJECT
+public:
+  EventLoopUpdater(QObject* parent, jl_value_t* f);
+  void process_eventloop_updates();
+
+private:
+  jlcxx::JuliaFunction m_process_eventloop_updates;
+};
+
 /// Manage creation and destruction of the application and the QML engine,
 class ApplicationManager
 {
@@ -45,6 +57,8 @@ public:
 
   void add_import_path(std::string path);
 
+  void queue_process_eventloop_updates();
+
   static void process_events();
 
   static jl_module_t* m_qml_mod;
@@ -60,7 +74,7 @@ private:
   QQmlEngine* m_engine = nullptr;
   QQmlContext* m_root_ctx = nullptr;
   std::vector<std::string> m_import_paths;
-  jlcxx::JuliaFunction m_event_hook;
+  EventLoopUpdater* m_event_loop_updater = nullptr;
 };
 
 }

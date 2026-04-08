@@ -19,6 +19,8 @@ public:
   void begin_julia();
   void end_julia();
 
+  void yield();
+
   // Remove the current instance, to be called after exec finishes.
   void cleanup();
 
