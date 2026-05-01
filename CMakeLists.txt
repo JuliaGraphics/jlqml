@@ -76,7 +76,9 @@ qt6_add_qml_module(jlqml
     opengl_viewport.hpp
     opengl_viewport.cpp
     jlqml.hpp
-    wrap_qml.cpp)
+    wrap_qml.cpp
+    wrap_qml_part_a.cpp
+    wrap_qml_part_b.cpp)
 
 set_property(TARGET jlqml PROPERTY VERSION ${JlQML_VERSION})
 if(WIN32)
