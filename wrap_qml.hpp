@@ -64,16 +64,6 @@ template<> struct SuperType<qmlwrap::JuliaImageProvider> { using type = QQuickIm
 namespace qmlwrap
 {
 
-inline QVariantAny::QVariantAny(jl_value_t* v) : value(v)
-{
-  assert(v != nullptr);
-  jlcxx::protect_from_gc(value);
-}
-inline QVariantAny::~QVariantAny()
-{
-  jlcxx::unprotect_from_gc(value);
-}
-
 using qvariant_types = jlcxx::ParameterList<bool, float, double, int32_t, int64_t, uint32_t, uint64_t, void*, jl_value_t*,
   QString, QUrl, jlcxx::SafeCFunction, QVariantMap, QVariantList, QStringList, QList<QUrl>, JuliaDisplay*, JuliaCanvas*, JuliaPropertyMap*, QObject*>;
 
