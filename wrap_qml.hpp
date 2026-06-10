@@ -37,6 +37,9 @@ namespace jlcxx
 {
 
 template<> struct SuperType<QQmlApplicationEngine> { using type = QQmlEngine; };
+template<> struct SuperType<QCoreApplication> { using type = QObject; };
+template<> struct SuperType<QGuiApplication> { using type = QCoreApplication; };
+template<> struct SuperType<QQmlComponent> { using type = QObject; };
 template<> struct SuperType<QQmlContext> { using type = QObject; };
 template<> struct SuperType<QQmlEngine> { using type = QObject; };
 template<> struct SuperType<QQmlPropertyMap> { using type = QObject; };

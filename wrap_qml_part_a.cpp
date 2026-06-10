@@ -84,6 +84,9 @@ void wrap_part_a(jlcxx::Module& qml_module)
   qml_module.add_type<Parametric<TypeVar<1>>>("QList", julia_type("AbstractVector"))
     .apply<QVariantList, QList<QString>, QList<QUrl>, QList<QByteArray>, QList<int>, QList<QObject*>>(qmlwrap::WrapQList());
 
+  qml_module.method("libraryPaths", QCoreApplication::libraryPaths);
+  qml_module.method("addLibraryPath", QCoreApplication::addLibraryPath);
+
   // QMap (= QVariantMap for the given type)
   qml_module.add_type<Parametric<TypeVar<1>,TypeVar<2>>>("QMapIterator")
     .apply<qmlwrap::QMapIteratorWrapper<QString, QVariant>>(qmlwrap::WrapQtIterator());
