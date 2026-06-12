@@ -10,7 +10,7 @@ namespace qmlwrap
 // Helper to store a Julia value of type Any in a GC-safe way
 struct QVariantAny
 {
-  inline QVariantAny(jl_value_t* v)
+  inline QVariantAny(jl_value_t* v) : value(v)
   {
     assert(v != nullptr);
     jlcxx::protect_from_gc(value);
