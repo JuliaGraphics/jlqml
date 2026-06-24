@@ -17,7 +17,20 @@ void wrap_part_b(jlcxx::Module& qml_module)
 
   qml_module.add_type<QQmlImageProviderBase>("QQmlImageProviderBase", julia_base_type<QObject>());
 
-  qml_module.add_type<QQmlEngine>("QQmlEngine", julia_base_type<QObject>())
+  qml_module.add_enum<QJSEngine::ObjectOwnership>("ObjectOwnership",
+    std::vector<const char*>({
+      "CppOwnership",
+      "JavaScriptOwnership"
+    }),
+    std::vector<int>({
+      QJSEngine::CppOwnership,
+      QJSEngine::JavaScriptOwnership
+    })
+  );
+
+  qml_module.add_type<QJSEngine>("QJSEngine", julia_base_type<QObject>());
+  qml_module.method("setObjectOwnership", QJSEngine::setObjectOwnership);
+  qml_module.add_type<QQmlEngine>("QQmlEngine", julia_base_type<QJSEngine>())
     .method("addImageProvider", &QQmlEngine::addImageProvider)
     .method("clearComponentCache", &QQmlEngine::clearComponentCache)
     .method("clearSingletons", &QQmlEngine::clearSingletons)
