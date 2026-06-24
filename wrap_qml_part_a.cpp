@@ -5,6 +5,7 @@ void wrap_part_a(jlcxx::Module& qml_module)
   using namespace jlcxx;
 
   qml_module.add_type<QObject>("QObject")
+    .method("parent", &QObject::parent)
     .method("deleteLater", &QObject::deleteLater);
   qml_module.method("connect_destroyed_signal", [] (QObject& obj, jl_value_t* jl_f)
   {
